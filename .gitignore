@@ -1,0 +1,74 @@
+####################################
+# ANDROID / GRADLE
+####################################
+
+# Gradle cache a build output
+.gradle/
+build/
+
+# Lokální konfigurace (SDK cesty, API keys)
+local.properties
+
+# Native build (NDK / CMake)
+.externalNativeBuild/
+.cxx/
+
+
+####################################
+# ANDROID STUDIO / INTELLIJ IDEA
+####################################
+
+# Celé IDE nastavení (uživatel-specifické)
+.idea/
+
+# Projektové soubory IDE
+*.iml
+
+# Pokud bys NĚKDY chtěl verzovat .idea,
+# tak aspoň tyto věci musí zůstat ignorované:
+# .idea/caches/
+# .idea/libraries/
+# .idea/modules.xml
+# .idea/workspace.xml
+# .idea/navEditor.xml
+# .idea/assetWizardSettings.xml
+
+
+####################################
+# BUILD ARTIFACTS
+####################################
+
+# Zachycené screenshoty / emulator captures
+captures/
+
+
+####################################
+# LOGS & TEMP FILES
+####################################
+
+# Logy
+*.log
+
+# Dočasné soubory
+*.tmp
+
+
+####################################
+# ENV / SECRETS
+####################################
+
+# Environment proměnné (pokud někdy použiješ)
+.env
+.env.*
+
+
+####################################
+# OS SPECIFIC
+####################################
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+

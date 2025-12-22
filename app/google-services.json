@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "308663661512",
+    "project_id": "memotripkroniq-56b29",
+    "storage_bucket": "memotripkroniq-56b29.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308663661512:android:f24ed884962a767d90c6fd",
+        "android_client_info": {
+          "package_name": "com.example.memotrip_kroniq"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnY0AneZuijFVjE3JIcwkCm3L7ykgEqLg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
