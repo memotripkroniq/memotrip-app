@@ -1,6 +1,7 @@
 package com.example.memotrip_kroniq.ui.addtrip.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -26,35 +29,46 @@ fun AddTripThemeCard(
     locked: Boolean,
     selected: Boolean
 ) {
+    val size = 80.dp
+    val radius = 10.dp
     val borderWidth = 3.dp
-    val outerRadius = 10.dp
-    val innerRadius = outerRadius - borderWidth
     val borderColor = Color(0xFF747781)
 
     Box(
         modifier = modifier
-            .size(80.dp)
-            .then(
-                if (!locked && selected) {
-                    Modifier
-                        .border(
-                            width = borderWidth,
-                            color = borderColor,
-                            shape = RoundedCornerShape(outerRadius)
-                        )
-                        .padding(borderWidth)
-                } else Modifier
-            )
+            .size(size)
     ) {
+
+        // 🔹 IMAGE – VŽDY PLNÁ VELIKOST
         Image(
             painter = painterResource(imageRes),
             contentDescription = null,
             modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(innerRadius)), // 🔥 FIX
+                .matchParentSize()
+                .graphicsLayer {
+                    shape = RoundedCornerShape(radius)
+                    clip = true   // 🔥 CLIP JEN JEDNOU, GPU LAYER
+                },
             contentScale = ContentScale.Crop,
             alpha = if (locked) 0.8f else 1f
         )
+
+        // 🔹 BORDER – KRESLENÝ MIMO BITMAPU
+        if (!locked && selected) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        shape = RoundedCornerShape(radius)
+                        clip = false   // 🔥 DŮLEŽITÉ
+                    }
+                    .border(
+                        borderWidth,
+                        borderColor,
+                        RoundedCornerShape(radius)
+                    )
+            )
+        }
 
         if (locked) {
             Image(
@@ -68,3 +82,6 @@ fun AddTripThemeCard(
         }
     }
 }
+
+
+

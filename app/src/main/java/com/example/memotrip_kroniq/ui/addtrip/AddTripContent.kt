@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +32,12 @@ import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.R
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerSheet
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import java.time.LocalDate
+import com.example.memotrip_kroniq.ui.addtrip.DateRange
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -40,14 +47,14 @@ fun AddTripContent(
     onTripNameChange: (String) -> Unit,
     onDestinationSelected: (Destination) -> Unit,
     onThemeSelected: (ThemeType) -> Unit,
-    onDateClick: () -> Unit,
+    onDateSelected: (DateRange) -> Unit,
     onFromClick: () -> Unit,
     onToClick: () -> Unit,
     onTransportSelected: (TransportType) -> Unit,
-    onNextClick: () -> Unit,
-    //onBackClick: () -> Unit
+    onNextClick: () -> Unit
 ) {
     val s = LocalUiScaler.current
+    var showDatePicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier              // 🔥 TADY SE TO LÁME
@@ -68,7 +75,7 @@ fun AddTripContent(
         /* 🌍 Hero banner */
         AddTripHeroBanner()
 
-        Spacer(modifier = Modifier.height(20f.sy(s)))
+        Spacer(modifier = Modifier.height(16f.sy(s)))
 
         /* 🌍 Destination */
         DestinationSelector(
@@ -90,9 +97,25 @@ fun AddTripContent(
 
         /* 📅 Date */
         DateField(
-            date = uiState.tripDate,
-            onClick = onDateClick
+            startDate = uiState.tripStartDate,
+            endDate = uiState.tripEndDate,
+            showError = uiState.showDateError,
+            onClick = { showDatePicker = true }
         )
+
+        if (showDatePicker) {
+            AddTripDatePickerSheet(
+                initialStartDate = uiState.tripStartDate,
+                initialEndDate = uiState.tripEndDate,
+                onDismiss = { showDatePicker = false },
+                onConfirm = { range ->
+                    showDatePicker = false
+                    onDateSelected(range) // ✅ DateRange se propaguje dál
+                }
+            )
+        }
+
+
 
         Spacer(modifier = Modifier.height(12f.sy(s)))
 
@@ -124,10 +147,10 @@ fun AddTripContent(
         /* ▶️ Next */
         PrimaryButton(
             text = "Next",
-            enabled = uiState.isValid,
+            enabled = true,
             onClick = onNextClick,
             modifier = Modifier
-                .width(220f.sx(s))
+                .width(200f.sx(s))
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -144,13 +167,16 @@ fun AddTripContentPreview() {
     ) {
         MemoTripTheme {
             AddTripContent(
-                modifier = Modifier,   // ✅ NOVĚ
+                modifier = Modifier,
                 uiState = AddTripUiState(
                     tripName = "",
                     destination = Destination.EUROPE,
                     selectedTheme = ThemeType.SUMMER,
-                    isThemesLocked = false,   // 🔒 LOCKED
-                    tripDate = java.time.LocalDate.now(),
+                    isThemesLocked = false,
+                    tripStartDate = null,
+                    tripEndDate = null,
+                    //tripStartDate = LocalDate.of(2025, 6, 28),
+                    //tripEndDate = LocalDate.of(2025, 7, 11),
                     fromLocation = "",
                     toLocation = "",
                     transport = TransportType.CARAVAN
@@ -158,7 +184,7 @@ fun AddTripContentPreview() {
                 onTripNameChange = {},
                 onDestinationSelected = {},
                 onThemeSelected = {},
-                onDateClick = {},
+                onDateSelected = {}, // ✅ OPRAVENO
                 onFromClick = {},
                 onToClick = {},
                 onTransportSelected = {},
@@ -167,3 +193,4 @@ fun AddTripContentPreview() {
         }
     }
 }
+

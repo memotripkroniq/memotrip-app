@@ -55,34 +55,28 @@ data class AddTripUiState(
     val isThemesLocked: Boolean = true,
 
     // 📅 Date
-    val tripDate: LocalDate? = null,
-    //val fromDate: LocalDate? = null,
-    //val toDate: LocalDate? = null,
+    val tripStartDate: LocalDate? = null,
+    val tripEndDate: LocalDate? = null,
 
     // 📍 Locations
     val fromLocation: String = "",
     val toLocation: String = "",
+    val showDateError: Boolean = false,
 
     // 🚗 Transport
     val transport: TransportType? = null,
 
     // 🔄 UI state
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
-) {
+    val errorMessage: String? = null,
 
-    /** 🔍 Validace pro tlačítko NEXT */
-    val isValid: Boolean
-        get() =
-            tripName.isNotBlank() &&
-                    destination != null &&
-                    tripDate != null &&
-                    //fromDate != null &&
-                    //toDate != null &&
-                    fromLocation.isNotBlank() &&
-                    toLocation.isNotBlank() &&
-                    transport != null
-}
+    // ❗ VALIDATION FLAGS (nastavují se až po kliknutí na Next)
+    val showTripNameError: Boolean = false,
+    val showDestinationError: Boolean = false,
+    val showFromLocationError: Boolean = false,
+    val showToLocationError: Boolean = false,
+    val showTransportError: Boolean = false
+)
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 892)
 @Composable

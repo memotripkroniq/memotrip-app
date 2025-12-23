@@ -1,6 +1,7 @@
 package com.example.memotrip_kroniq.ui.addtrip.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -40,6 +41,10 @@ fun LocationField(
                 .fillMaxWidth()
                 .height(52.dp)
                 .clickable { onClick() }
+                .background(
+                    color = Color(0xFF383A41),
+                    shape = RoundedCornerShape(10.dp)
+                )
                 .border(
                     BorderStroke(1.dp, Color(0xFF2B2E34)),
                     RoundedCornerShape(12.dp)

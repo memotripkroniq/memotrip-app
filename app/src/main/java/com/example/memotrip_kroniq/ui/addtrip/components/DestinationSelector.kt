@@ -67,7 +67,7 @@ private fun DestinationItem(
     onClick: () -> Unit
 ) {
     val borderColor = Color(0xFF747781)
-    val iconColor = if (selected) Color.White else Color(0xFF8E8E93)
+    val iconColor = if (selected) Color.White else Color(0xFF383A41)
 
     Box(
         modifier = Modifier

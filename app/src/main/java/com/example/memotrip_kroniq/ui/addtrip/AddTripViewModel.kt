@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.memotrip_kroniq.ui.addtrip.DateRange
 
 class AddTripViewModel(
     private val authRepository: AuthRepository
@@ -73,22 +74,57 @@ class AddTripViewModel(
         }
     }
 
+    fun onDateSelected(range: DateRange) {
+        _uiState.update {
+            it.copy(
+                tripStartDate = range.start,
+                tripEndDate = range.end,
+                showDateError = false
+            )
+        }
+    }
+
+
+
     fun onTransportSelected(transport: TransportType) {
         _uiState.update { state ->
             state.copy(transport = transport)
         }
     }
 
-    //jako u theme- možnost nevybrat žádný
-//    fun onTransportSelected(transport: TransportType) {
-//        _uiState.update { state ->
-//            state.copy(
-//                transport =
-//                    if (state.transport == transport) null
-//                    else transport
-//            )
+//    fun onNextClick() {
+//        val hasTripName = uiState.tripName.isNotBlank()
+//        val hasDestination = uiState.destination != null
+//        val hasDate = uiState.tripDate != null
+//        val hasFrom = uiState.fromLocation.isNotBlank()
+//        val hasTo = uiState.toLocation.isNotBlank()
+//        val hasTransport = uiState.transport != null
+//
+//        if (
+//            hasTripName &&
+//            hasDestination &&
+//            hasDate &&
+//            hasFrom &&
+//            hasTo &&
+//            hasTransport
+//        ) {
+//            // ✅ OK → pokračuj
+//            navigateNext()
+//        } else {
+//            // ❌ zobraz validační chyby
+//            _uiState.update {
+//                it.copy(
+//                    showTripNameError = !hasTripName,
+//                    showDestinationError = !hasDestination,
+//                    showDateError = !hasDate,
+//                    showFromLocationError = !hasFrom,
+//                    showToLocationError = !hasTo,
+//                    showTransportError = !hasTransport
+//                )
+//            }
 //        }
 //    }
+
 
 
 }
