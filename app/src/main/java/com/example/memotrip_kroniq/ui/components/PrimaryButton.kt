@@ -9,7 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sx
@@ -21,7 +24,8 @@ fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    fontSize: TextUnit = 16.sp
 ) {
     val s = LocalUiScaler.current
 
@@ -45,7 +49,8 @@ fun PrimaryButton(
         ) {
             Text(
                 text = text,
-                fontSize = 16f.fs(s)
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold
             )
         }
     }

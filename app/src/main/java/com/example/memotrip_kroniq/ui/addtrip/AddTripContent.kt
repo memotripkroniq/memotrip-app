@@ -31,13 +31,12 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import com.example.memotrip_kroniq.R
-import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerSheet
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import java.time.LocalDate
 import com.example.memotrip_kroniq.ui.addtrip.DateRange
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -54,14 +53,13 @@ fun AddTripContent(
     onNextClick: () -> Unit
 ) {
     val s = LocalUiScaler.current
-    var showDatePicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier              // 🔥 TADY SE TO LÁME
             .fillMaxSize()
             .background(Color.Black)
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+        //horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         /* ✍️ Trip name */
@@ -100,22 +98,8 @@ fun AddTripContent(
             startDate = uiState.tripStartDate,
             endDate = uiState.tripEndDate,
             showError = uiState.showDateError,
-            onClick = { showDatePicker = true }
+            onClick = onFromClick
         )
-
-        if (showDatePicker) {
-            AddTripDatePickerSheet(
-                initialStartDate = uiState.tripStartDate,
-                initialEndDate = uiState.tripEndDate,
-                onDismiss = { showDatePicker = false },
-                onConfirm = { range ->
-                    showDatePicker = false
-                    onDateSelected(range) // ✅ DateRange se propaguje dál
-                }
-            )
-        }
-
-
 
         Spacer(modifier = Modifier.height(12f.sy(s)))
 

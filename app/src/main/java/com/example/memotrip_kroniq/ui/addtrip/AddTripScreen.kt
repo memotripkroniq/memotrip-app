@@ -5,13 +5,17 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import PreviewUiScaler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
@@ -57,34 +62,65 @@ fun AddTripScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        containerColor = Color.Black,
-        topBar = {
-            AppTopBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = "Add Trip",
-                showBack = true,
-                onBackClick = { navController.popBackStack() }
+    // 🔥 OVLÁDÁNÍ DATEPICKERU
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        // ─────────────────────
+        // 🧱 HLAVNÍ OBSAH
+        // ─────────────────────
+        Scaffold(
+            containerColor = Color.Black,
+            topBar = {
+                AppTopBar(
+                    modifier = Modifier.statusBarsPadding(),
+                    title = "Add Trip",
+                    showBack = true,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        ) { innerPadding ->
+
+            AddTripContent(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(horizontal = 16f.sx(s)),
+                uiState = uiState,
+                onTripNameChange = viewModel::onTripNameChange,
+                onDestinationSelected = viewModel::onDestinationSelected,
+                onThemeSelected = viewModel::onThemeSelected,
+                onDateSelected = viewModel::onDateSelected,
+                onFromClick = {
+                    showDatePicker = true   // ⬅️ otevření
+                },
+                onToClick = {
+                    showDatePicker = true   // ⬅️ otevření
+                },
+                onTransportSelected = viewModel::onTransportSelected,
+                onNextClick = {}
             )
         }
-    ) { innerPadding ->
 
-        AddTripContent(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 16f.sx(s)),
-            uiState = uiState,
-            onTripNameChange = viewModel::onTripNameChange,
-            onDestinationSelected = viewModel::onDestinationSelected,
-            onThemeSelected = viewModel::onThemeSelected,
-            onDateSelected = viewModel::onDateSelected,
-            onFromClick = {},
-            onToClick = {},
-            onTransportSelected = viewModel::onTransportSelected,
-            onNextClick = {},
-        )
+        // ─────────────────────
+        // 📅 DATE PICKER OVERLAY
+        // ─────────────────────
+        if (showDatePicker) {
+            AddTripDatePickerOverlay(
+                initialStartDate = uiState.tripStartDate,
+                initialEndDate = uiState.tripEndDate,
+                onDismiss = { showDatePicker = false },
+                onConfirm = { range ->
+                    viewModel.onDateSelected(range)
+                    showDatePicker = false
+                }
+            )
+        }
     }
 }
+
 
 
 @RequiresApi(Build.VERSION_CODES.O)
