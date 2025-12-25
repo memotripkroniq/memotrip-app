@@ -99,7 +99,7 @@ fun AddTripScreen(
                 onToClick = {
                     showDatePicker = true   // ⬅️ otevření
                 },
-                onTransportSelected = viewModel::onTransportSelected,
+                onTransportSelectionChange = viewModel::onTransportSelectionChange,
                 onNextClick = {}
             )
         }
@@ -149,7 +149,9 @@ fun AddTripScreenPreview() {
                         isThemesLocked = false,   // 🔓 ODEMČENO
                         selectedTheme = null,
                         destination = Destination.EUROPE,
-                        transport = TransportType.CARAVAN
+                        transport = emptySet()
+                        // transport = setOf(TransportType.CARAVAN)
+                        // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
                     ),
                     onTripNameChange = {},
                     onDestinationSelected = {},
@@ -157,7 +159,7 @@ fun AddTripScreenPreview() {
                     onDateSelected = {},
                     onFromClick = {},
                     onToClick = {},
-                    onTransportSelected = {},
+                    onTransportSelectionChange = {},
                     onNextClick = {}
                 )
             }

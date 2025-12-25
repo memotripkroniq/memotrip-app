@@ -27,8 +27,8 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
 @Composable
 fun TransportSelector(
-    selected: TransportType?,
-    onSelect: (TransportType) -> Unit
+    selected: Set<TransportType>,
+    onSelectionChange: (Set<TransportType>) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -46,10 +46,26 @@ fun TransportSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(TransportType.values()) { transport ->
+
+                val isSelected = selected.contains(transport)
+
                 TransportItem(
                     transport = transport,
-                    selected = transport == selected,
-                    onClick = { onSelect(transport) }
+                    selected = isSelected,
+                    onClick = {
+                        val newSelection = when {
+                            isSelected ->
+                                selected - transport          // odklik
+
+                            selected.size < 2 ->
+                                selected + transport          // přidání
+
+                            else ->
+                                selected                      // ❌ třetí nejde
+                        }
+
+                        onSelectionChange(newSelection)
+                    }
                 )
             }
         }
@@ -103,8 +119,8 @@ private fun TransportSelectorPreview_Selected() {
     ) {
         MemoTripTheme {
             TransportSelector(
-                selected = TransportType.CARAVAN,
-                onSelect = {}
+                selected = setOf(TransportType.CAR, TransportType.CARAVAN),
+                onSelectionChange = {}
             )
         }
     }

@@ -84,13 +84,12 @@ class AddTripViewModel(
         }
     }
 
-
-
-    fun onTransportSelected(transport: TransportType) {
-        _uiState.update { state ->
-            state.copy(transport = transport)
+    fun onTransportSelectionChange(selected: Set<TransportType>) {
+        _uiState.update {
+            it.copy(transport = selected)
         }
     }
+
 
 //    fun onNextClick() {
 //        val hasTripName = uiState.tripName.isNotBlank()

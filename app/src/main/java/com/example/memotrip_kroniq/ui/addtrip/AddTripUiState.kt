@@ -64,7 +64,7 @@ data class AddTripUiState(
     val showDateError: Boolean = false,
 
     // 🚗 Transport
-    val transport: TransportType? = null,
+    val transport: Set<TransportType> = emptySet(),
 
     // 🔄 UI state
     val isLoading: Boolean = false,

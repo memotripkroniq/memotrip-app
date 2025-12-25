@@ -49,7 +49,7 @@ fun AddTripContent(
     onDateSelected: (DateRange) -> Unit,
     onFromClick: () -> Unit,
     onToClick: () -> Unit,
-    onTransportSelected: (TransportType) -> Unit,
+    onTransportSelectionChange: (Set<TransportType>) -> Unit,
     onNextClick: () -> Unit
 ) {
     val s = LocalUiScaler.current
@@ -123,7 +123,7 @@ fun AddTripContent(
         /* 🚗 Transport */
         TransportSelector(
             selected = uiState.transport,
-            onSelect = onTransportSelected
+            onSelectionChange = onTransportSelectionChange
         )
 
         Spacer(modifier = Modifier.height(28f.sy(s)))
@@ -163,7 +163,9 @@ fun AddTripContentPreview() {
                     //tripEndDate = LocalDate.of(2025, 7, 11),
                     fromLocation = "",
                     toLocation = "",
-                    transport = TransportType.CARAVAN
+                    transport = emptySet()
+                    // transport = setOf(TransportType.CARAVAN)
+                    // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
                 ),
                 onTripNameChange = {},
                 onDestinationSelected = {},
@@ -171,7 +173,7 @@ fun AddTripContentPreview() {
                 onDateSelected = {}, // ✅ OPRAVENO
                 onFromClick = {},
                 onToClick = {},
-                onTransportSelected = {},
+                onTransportSelectionChange = {},
                 onNextClick = {}
             )
         }
