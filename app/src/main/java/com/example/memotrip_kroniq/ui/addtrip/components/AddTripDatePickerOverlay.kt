@@ -9,12 +9,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,20 +53,22 @@ fun AddTripDatePickerOverlay(
     onDismiss: () -> Unit,
     onConfirm: (DateRange) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
-            .clickable { onDismiss() }
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // SCRIM
         Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
+                .matchParentSize()
+                .background(Color.Black.copy(alpha = 0.25f))
+                .clickable { onDismiss() }
+        )
+
+        // ❗️ JEN POZICE + PADDING
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
                 .padding(16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                //.background(Color(0xFF759F67))
-                .innerShadow()
-                .clickable(enabled = false) {} // ❗ blok kliků skrz
+                .clickable(enabled = false) {}
         ) {
             AddTripDatePickerContent(
                 initialStartDate = initialStartDate,
@@ -80,25 +84,42 @@ fun AddTripDatePickerOverlay(
 fun AddTripDatePickerContent(
     initialStartDate: LocalDate?,
     initialEndDate: LocalDate?,
-
     onConfirm: (DateRange) -> Unit
 ) {
     val today = LocalDate.now()
-    val seedDate = initialStartDate ?: today
 
-    var currentYm by remember(initialStartDate, initialEndDate) {
-        mutableStateOf(YearMonth.from(seedDate))
+    var currentYm by remember {
+        mutableStateOf(YearMonth.from(today))
+    }
+    // ✅ STATE PRO ROKY A MĚSÍCE
+    val yearListState = rememberLazyListState()
+    val monthListState = rememberLazyListState()
+
+    val years = remember(today) {
+        (today.year - 3..today.year + 1).toList()
+    }
+
+    // ✅ AUTO-SCROLL NA AKTUÁLNÍ ROK
+    LaunchedEffect(currentYm.year) {
+        val index = years.indexOf(currentYm.year)
+        if (index >= 0) {
+            yearListState.animateScrollToItem(index)
+        }
+    }
+
+    // ✅ AUTO-SCROLL NA AKTUÁLNÍ MĚSÍC
+    LaunchedEffect(currentYm.monthValue) {
+        monthListState.animateScrollToItem(currentYm.monthValue - 1)
     }
 
     var startDate by remember(initialStartDate, initialEndDate) {
         mutableStateOf(initialStartDate)
     }
-
     var endDate by remember(initialStartDate, initialEndDate) {
         mutableStateOf(initialEndDate)
     }
 
-    // 🎨 COLORS (Figmoidní)
+    // 🎨 COLORS
     val sheetBg = Color(0xFF759F67)
     val rangeBg = Color(0xFF383A41).copy(alpha = 0.75f)
     val selectedBg = Color.White
@@ -108,208 +129,167 @@ fun AddTripDatePickerContent(
     val monthTextInactive = Color(0xFF383A41)
 
 
-    Column(
-        modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                //.padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
+    Column {
 
-            // 🟩 ZELENÝ BOX (CARD)
-            Box(
+        Box(
+            modifier = Modifier
+                .widthIn(max = 360.dp)   // ✅ TADY
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(16.dp))
+                .background(sheetBg)
+                .innerShadow()
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)) // ⬅️ horní + spodní radius
-                    .background(sheetBg)
-                    .innerShadow()
+                    .padding(16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+                // ───────── YEARS ─────────
+                val yearTextDefault = Color(0xFF383A41)
+                val years = remember(today) { (today.year - 3..today.year + 1).toList() }
+                LazyRow(
+                    state = yearListState,
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    items(years) { year ->
+                        val selected = currentYm.year == year
+                        Text(
+                            text = year.toString(),
+                            color = if (selected)
+                                Color.White
+                            else
+                                yearTextDefault,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp,
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    currentYm = YearMonth.of(year, currentYm.month)
+                                }.padding(horizontal = 4.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
 
-                    // ───────── YEARS ─────────
-                    val yearTextDefault = Color(0xFF383A41)
+                // ───────── MONTHS ─────────
+                var selectedMonthOffsetX by remember { mutableStateOf(0f) }
+                var selectedMonthWidth by remember { mutableStateOf(0f) }
 
-                    val years = remember(today) { (today.year - 3..today.year + 1).toList() }
-
+                Column {
                     LazyRow(
+                        state = monthListState,
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        items(years) { year ->
-                            val selected = currentYm.year == year
-
-                            Text(
-                                text = year.toString(),
-                                color = if (selected)
-                                    Color.White
-                                else
-                                    yearTextDefault,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 20.sp,
+                        items((1..12).toList()) { m ->
+                            val selected = currentYm.monthValue == m
+                            val label = YearMonth.of(2000, m)
+                                .month
+                                .getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                                .uppercase(Locale.ENGLISH)
+                            Box(
                                 modifier = Modifier
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
                                     ) {
-                                        currentYm = YearMonth.of(year, currentYm.month)
+                                        currentYm = YearMonth.of(currentYm.year, m)
+                                    }.onGloballyPositioned { coords ->
+                                        if (selected) {
+                                            selectedMonthOffsetX = coords.positionInParent().x
+                                            selectedMonthWidth = coords.size.width.toFloat()
+                                        }
                                     }
-                                    .padding(horizontal = 4.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-
-
-                    Spacer(Modifier.height(10.dp))
-
-                    // ───────── MONTHS ─────────
-                    var selectedMonthOffsetX by remember { mutableStateOf(0f) }
-                    var selectedMonthWidth by remember { mutableStateOf(0f) }
-
-                    Column {
-
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            items((1..12).toList()) { m ->
-                                val selected = currentYm.monthValue == m
-                                val label = YearMonth.of(2000, m)
-                                    .month
-                                    .getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                                    .uppercase(Locale.ENGLISH)
-
-
-                                Box(
-                                    modifier = Modifier
-                                        .clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null
-                                        ) {
-                                            currentYm = YearMonth.of(currentYm.year, m)
-                                        }
-                                        .onGloballyPositioned { coords ->
-                                            if (selected) {
-                                                selectedMonthOffsetX = coords.positionInParent().x
-                                                selectedMonthWidth = coords.size.width.toFloat()
-                                            }
-                                        }
-                                ) {
-                                    Text(
-                                        text = label,
-                                        color = if (selected)
-                                            Color.White
-                                        else
-                                            monthTextInactive,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp
-                                    )
-                                }
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = if (selected)
+                                        Color.White
+                                    else
+                                        monthTextInactive,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
-
-                        Spacer(Modifier.height(6.dp))
-
-                        // ── PODTRŽENÍ ──
-                        Box {
-
-                            // základní (šedá) čára
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(2.dp)
-                                    .background(monthTextInactive.copy(alpha = 0.6f))
-                            )
-
-                            // aktivní (bílý) segment
-                            Box(
-                                modifier = Modifier
-                                    .offset { IntOffset(selectedMonthOffsetX.toInt(), 0) }
-                                    .width(with(LocalDensity.current) { selectedMonthWidth.toDp() })
-                                    .height(2.dp)
-                                    .background(Color.White)
-                            )
-                        }
                     }
-
-
-
-
-
-
-
-
-
-
-                    Spacer(Modifier.height(14.dp))
-
-                    // 📅 CALENDAR – BEZE ZMĚN
-                    CalendarGrid(
-                        yearMonth = currentYm,
-                        startDate = startDate,
-                        endDate = endDate,
-                        onDayClick = { day ->
-                            when {
-                                startDate == null -> {
-                                    startDate = day
-                                    endDate = null
-                                }
-                                endDate == null -> {
-                                    endDate = day
-                                    if (endDate!!.isBefore(startDate!!)) {
-                                        val tmp = startDate
-                                        startDate = endDate
-                                        endDate = tmp
-                                    }
-                                }
-                                else -> {
-                                    startDate = day
-                                    endDate = null
-                                }
-                            }
-                        },
-                        rangeBg = rangeBg,
-                        selectedBg = selectedBg,
-                        dayTextDefault = dayTextDefault,
-                        dayTextMuted = dayTextMuted,
-                        textPrimary = textPrimary
-                    )
-
-                    Spacer(Modifier.height(24.dp))
-                }
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            // ⬛ BLACK FOOTER
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Black)
-                    .padding(
-                        top = 20.dp,
-                        bottom = 28.dp
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                PrimaryButton(
-                    text = "Next",
-                    enabled = startDate != null && endDate != null,
-                    fontSize = 20.sp,
-                    modifier = Modifier.width(280.dp),
-                    onClick = {
-                        val s = startDate!!
-                        val e = endDate!!
-                        onConfirm(
-                            if (e.isBefore(s)) DateRange(e, s)
-                            else DateRange(s, e)
+                    Spacer(Modifier.height(6.dp))
+                    // ── PODTRŽENÍ ──
+                    Box {
+                        // základní (šedá) čára
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .background(monthTextInactive.copy(alpha = 0.6f))
+                        )
+                        // aktivní (bílý) segment
+                        Box(
+                            modifier = Modifier
+                                .offset { IntOffset(selectedMonthOffsetX.toInt(), 0) }
+                                .width(with(LocalDensity.current) { selectedMonthWidth.toDp() })
+                                .height(2.dp)
+                                .background(Color.White)
                         )
                     }
-                )
-
+                }
                 Spacer(Modifier.height(14.dp))
+                // 📅 CALENDAR – BEZE ZMĚN
+                CalendarGrid(
+                    yearMonth = currentYm,
+                    startDate = startDate,
+                    endDate = endDate,
+                    onDayClick = { day ->
+                        when {
+                            startDate == null -> {
+                                startDate = day
+                                endDate = null
+                            }
+                            endDate == null -> {
+                                endDate = day
+                                if (endDate!!.isBefore(startDate!!)) {
+                                    val tmp = startDate
+                                    startDate = endDate
+                                    endDate = tmp
+                                }
+                            }
+                            else -> {
+                                startDate = day
+                                endDate = null
+                            }
+                        } },
+                    rangeBg = rangeBg,
+                    selectedBg = selectedBg,
+                    dayTextDefault = dayTextDefault,
+                    dayTextMuted = dayTextMuted,
+                    textPrimary = textPrimary
+                )
             }
         }
+
+        Spacer(Modifier.height(20.dp))
+
+        // ⬛ BLACK FOOTER
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally) // ⬅️ ZMĚNA #4: NE fillMaxWidth
+        ) {
+            PrimaryButton(
+                text = "Next",
+                enabled = startDate != null && endDate != null,
+                modifier = Modifier.width(200.dp),
+                onClick = {
+                    val s = startDate!!
+                    val e = endDate!!
+                    onConfirm(
+                        if (e.isBefore(s)) DateRange(e, s)
+                        else DateRange(s, e)
+                    )
+                }
+            )
+        }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
