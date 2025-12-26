@@ -24,6 +24,7 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 fun LocationField(
     label: String,
     value: String,
+    showArrow: Boolean = false,
     onClick: () -> Unit
 ) {
     Column {
@@ -60,11 +61,13 @@ fun LocationField(
                 modifier = Modifier.weight(1f)
             )
 
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = null,
-                tint = Color(0xFF759F67)
-            )
+            if (showArrow) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_right),
+                    contentDescription = null,
+                    tint = Color(0xFF759F67)
+                )
+            }
         }
     }
 }
