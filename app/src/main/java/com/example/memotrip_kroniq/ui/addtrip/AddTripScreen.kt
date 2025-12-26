@@ -92,13 +92,10 @@ fun AddTripScreen(
                 onTripNameChange = viewModel::onTripNameChange,
                 onDestinationSelected = viewModel::onDestinationSelected,
                 onThemeSelected = viewModel::onThemeSelected,
-                onDateSelected = viewModel::onDateSelected,
-                onFromClick = {
-                    showDatePicker = true   // ⬅️ otevření
-                },
-                onToClick = {
-                    showDatePicker = true   // ⬅️ otevření
-                },
+                onDateClick = { showDatePicker = true },
+                //onDateSelected = viewModel::onDateSelected,
+                onFromClick = {},
+                onToClick = {},
                 onTransportSelectionChange = viewModel::onTransportSelectionChange,
                 onNextClick = {}
             )
@@ -156,7 +153,8 @@ fun AddTripScreenPreview() {
                     onTripNameChange = {},
                     onDestinationSelected = {},
                     onThemeSelected = {},
-                    onDateSelected = {},
+                    onDateClick = {},
+                    //onDateSelected = {},
                     onFromClick = {},
                     onToClick = {},
                     onTransportSelectionChange = {},

@@ -46,7 +46,7 @@ fun AddTripContent(
     onTripNameChange: (String) -> Unit,
     onDestinationSelected: (Destination) -> Unit,
     onThemeSelected: (ThemeType) -> Unit,
-    onDateSelected: (DateRange) -> Unit,
+    onDateClick: () -> Unit,
     onFromClick: () -> Unit,
     onToClick: () -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
@@ -98,7 +98,7 @@ fun AddTripContent(
             startDate = uiState.tripStartDate,
             endDate = uiState.tripEndDate,
             showError = uiState.showDateError,
-            onClick = onFromClick
+            onClick = onDateClick
         )
 
         Spacer(modifier = Modifier.height(12f.sy(s)))
@@ -170,7 +170,7 @@ fun AddTripContentPreview() {
                 onTripNameChange = {},
                 onDestinationSelected = {},
                 onThemeSelected = {},
-                onDateSelected = {}, // ✅ OPRAVENO
+                onDateClick = {},
                 onFromClick = {},
                 onToClick = {},
                 onTransportSelectionChange = {},
