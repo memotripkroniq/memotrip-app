@@ -48,7 +48,7 @@ fun HomeTabs(
         modifier = Modifier
             .fillMaxWidth()
             .height(50f.sy(s))
-            .background(containerColor, RoundedCornerShape(8.dp))
+            .background(containerColor, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
             .background(
                 brush = containerGradient,
