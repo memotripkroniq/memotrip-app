@@ -42,7 +42,7 @@ fun PrimaryButton(
             modifier = Modifier.fillMaxSize(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF0077C8),
-                disabledContainerColor = Color(0xFF0077C8).copy(alpha = 0.6f)
+                disabledContainerColor = Color(0xFF005A9E)
             ),
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(0.dp)

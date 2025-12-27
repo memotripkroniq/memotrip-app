@@ -35,7 +35,7 @@ fun HomeTabs(
     onTabSelected: (HomeTab) -> Unit
 ) {
     val s = LocalUiScaler.current
-    val containerColor = Color(0xFF2F2F38)
+    val containerColor = Color(0xFF383A41)
     val containerGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF383A41).copy(alpha = 0.55f),
