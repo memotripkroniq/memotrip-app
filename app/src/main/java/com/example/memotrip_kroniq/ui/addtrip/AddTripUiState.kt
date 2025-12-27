@@ -1,4 +1,5 @@
 package com.example.memotrip_kroniq.ui.addtrip
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.R
@@ -26,7 +27,10 @@ enum class TransportType(
     CAMPER("Camper", R.drawable.ic_transport_camper),
     CARAVAN("Caravan", R.drawable.ic_transport_caravan),
     MOTORCYCLE("Motorcycle", R.drawable.ic_transport_motorcycle),
-    BIKE("Bike", R.drawable.ic_transport_bike)
+    BIKE("Bike", R.drawable.ic_transport_bike),
+    WALK("Walk", R.drawable.ic_transport_walk),
+    SHIP("Ship", R.drawable.ic_transport_ship),
+    TRAIN("Train", R.drawable.ic_transport_train)
 }
 
 enum class ThemeType(
@@ -45,6 +49,7 @@ enum class ThemeType(
 data class AddTripUiState(
 
     // 📝 Basic info
+    val coverPhotoUri: Uri? = null,
     val tripName: String = "",
 
     // 🌍 Destination

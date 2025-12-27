@@ -37,6 +37,20 @@ import androidx.compose.runtime.setValue
 import java.time.LocalDate
 import com.example.memotrip_kroniq.ui.addtrip.DateRange
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripPhotoOverlay
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -50,22 +64,58 @@ fun AddTripContent(
     onFromClick: () -> Unit,
     onToClick: () -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
-    onNextClick: () -> Unit
+    onNextClick: () -> Unit,
+    onCoverPhotoSelected: (Uri?) -> Unit
 ) {
     val s = LocalUiScaler.current
+    var showPhotoActionSheet by remember { mutableStateOf(false) }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onCoverPhotoSelected(uri)
+        }
+        showPhotoActionSheet = false
+    }
+    val context = LocalContext.current
+    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempPhotoUri != null) {
+            onCoverPhotoSelected(tempPhotoUri)
+        }
+        showPhotoActionSheet = false
+    }
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                val photoFile = createImageFile(context)
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    photoFile
+                )
+                tempPhotoUri = uri
+                cameraLauncher.launch(uri)
+            }
+        }
 
     Column(
-        modifier = modifier              // 🔥 TADY SE TO LÁME
+        modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .verticalScroll(rememberScrollState()),
-        //horizontalAlignment = Alignment.CenterHorizontally
+            .verticalScroll(rememberScrollState())
     ) {
 
         /* ✍️ Trip name */
         AddTripNameField(
             value = uiState.tripName,
-            onValueChange = onTripNameChange
+            coverPhotoUri = uiState.coverPhotoUri,
+            onValueChange = onTripNameChange,
+            onAddPhotoClick = { showPhotoActionSheet = true }
         )
 
         Spacer(modifier = Modifier.height(16f.sy(s)))
@@ -140,7 +190,51 @@ fun AddTripContent(
 
         Spacer(modifier = Modifier.height(24f.sy(s)))
     }
+
+    if (showPhotoActionSheet) {
+        AddTripPhotoOverlay(
+            canDelete = uiState.coverPhotoUri != null,
+            onTakePhoto = {
+                if (
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    val photoFile = createImageFile(context)
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        photoFile
+                    )
+                    tempPhotoUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                }
+            },
+            onPickFromGallery = {
+                galleryLauncher.launch("image/*")   // 👈 TADY
+            },
+            onDeletePhoto = {
+                onCoverPhotoSelected(null)
+                showPhotoActionSheet = false
+            },
+            onDismiss = {
+                showPhotoActionSheet = false
+            }
+        )
+
+    }
+
 }
+
+fun createImageFile(context: Context): File {
+    val dir = File(context.cacheDir, "images")
+    if (!dir.exists()) dir.mkdirs()
+    return File(dir, "photo_${System.currentTimeMillis()}.jpg")
+}
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, widthDp = 412, heightDp = 1090)
@@ -168,6 +262,7 @@ fun AddTripContentPreview() {
                     // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
                 ),
                 onTripNameChange = {},
+                onCoverPhotoSelected = {},
                 onDestinationSelected = {},
                 onThemeSelected = {},
                 onDateClick = {},

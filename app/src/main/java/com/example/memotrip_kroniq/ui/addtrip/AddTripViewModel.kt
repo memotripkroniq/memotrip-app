@@ -1,5 +1,6 @@
 package com.example.memotrip_kroniq.ui.addtrip
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.AuthRepository
@@ -43,6 +44,12 @@ class AddTripViewModel(
     fun onTripNameChange(value: String) {
         _uiState.update {
             it.copy(tripName = value)
+        }
+    }
+
+    fun onCoverPhotoSelected(uri: Uri?) {
+        _uiState.update {
+            it.copy(coverPhotoUri = uri)
         }
     }
 

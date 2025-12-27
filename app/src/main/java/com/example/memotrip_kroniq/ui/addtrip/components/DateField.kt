@@ -57,7 +57,7 @@ fun DateField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(45.dp)
                 .clickable { onClick() }
                 .background(
                     color = Color(0xFF383A41),
@@ -65,7 +65,7 @@ fun DateField(
                 )
                 .border(
                     BorderStroke(1.dp, Color(0xFF2B2E34)),
-                    RoundedCornerShape(12.dp)
+                    RoundedCornerShape(10.dp)
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -77,8 +77,7 @@ fun DateField(
                     Color.Gray
                 else
                     Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 

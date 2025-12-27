@@ -40,7 +40,7 @@ fun LocationField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(45.dp)
                 .clickable { onClick() }
                 .background(
                     color = Color(0xFF383A41),
@@ -48,7 +48,7 @@ fun LocationField(
                 )
                 .border(
                     BorderStroke(1.dp, Color(0xFF2B2E34)),
-                    RoundedCornerShape(12.dp)
+                    RoundedCornerShape(10.dp)
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -57,7 +57,7 @@ fun LocationField(
             Text(
                 text = if (value.isBlank()) "Add ${label.lowercase()} destination" else value,
                 color = if (value.isBlank()) Color.Gray else Color.White,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 

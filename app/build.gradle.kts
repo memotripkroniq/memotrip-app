@@ -168,4 +168,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
     implementation("com.google.firebase:firebase-auth")
+
+    // ===== Coil pro nahraní fotky Add Trip field =====
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 }

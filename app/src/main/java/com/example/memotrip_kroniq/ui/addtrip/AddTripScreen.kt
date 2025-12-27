@@ -5,6 +5,8 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import PreviewUiScaler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,6 +32,9 @@ import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.google.android.play.integrity.internal.s
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.clickable
+
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -39,6 +44,7 @@ fun AddTripScreen(
 ) {
     val context = LocalContext.current
     val s = LocalUiScaler.current
+    val focusManager = LocalFocusManager.current
 
     val tokenStore = remember { TokenDataStore(context) }
 
@@ -66,7 +72,14 @@ fun AddTripScreen(
     var showDatePicker by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                focusManager.clearFocus() // 🔥 TADY SE ODEBERE FOCUS
+            }
     ) {
 
         // ─────────────────────
@@ -90,6 +103,7 @@ fun AddTripScreen(
                     .padding(horizontal = 16f.sx(s)),
                 uiState = uiState,
                 onTripNameChange = viewModel::onTripNameChange,
+                onCoverPhotoSelected = viewModel::onCoverPhotoSelected,
                 onDestinationSelected = viewModel::onDestinationSelected,
                 onThemeSelected = viewModel::onThemeSelected,
                 onDateClick = { showDatePicker = true },
@@ -151,6 +165,7 @@ fun AddTripScreenPreview() {
                         // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
                     ),
                     onTripNameChange = {},
+                    onCoverPhotoSelected = {},
                     onDestinationSelected = {},
                     onThemeSelected = {},
                     onDateClick = {},
