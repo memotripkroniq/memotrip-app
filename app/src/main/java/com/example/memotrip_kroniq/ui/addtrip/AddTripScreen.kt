@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
@@ -31,10 +30,9 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import com.google.android.play.integrity.internal.s
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.clickable
-
+import com.example.memotrip_kroniq.data.location.LocationSearchRepository
+import com.example.memotrip_kroniq.data.network.HttpClientProvider
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -60,7 +58,8 @@ fun AddTripScreen(
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return AddTripViewModel(
-                    authRepository = repository
+                    authRepository = repository,
+                    locationSearchRepository = LocationSearchRepository(HttpClientProvider.client)
                 ) as T
             }
         }
@@ -107,9 +106,10 @@ fun AddTripScreen(
                 onDestinationSelected = viewModel::onDestinationSelected,
                 onThemeSelected = viewModel::onThemeSelected,
                 onDateClick = { showDatePicker = true },
-                //onDateSelected = viewModel::onDateSelected,
-                onFromClick = {},
-                onToClick = {},
+                onFromLocationChange = viewModel::onFromLocationChange,
+                onToLocationChange = viewModel::onToLocationChange,
+                onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
+                onToSuggestionSelected = viewModel::onToSuggestionSelected,
                 onTransportSelectionChange = viewModel::onTransportSelectionChange,
                 onNextClick = {}
             )
@@ -169,9 +169,10 @@ fun AddTripScreenPreview() {
                     onDestinationSelected = {},
                     onThemeSelected = {},
                     onDateClick = {},
-                    //onDateSelected = {},
-                    onFromClick = {},
-                    onToClick = {},
+                    onFromLocationChange = {},
+                    onToLocationChange = {},
+                    onFromSuggestionSelected = {},
+                    onToSuggestionSelected = {},
                     onTransportSelectionChange = {},
                     onNextClick = {}
                 )

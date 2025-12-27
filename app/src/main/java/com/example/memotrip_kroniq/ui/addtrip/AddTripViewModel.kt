@@ -4,18 +4,29 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.AuthRepository
+import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.example.memotrip_kroniq.ui.addtrip.DateRange
+import com.example.memotrip_kroniq.data.location.LocationSearchRepository
+import com.example.memotrip_kroniq.data.network.HttpClientProvider
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+
 
 class AddTripViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val locationSearchRepository: LocationSearchRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTripUiState())
     val uiState: StateFlow<AddTripUiState> = _uiState
+
+    private var fromSearchJob: Job? = null
+    private var toSearchJob: Job? = null
+
 
     init {
         _uiState.update { it.copy(isLoading = true) }
@@ -56,6 +67,71 @@ class AddTripViewModel(
     fun onDestinationSelected(destination: Destination) {
         _uiState.update {
             it.copy(destination = destination)
+        }
+    }
+
+    fun onFromLocationChange(value: String) {
+        _uiState.update { it.copy(fromLocation = value) }
+
+        fromSearchJob?.cancel()
+
+        if (value.length < 3) {
+            _uiState.update {
+                it.copy(fromSuggestions = emptyList())
+            }
+            return
+        }
+
+        fromSearchJob = viewModelScope.launch {
+            delay(300)
+
+            val results = locationSearchRepository.search(value)
+
+            _uiState.update {
+                it.copy(fromSuggestions = results)
+            }
+        }
+    }
+
+
+    fun onFromSuggestionSelected(suggestion: LocationSuggestion) {
+        _uiState.update {
+            it.copy(
+                fromLocation = suggestion.displayName,
+                fromSuggestions = emptyList()
+            )
+        }
+    }
+
+    fun onToLocationChange(value: String) {
+        _uiState.update { it.copy(toLocation = value) }
+
+        toSearchJob?.cancel()
+
+        if (value.length < 3) {
+            _uiState.update {
+                it.copy(toSuggestions = emptyList())
+            }
+            return
+        }
+
+        toSearchJob = viewModelScope.launch {
+            delay(300)
+
+            val results = locationSearchRepository.search(value)
+
+            _uiState.update {
+                it.copy(toSuggestions = results)
+            }
+        }
+    }
+
+    fun onToSuggestionSelected(suggestion: LocationSuggestion) {
+        _uiState.update {
+            it.copy(
+                toLocation = suggestion.displayName,
+                toSuggestions = emptyList()
+            )
         }
     }
 

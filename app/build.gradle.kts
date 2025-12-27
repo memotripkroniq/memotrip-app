@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 
     // Google Services (Google Login)
     id("com.google.gms.google-services")
@@ -171,5 +172,15 @@ dependencies {
 
     // ===== Coil pro nahraní fotky Add Trip field =====
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // ===== Ktor core =====
+    implementation("io.ktor:ktor-client-core:2.3.7")
+
+    // ===== Engine (Android) =====
+    implementation("io.ktor:ktor-client-okhttp:2.3.7")
+
+    // =====JSON serialization =====
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
 
 }

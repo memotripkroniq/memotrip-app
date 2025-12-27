@@ -3,6 +3,7 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.R
+import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import java.time.LocalDate
 
@@ -20,7 +21,8 @@ enum class Destination(
 
 enum class TransportType(
     val label: String,
-    val iconRes: Int
+    val iconRes: Int,
+
 ) {
     PLANE("Plane", R.drawable.ic_transport_plane),
     CAR("Car", R.drawable.ic_transport_car),
@@ -66,6 +68,10 @@ data class AddTripUiState(
     // 📍 Locations
     val fromLocation: String = "",
     val toLocation: String = "",
+    val fromSuggestions: List<LocationSuggestion> = emptyList(),
+    val toSuggestions: List<LocationSuggestion> = emptyList(),
+    val isSearchingFrom: Boolean = false,
+    val isSearchingTo: Boolean = false,
     val showDateError: Boolean = false,
 
     // 🚗 Transport

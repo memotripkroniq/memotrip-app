@@ -48,6 +48,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.memotrip_kroniq.data.location.LocationSuggestion
+import com.example.memotrip_kroniq.ui.addtrip.components.LocationSuggestionsDropdown
 import java.io.File
 
 
@@ -61,8 +64,10 @@ fun AddTripContent(
     onDestinationSelected: (Destination) -> Unit,
     onThemeSelected: (ThemeType) -> Unit,
     onDateClick: () -> Unit,
-    onFromClick: () -> Unit,
-    onToClick: () -> Unit,
+    onFromLocationChange: (String) -> Unit,
+    onToLocationChange: (String) -> Unit,
+    onFromSuggestionSelected: (LocationSuggestion) -> Unit,
+    onToSuggestionSelected: (LocationSuggestion) -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
     onNextClick: () -> Unit,
     onCoverPhotoSelected: (Uri?) -> Unit
@@ -154,19 +159,36 @@ fun AddTripContent(
         Spacer(modifier = Modifier.height(12f.sy(s)))
 
         /* 📍 From / To */
-        LocationField(
-            label = "From",
-            value = uiState.fromLocation,
-            onClick = onFromClick
-        )
+        Column {
+
+            LocationField(
+                label = "From",
+                value = uiState.fromLocation,
+                onValueChange = onFromLocationChange
+            )
+
+            // ⬇️ Dropdown hned POD inputem
+            LocationSuggestionsDropdown(
+                suggestions = uiState.fromSuggestions,
+                onSelect = onFromSuggestionSelected
+            )
+        }
 
         Spacer(modifier = Modifier.height(12f.sy(s)))
 
-        LocationField(
-            label = "To",
-            value = uiState.toLocation,
-            onClick = onToClick
-        )
+        Column {
+
+            LocationField(
+                label = "To",
+                value = uiState.toLocation,
+                onValueChange = onToLocationChange
+            )
+
+            LocationSuggestionsDropdown(
+                suggestions = uiState.toSuggestions,
+                onSelect = onToSuggestionSelected
+            )
+        }
 
         Spacer(modifier = Modifier.height(20f.sy(s)))
 
@@ -266,8 +288,10 @@ fun AddTripContentPreview() {
                 onDestinationSelected = {},
                 onThemeSelected = {},
                 onDateClick = {},
-                onFromClick = {},
-                onToClick = {},
+                onFromLocationChange = {},
+                onToLocationChange = {},
+                onFromSuggestionSelected = {},
+                onToSuggestionSelected = {},
                 onTransportSelectionChange = {},
                 onNextClick = {}
             )

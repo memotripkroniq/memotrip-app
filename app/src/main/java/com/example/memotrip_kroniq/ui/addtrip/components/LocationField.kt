@@ -6,12 +6,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,8 +26,7 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 fun LocationField(
     label: String,
     value: String,
-    showArrow: Boolean = false,
-    onClick: () -> Unit
+    onValueChange: (String) -> Unit
 ) {
     Column {
 
@@ -37,11 +38,10 @@ fun LocationField(
             modifier = Modifier.padding(bottom = 4.dp)
         )
 
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(45.dp)
-                .clickable { onClick() }
                 .background(
                     color = Color(0xFF383A41),
                     shape = RoundedCornerShape(10.dp)
@@ -51,36 +51,48 @@ fun LocationField(
                     RoundedCornerShape(10.dp)
                 )
                 .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.CenterStart
         ) {
-
-            Text(
-                text = if (value.isBlank()) "Add ${label.lowercase()} destination" else value,
-                color = if (value.isBlank()) Color.Gray else Color.White,
-                fontSize = 16.sp,
-                modifier = Modifier.weight(1f)
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    color = Color.White,
+                    fontSize = 16.sp
+                ),
+                cursorBrush = SolidColor(Color.White),
+                modifier = Modifier.fillMaxWidth()
             )
 
-            if (showArrow) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_right),
-                    contentDescription = null,
-                    tint = Color(0xFF759F67)
+            if (value.isBlank()) {
+                Text(
+                    text = "Add ${label.lowercase()} destination",
+                    color = Color.Gray,
+                    fontSize = 16.sp
                 )
             }
         }
     }
 }
 
+
 @Preview(showBackground = true, widthDp = 412, heightDp = 892)
 @Composable
 private fun LocationFieldEmptyPreview() {
     MemoTripTheme {
-        LocationField(
-            label = "From",
-            value = "",
-            onClick = {}
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF1E1F24))
+                .padding(24.dp)
+        ) {
+            LocationField(
+                label = "From",
+                value = "",
+                onValueChange = {}
+            )
+        }
     }
 }
 
@@ -91,7 +103,7 @@ private fun LocationFieldFilledPreview() {
         LocationField(
             label = "To",
             value = "Rome, Italy",
-            onClick = {}
+            onValueChange = {}
         )
     }
 }
