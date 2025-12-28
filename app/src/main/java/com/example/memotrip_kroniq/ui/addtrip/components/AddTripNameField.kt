@@ -65,7 +65,7 @@ fun AddTripNameField(
                 model = coverPhotoUri,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(35.dp)
+                    .size(38.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -108,8 +108,13 @@ fun AddTripNameField(
                 .onFocusChanged { hasFocus = it.isFocused },
             decorationBox = { innerTextField ->
                 when {
+                    hasFocus -> {
+                        // ✍️ EDIT MODE – vždy zobraz BasicTextField (cursor!)
+                        innerTextField()
+                    }
+
                     value.isEmpty() -> {
-                        // PLACEHOLDER
+                        // PLACEHOLDER (jen když NENÍ focus)
                         Text(
                             text = "Add Trip name",
                             color = Color.White.copy(alpha = 0.5f),
@@ -117,13 +122,8 @@ fun AddTripNameField(
                         )
                     }
 
-                    hasFocus -> {
-                        // ✍️ EDIT MODE → cursor + scroll
-                        innerTextField()
-                    }
-
                     else -> {
-                        // 👁️ VIEW MODE → ellipsis
+                        // 👁️ VIEW MODE – ellipsis
                         Text(
                             text = value,
                             color = Color.White,
