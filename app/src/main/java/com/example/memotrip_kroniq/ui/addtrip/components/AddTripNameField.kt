@@ -66,7 +66,6 @@ fun AddTripNameField(
                 contentDescription = null,
                 modifier = Modifier
                     .size(38.dp)
-                    .clip(RoundedCornerShape(8.dp))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
