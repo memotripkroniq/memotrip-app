@@ -31,20 +31,26 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DestinationSelector(
     selected: Destination?,
-    onSelect: (Destination) -> Unit
+    onSelect: (Destination) -> Unit,
+    error: Boolean,
+    showError: Boolean
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
     ) {
+        val errorGreen = Color(0xFF759F67)
 
         Text(
             text = "Destination",
-            color = Color.White,
+            color =
+                if (error && showError) errorGreen
+                else Color.White,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
+
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

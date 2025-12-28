@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +31,7 @@ import com.example.memotrip_kroniq.ui.addtrip.components.DateField
 fun DateField(
     startDate: LocalDate?,
     endDate: LocalDate?,
+    error: Boolean,
     showError: Boolean,
     onClick: () -> Unit
 ) {
@@ -41,6 +43,9 @@ fun DateField(
         }
         else -> "Add trip dates"
     }
+
+    val errorGreen = Color(0xFF759F67)
+
 
 
     Column {
@@ -59,42 +64,37 @@ fun DateField(
                 .fillMaxWidth()
                 .height(45.dp)
                 .clickable { onClick() }
+                .clip(RoundedCornerShape(10.dp))
                 .background(
                     color = Color(0xFF383A41),
                     shape = RoundedCornerShape(10.dp)
                 )
                 .border(
-                    BorderStroke(1.dp, Color(0xFF2B2E34)),
-                    RoundedCornerShape(10.dp)
+                    width = 1.5.dp,
+                    color = if (error && showError) errorGreen else Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
                 )
+
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
+            val isEmpty = startDate == null || endDate == null
+
             Text(
                 text = text,
-                color = if (startDate == null || endDate == null)
-                    Color.Gray
-                else
-                    Color.White,
+                color =
+                    if (error && showError) errorGreen
+                    else if (isEmpty) Color.Gray
+                    else Color.White,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
-
 
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_right),
                 contentDescription = "Select date",
                 tint = Color(0xFF759F67)
-            )
-        }
-
-        if (showError) {
-            Text(
-                text = "Date is required",
-                color = Color(0xFFE06B6B),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 6.dp)
             )
         }
     }
@@ -109,6 +109,7 @@ private fun DateFieldEmptyPreview() {
         DateField(
             startDate = null,
             endDate = null,
+            error = true,
             showError = false, // 👈 DOPLNĚNO
             onClick = {}
         )
@@ -124,6 +125,7 @@ private fun DateFieldFilledPreview() {
         DateField(
             startDate = LocalDate.of(2025, 6, 28),
             endDate = LocalDate.of(2025, 7, 11),
+            error = true,
             showError = false, // 👈 DOPLNĚNO
             onClick = {}
         )

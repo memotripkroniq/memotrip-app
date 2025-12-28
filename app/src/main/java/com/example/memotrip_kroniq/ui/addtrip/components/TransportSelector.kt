@@ -4,6 +4,7 @@ import PreviewUiScaler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,19 +30,24 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 @Composable
 fun TransportSelector(
     selected: Set<TransportType>,
-    onSelectionChange: (Set<TransportType>) -> Unit
+    onSelectionChange: (Set<TransportType>) -> Unit,
+    error: Boolean,
+    showError: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-
+        val errorGreen = Color(0xFF759F67)
         Text(
             text = "Transport",
-            color = Color.White,
+            color =
+                if (error && showError) errorGreen
+                else Color.White,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
+
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -84,7 +91,12 @@ private fun TransportItem(
     Box(
         modifier = Modifier
             .size(80.dp)
-            .clickable { onClick() },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
 
@@ -120,7 +132,9 @@ private fun TransportSelectorPreview_Selected() {
         MemoTripTheme {
             TransportSelector(
                 selected = setOf(TransportType.CAR, TransportType.CARAVAN),
-                onSelectionChange = {}
+                onSelectionChange = {},
+                error = true,
+                showError = true
             )
         }
     }

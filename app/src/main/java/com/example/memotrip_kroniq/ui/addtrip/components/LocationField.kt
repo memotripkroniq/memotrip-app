@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
@@ -26,8 +27,13 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 fun LocationField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    error: Boolean,
+    showError: Boolean
 ) {
+    val errorGreen = Color(0xFF759F67)
+    val isEmpty = value.isBlank()
+
     Column {
 
         Text(
@@ -42,14 +48,17 @@ fun LocationField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(45.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(
                     color = Color(0xFF383A41),
                     shape = RoundedCornerShape(10.dp)
                 )
                 .border(
-                    BorderStroke(1.dp, Color(0xFF2B2E34)),
-                    RoundedCornerShape(10.dp)
+                    width = 1.5.dp,
+                    color = if (error && showError) errorGreen else Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
                 )
+
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -65,13 +74,16 @@ fun LocationField(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (value.isBlank()) {
+            if (isEmpty) {
                 Text(
                     text = "Add ${label.lowercase()} destination",
-                    color = Color.Gray,
+                    color =
+                        if (error && showError) errorGreen
+                        else Color.Gray,
                     fontSize = 16.sp
                 )
             }
+
         }
     }
 }
@@ -90,7 +102,9 @@ private fun LocationFieldEmptyPreview() {
             LocationField(
                 label = "From",
                 value = "",
-                onValueChange = {}
+                onValueChange = {},
+                error = true,
+                showError = true
             )
         }
     }
@@ -103,7 +117,9 @@ private fun LocationFieldFilledPreview() {
         LocationField(
             label = "To",
             value = "Rome, Italy",
-            onValueChange = {}
+            onValueChange = {},
+            error = true,
+            showError = true
         )
     }
 }

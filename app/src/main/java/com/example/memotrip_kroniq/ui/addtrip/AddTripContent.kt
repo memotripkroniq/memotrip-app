@@ -108,6 +108,9 @@ fun AddTripContent(
             }
         }
 
+    var submitted by remember { mutableStateOf(false) }
+    val destinationError = uiState.destination == null
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -120,7 +123,9 @@ fun AddTripContent(
             value = uiState.tripName,
             coverPhotoUri = uiState.coverPhotoUri,
             onValueChange = onTripNameChange,
-            onAddPhotoClick = { showPhotoActionSheet = true }
+            onAddPhotoClick = { showPhotoActionSheet = true },
+            error = uiState.tripName.isBlank(),
+            showError = submitted
         )
 
         Spacer(modifier = Modifier.height(16f.sy(s)))
@@ -133,7 +138,9 @@ fun AddTripContent(
         /* 🌍 Destination */
         DestinationSelector(
             selected = uiState.destination,
-            onSelect = onDestinationSelected
+            onSelect = onDestinationSelected,
+            error = uiState.destination == null,
+            showError = submitted
         )
 
         Spacer(modifier = Modifier.height(20f.sy(s)))
@@ -152,7 +159,8 @@ fun AddTripContent(
         DateField(
             startDate = uiState.tripStartDate,
             endDate = uiState.tripEndDate,
-            showError = uiState.showDateError,
+            error = uiState.tripStartDate == null || uiState.tripEndDate == null,
+            showError = submitted,
             onClick = onDateClick
         )
 
@@ -164,7 +172,9 @@ fun AddTripContent(
             LocationField(
                 label = "From",
                 value = uiState.fromLocation,
-                onValueChange = onFromLocationChange
+                onValueChange = onFromLocationChange,
+                error = uiState.fromLocation.isBlank(),
+                showError = submitted
             )
 
             // ⬇️ Dropdown hned POD inputem
@@ -181,7 +191,9 @@ fun AddTripContent(
             LocationField(
                 label = "To",
                 value = uiState.toLocation,
-                onValueChange = onToLocationChange
+                onValueChange = onToLocationChange,
+                error = uiState.toLocation.isBlank(),
+                showError = submitted
             )
 
             LocationSuggestionsDropdown(
@@ -195,7 +207,9 @@ fun AddTripContent(
         /* 🚗 Transport */
         TransportSelector(
             selected = uiState.transport,
-            onSelectionChange = onTransportSelectionChange
+            onSelectionChange = onTransportSelectionChange,
+            error = uiState.transport.isEmpty(),
+            showError = submitted
         )
 
         Spacer(modifier = Modifier.height(28f.sy(s)))
@@ -204,11 +218,33 @@ fun AddTripContent(
         PrimaryButton(
             text = "Next",
             enabled = true,
-            onClick = onNextClick,
+            onClick = {
+                // 1️⃣ označíme pokus o submit (spustí validace v UI)
+                submitted = true
+
+                // 2️⃣ jednotlivé validace
+                val hasTripNameError = uiState.tripName.isBlank()
+                val hasDestinationError = uiState.destination == null
+                val hasDateError =
+                    uiState.tripStartDate == null || uiState.tripEndDate == null
+                val hasFromError = uiState.fromLocation.isBlank()
+                val hasToError = uiState.toLocation.isBlank()
+                val hasTransportError = uiState.transport.isEmpty()
+
+                // 3️⃣ pokud je cokoliv špatně, zůstaň na stránce
+                if (hasTripNameError || hasDestinationError || hasDateError || hasFromError || hasToError || hasTransportError) {
+                    return@PrimaryButton
+                }
+
+                // 4️⃣ vše OK → pokračuj
+                onNextClick()
+            },
             modifier = Modifier
                 .width(200f.sx(s))
                 .align(Alignment.CenterHorizontally)
         )
+
+
 
         Spacer(modifier = Modifier.height(24f.sy(s)))
     }
