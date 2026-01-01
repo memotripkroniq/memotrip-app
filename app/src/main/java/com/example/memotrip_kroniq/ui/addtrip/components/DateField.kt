@@ -32,7 +32,6 @@ fun DateField(
     startDate: LocalDate?,
     endDate: LocalDate?,
     error: Boolean,
-    showError: Boolean,
     onClick: () -> Unit
 ) {
     val text = when {
@@ -71,7 +70,7 @@ fun DateField(
                 )
                 .border(
                     width = 1.5.dp,
-                    color = if (error && showError) errorGreen else Color.Transparent,
+                    color = if (error) errorGreen else Color.Transparent,
                     shape = RoundedCornerShape(10.dp)
                 )
 
@@ -84,7 +83,7 @@ fun DateField(
             Text(
                 text = text,
                 color =
-                    if (error && showError) errorGreen
+                    if (error) errorGreen
                     else if (isEmpty) Color.Gray
                     else Color.White,
                 fontSize = 16.sp,
@@ -110,7 +109,6 @@ private fun DateFieldEmptyPreview() {
             startDate = null,
             endDate = null,
             error = true,
-            showError = false, // 👈 DOPLNĚNO
             onClick = {}
         )
     }
@@ -126,7 +124,6 @@ private fun DateFieldFilledPreview() {
             startDate = LocalDate.of(2025, 6, 28),
             endDate = LocalDate.of(2025, 7, 11),
             error = true,
-            showError = false, // 👈 DOPLNĚNO
             onClick = {}
         )
     }

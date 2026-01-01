@@ -34,8 +34,7 @@ fun AddTripNameField(
     coverPhotoUri: Uri?,
     onValueChange: (String) -> Unit,
     onAddPhotoClick: () -> Unit,
-    error: Boolean,
-    showError: Boolean
+    error: Boolean
 ) {
     var hasFocus by remember { mutableStateOf(false) }
 
@@ -62,7 +61,7 @@ fun AddTripNameField(
 
     val errorGreen = Color(0xFF759F67)
     val borderColor =
-        if (error && showError) errorGreen else Color.Transparent
+        if (error) errorGreen else Color.Transparent
 
     Row(
         modifier = Modifier
@@ -130,7 +129,7 @@ fun AddTripNameField(
                         // PLACEHOLDER (bez focusu)
                         Text(
                             text = "Add Trip name",
-                            color = if (error && showError)
+                            color = if (error)
                                 errorGreen
                             else
                                 Color.White.copy(alpha = 0.5f),

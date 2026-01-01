@@ -32,8 +32,7 @@ import androidx.compose.ui.unit.sp
 fun DestinationSelector(
     selected: Destination?,
     onSelect: (Destination) -> Unit,
-    error: Boolean,
-    showError: Boolean
+    error: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -44,7 +43,7 @@ fun DestinationSelector(
         Text(
             text = "Destination",
             color =
-                if (error && showError) errorGreen
+                if (error) errorGreen
                 else Color.White,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,

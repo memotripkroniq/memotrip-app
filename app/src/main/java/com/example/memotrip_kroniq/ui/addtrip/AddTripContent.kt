@@ -3,12 +3,10 @@ package com.example.memotrip_kroniq.ui.addtrip
 import PreviewUiScaler
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -16,15 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripHeroBanner
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripNameField
 import com.example.memotrip_kroniq.ui.addtrip.components.DateField
 import com.example.memotrip_kroniq.ui.addtrip.components.DestinationSelector
 import com.example.memotrip_kroniq.ui.addtrip.components.LocationField
-import com.example.memotrip_kroniq.ui.addtrip.components.PrimaryNextButton
 import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import com.example.memotrip_kroniq.ui.addtrip.components.TransportSelector
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
@@ -34,21 +29,15 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import java.time.LocalDate
-import com.example.memotrip_kroniq.ui.addtrip.DateRange
-import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripPhotoOverlay
-import androidx.activity.compose.rememberLauncherForActivityResult
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.ui.addtrip.components.LocationSuggestionsDropdown
 import java.io.File
@@ -69,7 +58,8 @@ fun AddTripContent(
     onFromSuggestionSelected: (LocationSuggestion) -> Unit,
     onToSuggestionSelected: (LocationSuggestion) -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
-    onNextClick: () -> Unit,
+    onCreateClick: () -> Unit,
+    onGenerateMapClick: () -> Unit,
     onCoverPhotoSelected: (Uri?) -> Unit
 ) {
     val s = LocalUiScaler.current
@@ -108,7 +98,6 @@ fun AddTripContent(
             }
         }
 
-    var submitted by remember { mutableStateOf(false) }
     val destinationError = uiState.destination == null
 
     Column(
@@ -124,14 +113,19 @@ fun AddTripContent(
             coverPhotoUri = uiState.coverPhotoUri,
             onValueChange = onTripNameChange,
             onAddPhotoClick = { showPhotoActionSheet = true },
-            error = uiState.tripName.isBlank(),
-            showError = submitted
+            error = uiState.showTripNameError
         )
 
         Spacer(modifier = Modifier.height(16f.sy(s)))
 
         /* 🌍 Hero banner */
-        AddTripHeroBanner()
+        AddTripHeroBanner(
+            imageUrl = uiState.generatedMapImageUrl,
+            isGenerating = uiState.isGeneratingMap,
+            onGenerateClick = onGenerateMapClick
+            //modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
 
         Spacer(modifier = Modifier.height(16f.sy(s)))
 
@@ -139,8 +133,7 @@ fun AddTripContent(
         DestinationSelector(
             selected = uiState.destination,
             onSelect = onDestinationSelected,
-            error = uiState.destination == null,
-            showError = submitted
+            error = uiState.showDestinationError
         )
 
         Spacer(modifier = Modifier.height(20f.sy(s)))
@@ -159,8 +152,7 @@ fun AddTripContent(
         DateField(
             startDate = uiState.tripStartDate,
             endDate = uiState.tripEndDate,
-            error = uiState.tripStartDate == null || uiState.tripEndDate == null,
-            showError = submitted,
+            error = uiState.showDateError,
             onClick = onDateClick
         )
 
@@ -173,8 +165,7 @@ fun AddTripContent(
                 label = "From",
                 value = uiState.fromLocation,
                 onValueChange = onFromLocationChange,
-                error = uiState.fromLocation.isBlank(),
-                showError = submitted
+                error = uiState.showFromLocationError
             )
 
             // ⬇️ Dropdown hned POD inputem
@@ -192,8 +183,7 @@ fun AddTripContent(
                 label = "To",
                 value = uiState.toLocation,
                 onValueChange = onToLocationChange,
-                error = uiState.toLocation.isBlank(),
-                showError = submitted
+                error = uiState.showToLocationError
             )
 
             LocationSuggestionsDropdown(
@@ -208,43 +198,20 @@ fun AddTripContent(
         TransportSelector(
             selected = uiState.transport,
             onSelectionChange = onTransportSelectionChange,
-            error = uiState.transport.isEmpty(),
-            showError = submitted
+            error = uiState.showTransportError
         )
 
         Spacer(modifier = Modifier.height(28f.sy(s)))
 
-        /* ▶️ Next */
+        /* ▶️ Create */
         PrimaryButton(
-            text = "Next",
-            enabled = true,
-            onClick = {
-                // 1️⃣ označíme pokus o submit (spustí validace v UI)
-                submitted = true
-
-                // 2️⃣ jednotlivé validace
-                val hasTripNameError = uiState.tripName.isBlank()
-                val hasDestinationError = uiState.destination == null
-                val hasDateError =
-                    uiState.tripStartDate == null || uiState.tripEndDate == null
-                val hasFromError = uiState.fromLocation.isBlank()
-                val hasToError = uiState.toLocation.isBlank()
-                val hasTransportError = uiState.transport.isEmpty()
-
-                // 3️⃣ pokud je cokoliv špatně, zůstaň na stránce
-                if (hasTripNameError || hasDestinationError || hasDateError || hasFromError || hasToError || hasTransportError) {
-                    return@PrimaryButton
-                }
-
-                // 4️⃣ vše OK → pokračuj
-                onNextClick()
-            },
+            text = if (uiState.isGeneratingMap) "Generating..." else "Create",
+            enabled = !uiState.isGeneratingMap,
+            onClick = onCreateClick,
             modifier = Modifier
                 .width(200f.sx(s))
                 .align(Alignment.CenterHorizontally)
         )
-
-
 
         Spacer(modifier = Modifier.height(24f.sy(s)))
     }
@@ -315,9 +282,11 @@ fun AddTripContentPreview() {
                     //tripEndDate = LocalDate.of(2025, 7, 11),
                     fromLocation = "",
                     toLocation = "",
-                    transport = emptySet()
+                    transport = emptySet(),
                     // transport = setOf(TransportType.CARAVAN)
                     // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
+                    generatedMapImageUrl = null,   // ⬅️ default mapa (Generate overlay)
+                    isGeneratingMap = false
                 ),
                 onTripNameChange = {},
                 onCoverPhotoSelected = {},
@@ -329,7 +298,8 @@ fun AddTripContentPreview() {
                 onFromSuggestionSelected = {},
                 onToSuggestionSelected = {},
                 onTransportSelectionChange = {},
-                onNextClick = {}
+                onGenerateMapClick = {},
+                onCreateClick = {}
             )
         }
     }

@@ -28,8 +28,7 @@ fun LocationField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    error: Boolean,
-    showError: Boolean
+    error: Boolean
 ) {
     val errorGreen = Color(0xFF759F67)
     val isEmpty = value.isBlank()
@@ -55,7 +54,7 @@ fun LocationField(
                 )
                 .border(
                     width = 1.5.dp,
-                    color = if (error && showError) errorGreen else Color.Transparent,
+                    color = if (error) errorGreen else Color.Transparent,
                     shape = RoundedCornerShape(10.dp)
                 )
 
@@ -78,7 +77,7 @@ fun LocationField(
                 Text(
                     text = "Add ${label.lowercase()} destination",
                     color =
-                        if (error && showError) errorGreen
+                        if (error) errorGreen
                         else Color.Gray,
                     fontSize = 16.sp
                 )
@@ -103,8 +102,7 @@ private fun LocationFieldEmptyPreview() {
                 label = "From",
                 value = "",
                 onValueChange = {},
-                error = true,
-                showError = true
+                error = true
             )
         }
     }
@@ -118,8 +116,7 @@ private fun LocationFieldFilledPreview() {
             label = "To",
             value = "Rome, Italy",
             onValueChange = {},
-            error = true,
-            showError = true
+            error = true
         )
     }
 }

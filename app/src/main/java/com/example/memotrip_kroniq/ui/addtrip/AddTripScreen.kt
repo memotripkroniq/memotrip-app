@@ -7,32 +7,36 @@ import androidx.navigation.NavHostController
 import PreviewUiScaler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.*
+//import androidx.compose.foundation.statusBarsPadding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
+import com.example.memotrip_kroniq.data.location.LocationSearchRepository
+import com.example.memotrip_kroniq.data.network.HttpClientProvider
+import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
+import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
+
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import androidx.compose.ui.platform.LocalFocusManager
-import com.example.memotrip_kroniq.data.location.LocationSearchRepository
-import com.example.memotrip_kroniq.data.network.HttpClientProvider
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -57,13 +61,19 @@ fun AddTripScreen(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+
+                val tripMapGenerator: TripMapGenerator =
+                    RemoteTripMapGenerator(HttpClientProvider.client)
+
                 return AddTripViewModel(
                     authRepository = repository,
-                    locationSearchRepository = LocationSearchRepository(HttpClientProvider.client)
+                    locationSearchRepository = LocationSearchRepository(HttpClientProvider.client),
+                    tripMapGenerator = tripMapGenerator
                 ) as T
             }
         }
     )
+
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -100,20 +110,29 @@ fun AddTripScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .padding(horizontal = 16f.sx(s)),
+
                 uiState = uiState,
+
                 onTripNameChange = viewModel::onTripNameChange,
                 onCoverPhotoSelected = viewModel::onCoverPhotoSelected,
+
                 onDestinationSelected = viewModel::onDestinationSelected,
                 onThemeSelected = viewModel::onThemeSelected,
                 onDateClick = { showDatePicker = true },
+
                 onFromLocationChange = viewModel::onFromLocationChange,
                 onToLocationChange = viewModel::onToLocationChange,
                 onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
                 onToSuggestionSelected = viewModel::onToSuggestionSelected,
+
                 onTransportSelectionChange = viewModel::onTransportSelectionChange,
-                onNextClick = {}
+
+                onGenerateMapClick = viewModel::generateTripMap, // ✅ HERO
+                onCreateClick = viewModel::onCreateClick            // ✅ CREATE (validace)
             )
+
         }
+
 
         // ─────────────────────
         // 📅 DATE PICKER OVERLAY
@@ -131,8 +150,6 @@ fun AddTripScreen(
         }
     }
 }
-
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, widthDp = 412, heightDp = 1110)
@@ -166,6 +183,7 @@ fun AddTripScreenPreview() {
                     ),
                     onTripNameChange = {},
                     onCoverPhotoSelected = {},
+                    //generatedMapImageUrl = null,
                     onDestinationSelected = {},
                     onThemeSelected = {},
                     onDateClick = {},
@@ -174,7 +192,8 @@ fun AddTripScreenPreview() {
                     onFromSuggestionSelected = {},
                     onToSuggestionSelected = {},
                     onTransportSelectionChange = {},
-                    onNextClick = {}
+                    onGenerateMapClick = {},
+                    onCreateClick = {}
                 )
             }
         }

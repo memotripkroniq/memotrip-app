@@ -31,8 +31,7 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 fun TransportSelector(
     selected: Set<TransportType>,
     onSelectionChange: (Set<TransportType>) -> Unit,
-    error: Boolean,
-    showError: Boolean
+    error: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -41,7 +40,7 @@ fun TransportSelector(
         Text(
             text = "Transport",
             color =
-                if (error && showError) errorGreen
+                if (error) errorGreen
                 else Color.White,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
@@ -133,8 +132,7 @@ private fun TransportSelectorPreview_Selected() {
             TransportSelector(
                 selected = setOf(TransportType.CAR, TransportType.CARAVAN),
                 onSelectionChange = {},
-                error = true,
-                showError = true
+                error = true
             )
         }
     }

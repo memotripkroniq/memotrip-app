@@ -9,7 +9,8 @@ import java.time.LocalDate
 
 enum class Destination(
     val label: String,
-    val iconRes: Int
+    val iconRes: Int,
+
 ) {
     EUROPE("Europe", R.drawable.ic_destination_europe),
     ASIA("Asia", R.drawable.ic_destination_asia),
@@ -47,12 +48,15 @@ enum class ThemeType(
     EXOTIC("Exotic", R.drawable.homescreen_theme_exotic)
 }
 
-
 data class AddTripUiState(
 
     // 📝 Basic info
     val coverPhotoUri: Uri? = null,
     val tripName: String = "",
+
+    // Generated map
+    val generatedMapImageUrl: String? = null,
+    val isGeneratingMap: Boolean = false,
 
     // 🌍 Destination
     val destination: Destination? = null,
@@ -70,9 +74,8 @@ data class AddTripUiState(
     val toLocation: String = "",
     val fromSuggestions: List<LocationSuggestion> = emptyList(),
     val toSuggestions: List<LocationSuggestion> = emptyList(),
-    val isSearchingFrom: Boolean = false,
-    val isSearchingTo: Boolean = false,
-    val showDateError: Boolean = false,
+    //val isSearchingFrom: Boolean = false,
+    //val isSearchingTo: Boolean = false
 
     // 🚗 Transport
     val transport: Set<TransportType> = emptySet(),
@@ -81,9 +84,10 @@ data class AddTripUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
 
-    // ❗ VALIDATION FLAGS (nastavují se až po kliknutí na Next)
+    // ❗ VALIDATION FLAGS (nastavují se až po kliknutí na Create)
     val showTripNameError: Boolean = false,
     val showDestinationError: Boolean = false,
+    val showDateError: Boolean = false,
     val showFromLocationError: Boolean = false,
     val showToLocationError: Boolean = false,
     val showTransportError: Boolean = false

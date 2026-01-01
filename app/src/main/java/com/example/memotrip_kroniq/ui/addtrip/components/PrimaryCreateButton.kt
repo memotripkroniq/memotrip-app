@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
 @Composable
-fun PrimaryNextButton(
+fun PrimaryCreateButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
@@ -42,9 +42,9 @@ fun PrimaryNextButton(
 
 @Preview(showBackground = true)
 @Composable
-private fun PrimaryNextButtonEnabledPreview() {
+private fun PrimaryCreateButtonEnabledPreview() {
     MemoTripTheme {
-        PrimaryNextButton(
+        PrimaryCreateButton(
             enabled = true,
             onClick = {}
         )
@@ -53,9 +53,9 @@ private fun PrimaryNextButtonEnabledPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun PrimaryNextButtonDisabledPreview() {
+private fun PrimaryCreateButtonDisabledPreview() {
     MemoTripTheme {
-        PrimaryNextButton(
+        PrimaryCreateButton(
             enabled = false,
             onClick = {}
         )

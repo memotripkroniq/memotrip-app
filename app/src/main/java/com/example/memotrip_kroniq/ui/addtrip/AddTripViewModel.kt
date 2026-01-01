@@ -12,14 +12,21 @@ import kotlinx.coroutines.launch
 import com.example.memotrip_kroniq.ui.addtrip.DateRange
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
 import com.example.memotrip_kroniq.data.network.HttpClientProvider
+import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import android.util.Log
 
 
 class AddTripViewModel(
     private val authRepository: AuthRepository,
-    private val locationSearchRepository: LocationSearchRepository
+    private val locationSearchRepository: LocationSearchRepository,
+    private val tripMapGenerator: TripMapGenerator
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "AddTripVM"
+    }
 
     private val _uiState = MutableStateFlow(AddTripUiState())
     val uiState: StateFlow<AddTripUiState> = _uiState
@@ -63,6 +70,67 @@ class AddTripViewModel(
             it.copy(coverPhotoUri = uri)
         }
     }
+
+    fun generateTripMap() {
+        val state = _uiState.value
+
+        Log.d(TAG, "🔥 generateTripMap() click")
+        Log.d(TAG, "from='${state.fromLocation}', to='${state.toLocation}', transport=${state.transport}")
+
+        // 🟥 VALIDACE PRO GENERATE MAPY
+        val hasFromError = state.fromLocation.isBlank()
+        val hasToError = state.toLocation.isBlank()
+        val hasTransportError = state.transport.isEmpty()
+
+        if (hasFromError || hasToError || hasTransportError) {
+            Log.d(TAG, "⛔ validation failed: from=$hasFromError to=$hasToError transport=$hasTransportError")
+            _uiState.update {
+                it.copy(
+                    showFromLocationError = hasFromError,
+                    showToLocationError = hasToError,
+                    showTransportError = hasTransportError
+                )
+            }
+            return
+        }
+
+        // ⛔ už se generuje
+        if (state.isGeneratingMap) {
+            Log.d(TAG, "⛔ already generating, ignoring click")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingMap = true) }
+
+            try {
+                val imageUrl = tripMapGenerator.generate(
+                    from = state.fromLocation,
+                    to = state.toLocation,
+                    transport = state.transport.first() // zatím 1
+                )
+
+                Log.d(TAG, "✅ generated url=$imageUrl")
+                _uiState.update {
+                    it.copy(
+                        generatedMapImageUrl = imageUrl,
+                        isGeneratingMap = false
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ generate failed", e)
+                _uiState.update {
+                    it.copy(
+                        isGeneratingMap = false,
+                        errorMessage = e.message
+                    )
+                }
+            }
+        }
+    }
+
+
+
 
     fun onDestinationSelected(destination: Destination) {
         _uiState.update {
@@ -174,39 +242,40 @@ class AddTripViewModel(
     }
 
 
-//    fun onNextClick() {
-//        val hasTripName = uiState.tripName.isNotBlank()
-//        val hasDestination = uiState.destination != null
-//        val hasDate = uiState.tripDate != null
-//        val hasFrom = uiState.fromLocation.isNotBlank()
-//        val hasTo = uiState.toLocation.isNotBlank()
-//        val hasTransport = uiState.transport != null
-//
-//        if (
-//            hasTripName &&
-//            hasDestination &&
-//            hasDate &&
-//            hasFrom &&
-//            hasTo &&
-//            hasTransport
-//        ) {
-//            // ✅ OK → pokračuj
-//            navigateNext()
-//        } else {
-//            // ❌ zobraz validační chyby
-//            _uiState.update {
-//                it.copy(
-//                    showTripNameError = !hasTripName,
-//                    showDestinationError = !hasDestination,
-//                    showDateError = !hasDate,
-//                    showFromLocationError = !hasFrom,
-//                    showToLocationError = !hasTo,
-//                    showTransportError = !hasTransport
-//                )
-//            }
-//        }
-//    }
+    fun onCreateClick() {
+        val state = _uiState.value
 
+        // 🔴 validace (STEJNÁ JAKO TEĎ – OK)
+        val hasTripNameError = state.tripName.isBlank()
+        val hasDestinationError = state.destination == null
+        val hasDateError = state.tripStartDate == null || state.tripEndDate == null
+        val hasFromError = state.fromLocation.isBlank()
+        val hasToError = state.toLocation.isBlank()
+        val hasTransportError = state.transport.isEmpty()
 
+        if (
+            hasTripNameError ||
+            hasDestinationError ||
+            hasDateError ||
+            hasFromError ||
+            hasToError ||
+            hasTransportError
+        ) {
+            _uiState.update {
+                it.copy(
+                    showTripNameError = hasTripNameError,
+                    showDestinationError = hasDestinationError,
+                    showDateError = hasDateError,
+                    showFromLocationError = hasFromError,
+                    showToLocationError = hasToError,
+                    showTransportError = hasTransportError
+                )
+            }
+            return
+        }
+
+        // ✅ TADY UŽ SE MAPA NEGENERUJE
+        // tady bude save / pokračování flow
+    }
 
 }
