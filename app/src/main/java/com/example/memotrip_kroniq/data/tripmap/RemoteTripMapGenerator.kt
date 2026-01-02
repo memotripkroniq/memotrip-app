@@ -3,7 +3,6 @@ package com.example.memotrip_kroniq.data.tripmap
 import com.example.memotrip_kroniq.ui.addtrip.TransportType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.timeout
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -22,10 +21,6 @@ class RemoteTripMapGenerator(
         val response: GenerateTripMapResponse =
             client.post("https://memotrip-bff-production.up.railway.app/trips/render-map") {
                 contentType(ContentType.Application.Json)
-                timeout {
-                    requestTimeoutMillis = 60_000
-                    socketTimeoutMillis = 60_000
-                }
                 setBody(
                     GenerateTripMapRequest(
                         from = from,
