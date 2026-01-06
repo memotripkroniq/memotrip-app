@@ -29,12 +29,13 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
 @Composable
 fun TransportSelector(
+    modifier: Modifier = Modifier,
     selected: Set<TransportType>,
     onSelectionChange: (Set<TransportType>) -> Unit,
     error: Boolean
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         val errorGreen = Color(0xFF759F67)
         Text(

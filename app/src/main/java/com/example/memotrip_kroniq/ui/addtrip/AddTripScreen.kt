@@ -122,8 +122,15 @@ fun AddTripScreen(
 
                 onFromLocationChange = viewModel::onFromLocationChange,
                 onToLocationChange = viewModel::onToLocationChange,
+                onFromFocusChange = viewModel::onFromFocusChanged,
+                onToFocusChange = viewModel::onToFocusChanged,
+                onStopFocusChange = viewModel::onStopFocusChanged,
                 onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
                 onToSuggestionSelected = viewModel::onToSuggestionSelected,
+                onAddStop = viewModel::onAddStop,
+                onRemoveStop = viewModel::onRemoveStop,
+                onStopLocationChange = viewModel::onStopLocationChange,
+                onStopSuggestionSelected = viewModel::onStopSuggestionSelected,
 
                 onTransportSelectionChange = viewModel::onTransportSelectionChange,
 
@@ -189,8 +196,15 @@ fun AddTripScreenPreview() {
                     onDateClick = {},
                     onFromLocationChange = {},
                     onToLocationChange = {},
+                    onFromFocusChange = {},
+                    onToFocusChange = {},
+                    onStopFocusChange = { _, _ -> },
                     onFromSuggestionSelected = {},
                     onToSuggestionSelected = {},
+                    onAddStop = {},
+                    onRemoveStop = {},
+                    onStopLocationChange = { _, _ -> },
+                    onStopSuggestionSelected = { _, _ -> },
                     onTransportSelectionChange = {},
                     onGenerateMapClick = {},
                     onCreateClick = {}

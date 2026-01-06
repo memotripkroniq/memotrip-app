@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.topOverlayShadow
@@ -31,7 +32,8 @@ fun PrimaryAiButton(
 ) {
     Box(
         modifier = modifier
-            .width(150.dp)
+            //.width(150.dp)
+            .defaultMinSize(minWidth = 140.dp)
             .height(45.dp)
             .clip(RoundedCornerShape(10.dp))   // 🔥 ořez
             .topOverlayShadow(                // 🔥 top inner shadow
@@ -81,7 +83,8 @@ fun PrimaryAiButton(
                     text = text,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

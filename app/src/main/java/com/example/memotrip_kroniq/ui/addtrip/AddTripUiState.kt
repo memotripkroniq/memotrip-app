@@ -1,6 +1,7 @@
 package com.example.memotrip_kroniq.ui.addtrip
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
@@ -57,6 +58,8 @@ data class AddTripUiState(
     // Generated map
     val generatedMapImageUrl: String? = null,
     val isGeneratingMap: Boolean = false,
+    val isMapDirty: Boolean = false,
+    val hasTriedGenerate: Boolean = false,
 
     // 🌍 Destination
     val destination: Destination? = null,
@@ -70,10 +73,18 @@ data class AddTripUiState(
     val tripEndDate: LocalDate? = null,
 
     // 📍 Locations
-    val fromLocation: String = "",
-    val toLocation: String = "",
+    val fromLocation: TextFieldValue = TextFieldValue(""),
+    val toLocation: TextFieldValue = TextFieldValue(""),
+    val isFromFocused: Boolean = false,
+    val isToFocused: Boolean = false,
+    val focusedStopIndex: Int? = null, // 🆕 WAYPOINT FOCUS (pouze jeden WP může být focused)
     val fromSuggestions: List<LocationSuggestion> = emptyList(),
     val toSuggestions: List<LocationSuggestion> = emptyList(),
+    val stops: List<TextFieldValue> = emptyList(),
+    val stopSuggestions: List<List<LocationSuggestion>> = emptyList(),
+    // 🆕 WAYPOINT VALIDATION
+    val showStopErrors: List<Boolean> = emptyList(),
+
     //val isSearchingFrom: Boolean = false,
     //val isSearchingTo: Boolean = false
 

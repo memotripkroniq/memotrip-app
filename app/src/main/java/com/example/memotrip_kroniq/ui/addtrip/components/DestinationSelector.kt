@@ -30,12 +30,13 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DestinationSelector(
+    modifier: Modifier = Modifier,
     selected: Destination?,
     onSelect: (Destination) -> Unit,
     error: Boolean
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
     ) {
         val errorGreen = Color(0xFF759F67)

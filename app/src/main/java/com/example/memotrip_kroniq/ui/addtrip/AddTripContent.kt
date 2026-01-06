@@ -36,11 +36,20 @@ import com.example.memotrip_kroniq.ui.addtrip.components.AddTripPhotoOverlay
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.ui.addtrip.components.LocationSuggestionsDropdown
 import java.io.File
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.ui.addtrip.components.AddStopButton
+import com.example.memotrip_kroniq.ui.addtrip.components.WaypointField
 
 
 
@@ -53,10 +62,17 @@ fun AddTripContent(
     onDestinationSelected: (Destination) -> Unit,
     onThemeSelected: (ThemeType) -> Unit,
     onDateClick: () -> Unit,
-    onFromLocationChange: (String) -> Unit,
-    onToLocationChange: (String) -> Unit,
+    onFromLocationChange: (TextFieldValue) -> Unit,
+    onToLocationChange: (TextFieldValue) -> Unit,
+    onFromFocusChange: (Boolean) -> Unit,
+    onToFocusChange: (Boolean) -> Unit,
+    onStopFocusChange: (index: Int, focused: Boolean) -> Unit,
     onFromSuggestionSelected: (LocationSuggestion) -> Unit,
     onToSuggestionSelected: (LocationSuggestion) -> Unit,
+    onAddStop: () -> Unit,
+    onRemoveStop: (index: Int) -> Unit,
+    onStopLocationChange: (index: Int, value: TextFieldValue) -> Unit,
+    onStopSuggestionSelected: (index: Int, suggestion: LocationSuggestion) -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
     onCreateClick: () -> Unit,
     onGenerateMapClick: () -> Unit,
@@ -100,6 +116,17 @@ fun AddTripContent(
 
     val destinationError = uiState.destination == null
 
+    val tripNameRequester = remember { BringIntoViewRequester() }
+    val destinationRequester = remember { BringIntoViewRequester() }
+    val dateRequester = remember { BringIntoViewRequester() }
+    val fromRequester = remember { BringIntoViewRequester() }
+    val toRequester = remember { BringIntoViewRequester() }
+    val transportRequester = remember { BringIntoViewRequester() }
+
+    val focusManager = LocalFocusManager.current
+
+
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -109,6 +136,7 @@ fun AddTripContent(
 
         /* ✍️ Trip name */
         AddTripNameField(
+            modifier = Modifier.bringIntoViewRequester(tripNameRequester),
             value = uiState.tripName,
             coverPhotoUri = uiState.coverPhotoUri,
             onValueChange = onTripNameChange,
@@ -122,8 +150,8 @@ fun AddTripContent(
         AddTripHeroBanner(
             imageUrl = uiState.generatedMapImageUrl,
             isGenerating = uiState.isGeneratingMap,
+            isMapDirty = uiState.isMapDirty,
             onGenerateClick = onGenerateMapClick
-            //modifier = Modifier.padding(horizontal = 16.dp)
         )
 
 
@@ -131,6 +159,7 @@ fun AddTripContent(
 
         /* 🌍 Destination */
         DestinationSelector(
+            modifier = Modifier.bringIntoViewRequester(destinationRequester),
             selected = uiState.destination,
             onSelect = onDestinationSelected,
             error = uiState.showDestinationError
@@ -150,6 +179,7 @@ fun AddTripContent(
 
         /* 📅 Date */
         DateField(
+            modifier = Modifier.bringIntoViewRequester(dateRequester),
             startDate = uiState.tripStartDate,
             endDate = uiState.tripEndDate,
             error = uiState.showDateError,
@@ -158,31 +188,78 @@ fun AddTripContent(
 
         Spacer(modifier = Modifier.height(12f.sy(s)))
 
-        /* 📍 From / To */
-        Column {
-
+        /* 📍 From */
+        Column(
+            modifier = Modifier.bringIntoViewRequester(fromRequester)
+        ) {
             LocationField(
                 label = "From",
                 value = uiState.fromLocation,
                 onValueChange = onFromLocationChange,
+                onFocusChange = onFromFocusChange,
                 error = uiState.showFromLocationError
             )
 
-            // ⬇️ Dropdown hned POD inputem
             LocationSuggestionsDropdown(
                 suggestions = uiState.fromSuggestions,
                 onSelect = onFromSuggestionSelected
             )
         }
 
-        Spacer(modifier = Modifier.height(12f.sy(s)))
+        /* ➕ Add stop */
+        AddStopButton(
+            visible = uiState.stops.size < 3,
+            onClick = onAddStop
+        )
 
-        Column {
+        /* 📍 Waypoints */
+        uiState.stops.forEachIndexed { index, value ->
+            Spacer(modifier = Modifier.height(12f.sy(s)))
 
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                WaypointField(
+                    index = index,
+                    value = value,
+                    suggestions = uiState.stopSuggestions.getOrNull(index) ?: emptyList(),                       // ⬅️ jen fokusovaný WP
+                    error = uiState.showStopErrors.getOrNull(index) == true,
+                    onValueChange = { onStopLocationChange(index, it) },
+                    onFocusChange = { focused ->               // ⬅️ TADY
+                        onStopFocusChange(index, focused)
+                    },
+                    onSuggestionSelected = {
+                        onStopSuggestionSelected(index, it)
+                        focusManager.clearFocus()
+                    },
+                    onRemoveClick = {
+                        onRemoveStop(index)
+                    }
+                )
+
+                // ✅ TADY MUSÍ BÝT DROPDOWN
+                LocationSuggestionsDropdown(
+                    suggestions = uiState.stopSuggestions.getOrNull(index) ?: emptyList(),
+                    onSelect = {
+                        onStopSuggestionSelected(index, it)
+                        focusManager.clearFocus()
+                    }
+                )
+            }
+        }
+
+
+        /* 📍 To */
+        Spacer(modifier = Modifier.height(1f.sy(s)))
+
+        Column(
+            modifier = Modifier.bringIntoViewRequester(toRequester)
+        ) {
             LocationField(
                 label = "To",
                 value = uiState.toLocation,
                 onValueChange = onToLocationChange,
+                onFocusChange = onToFocusChange,
                 error = uiState.showToLocationError
             )
 
@@ -192,20 +269,23 @@ fun AddTripContent(
             )
         }
 
+
         Spacer(modifier = Modifier.height(20f.sy(s)))
 
         /* 🚗 Transport */
         TransportSelector(
+            modifier = Modifier.bringIntoViewRequester(transportRequester),
             selected = uiState.transport,
             onSelectionChange = onTransportSelectionChange,
             error = uiState.showTransportError
+
         )
 
         Spacer(modifier = Modifier.height(28f.sy(s)))
 
         /* ▶️ Create */
         PrimaryButton(
-            text = if (uiState.isGeneratingMap) "Generating..." else "Create",
+            text = if (uiState.isGeneratingMap) "Generating" else "Create",
             enabled = !uiState.isGeneratingMap,
             onClick = onCreateClick,
             modifier = Modifier
@@ -252,7 +332,26 @@ fun AddTripContent(
 
     }
 
+    // Scroll na chybu, která je nejvyšší od začátku obrazovky
+    LaunchedEffect(
+        uiState.showTripNameError,
+        uiState.showDestinationError,
+        uiState.showDateError,
+        uiState.showFromLocationError,
+        uiState.showToLocationError,
+        uiState.showTransportError
+    ) {
+        when {
+            uiState.showTripNameError -> tripNameRequester.bringIntoView()
+            uiState.showDestinationError -> destinationRequester.bringIntoView()
+            uiState.showDateError -> dateRequester.bringIntoView()
+            uiState.showFromLocationError -> fromRequester.bringIntoView()
+            uiState.showToLocationError -> toRequester.bringIntoView()
+            uiState.showTransportError -> transportRequester.bringIntoView()
+        }
+    }
 }
+
 
 fun createImageFile(context: Context): File {
     val dir = File(context.cacheDir, "images")
@@ -280,8 +379,10 @@ fun AddTripContentPreview() {
                     tripEndDate = null,
                     //tripStartDate = LocalDate.of(2025, 6, 28),
                     //tripEndDate = LocalDate.of(2025, 7, 11),
-                    fromLocation = "",
-                    toLocation = "",
+                    fromLocation = TextFieldValue(""),
+                    toLocation = TextFieldValue(""),
+                    stops = emptyList(),
+                    stopSuggestions = emptyList(),
                     transport = emptySet(),
                     // transport = setOf(TransportType.CARAVAN)
                     // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
@@ -295,8 +396,15 @@ fun AddTripContentPreview() {
                 onDateClick = {},
                 onFromLocationChange = {},
                 onToLocationChange = {},
+                onFromFocusChange = {},
+                onToFocusChange = {},
                 onFromSuggestionSelected = {},
                 onToSuggestionSelected = {},
+                onStopFocusChange = { _, _ -> },
+                onAddStop = {},
+                onRemoveStop = {},
+                onStopLocationChange = { _, _ -> },
+                onStopSuggestionSelected = { _, _ -> },
                 onTransportSelectionChange = {},
                 onGenerateMapClick = {},
                 onCreateClick = {}

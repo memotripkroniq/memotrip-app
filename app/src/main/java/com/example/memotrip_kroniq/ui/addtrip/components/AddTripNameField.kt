@@ -30,6 +30,7 @@ import com.example.memotrip_kroniq.R
 
 @Composable
 fun AddTripNameField(
+    modifier: Modifier = Modifier,
     value: String,
     coverPhotoUri: Uri?,
     onValueChange: (String) -> Unit,
@@ -64,7 +65,7 @@ fun AddTripNameField(
         if (error) errorGreen else Color.Transparent
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(45.dp)
             .clip(RoundedCornerShape(10.dp))

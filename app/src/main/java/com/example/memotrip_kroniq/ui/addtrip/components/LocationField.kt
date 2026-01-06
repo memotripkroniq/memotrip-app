@@ -13,10 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,12 +29,14 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 @Composable
 fun LocationField(
     label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    error: Boolean
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    error: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val errorGreen = Color(0xFF759F67)
-    val isEmpty = value.isBlank()
+    val isEmpty = value.text.isBlank()
 
     Column {
 
@@ -70,7 +75,18 @@ fun LocationField(
                     fontSize = 16.sp
                 ),
                 cursorBrush = SolidColor(Color.White),
-                modifier = Modifier.fillMaxWidth()
+                modifier = modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        onFocusChange(focusState.isFocused)// ⭐ ZMĚNA – KLÍČOVÉ
+                        if (focusState.isFocused && value.text.isNotEmpty()) {
+                            onValueChange(
+                                value.copy(
+                                    selection = TextRange(value.text.length) // ⭐ kurzor na konec
+                                )
+                            )
+                        }
+                    }
             )
 
             if (isEmpty) {
@@ -100,8 +116,9 @@ private fun LocationFieldEmptyPreview() {
         ) {
             LocationField(
                 label = "From",
-                value = "",
+                value = TextFieldValue(""),
                 onValueChange = {},
+                onFocusChange = {},
                 error = true
             )
         }
@@ -114,8 +131,9 @@ private fun LocationFieldFilledPreview() {
     MemoTripTheme {
         LocationField(
             label = "To",
-            value = "Rome, Italy",
+            value = TextFieldValue("Rome, Italy"),
             onValueChange = {},
+            onFocusChange = {},
             error = true
         )
     }

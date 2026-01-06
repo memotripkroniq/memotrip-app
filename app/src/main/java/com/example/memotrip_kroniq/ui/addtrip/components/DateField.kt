@@ -29,6 +29,7 @@ import com.example.memotrip_kroniq.ui.addtrip.components.DateField
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DateField(
+    modifier: Modifier = Modifier,
     startDate: LocalDate?,
     endDate: LocalDate?,
     error: Boolean,
@@ -47,7 +48,9 @@ fun DateField(
 
 
 
-    Column {
+    Column(
+        modifier = modifier
+    ) {
 
         // 🔹 HEADER
         Text(
