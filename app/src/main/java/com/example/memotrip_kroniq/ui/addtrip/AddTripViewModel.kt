@@ -185,7 +185,7 @@ class AddTripViewModel(
 
         val query = value.text
 
-        if (query.length < 3) {
+        if (query.length < 4) {
             _uiState.update {
                 it.copy(fromSuggestions = emptyList())
             }
@@ -260,7 +260,7 @@ class AddTripViewModel(
 
         val query = value.text
 
-        if (query.length < 3) {
+        if (query.length < 4) {
             _uiState.update {
                 it.copy(toSuggestions = emptyList())
             }
@@ -362,7 +362,7 @@ class AddTripViewModel(
         }
 
         val query = value.text
-        if (query.length < 3) {
+        if (query.length < 4) {
             _uiState.update { state ->
                 state.copy(
                     stopSuggestions = state.stopSuggestions.mapIndexed { i, old ->
