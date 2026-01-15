@@ -31,6 +31,8 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import com.example.memotrip_kroniq.ui.addtrip.utils.scrollToFirstAddTripError
+
 import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -242,6 +244,22 @@ fun AddTripContent(
 
             Spacer(Modifier.height(24f.sy(s)))
         }
+    }
+
+    // ✅ AUTO-SCROLL NA TRIP NAME PŘI CHYBĚ
+    LaunchedEffect(
+        uiState.showTripNameError,
+        uiState.showDestinationError,
+        uiState.showDateError,
+        uiState.showFromLocationError,
+        uiState.showStopErrors,
+        uiState.showToLocationError,
+        uiState.showTransportError
+    ) {
+        scrollToFirstAddTripError(
+            listState = listState,
+            uiState = uiState
+        )
     }
 
     if (showPhotoActionSheet) {
