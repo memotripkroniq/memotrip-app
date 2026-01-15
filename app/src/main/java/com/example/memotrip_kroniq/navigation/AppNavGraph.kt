@@ -4,8 +4,18 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 
@@ -13,11 +23,15 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.location.LocationSearchRepository
+import com.example.memotrip_kroniq.data.network.HttpClientProvider
 import com.example.memotrip_kroniq.ui.addtrip.AddTripScreen
 import com.example.memotrip_kroniq.ui.auth.ForgotPasswordScreen
 import com.example.memotrip_kroniq.ui.auth.LoginScreen
 import com.example.memotrip_kroniq.ui.auth.SignUpScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
+import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
+import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
 
 sealed class Screen(val route: String) {
@@ -27,7 +41,23 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object ForgotPassword : Screen("forgot_password")
     object AddTrip : Screen("add_trip")
+    object LocationSearch : Screen("location_search")
 }
+
+enum class LocationTarget {
+    FROM,
+    TO,
+    STOP
+}
+
+const val LOCATION_RESULT_KEY = "location_result"
+const val LOCATION_TARGET_KEY = "location_target"
+const val LOCATION_NAME_KEY = "location_name"
+const val LOCATION_LAT_KEY = "location_lat"
+const val LOCATION_LON_KEY = "location_lon"
+
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalAnimationApi::class)
@@ -138,6 +168,27 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.AddTrip.route) {
             AddTripScreen(
                 navController = navController
+            )
+        }
+
+        // =============================================================
+// ⭐ LOCATION SEARCH (FULLSCREEN)
+// =============================================================
+        composable(Screen.LocationSearch.route) {
+
+            val vm: LocationSearchViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return LocationSearchViewModel(
+                            LocationSearchRepository(HttpClientProvider.client)
+                        ) as T
+                    }
+                }
+            )
+
+            FullScreenLocationSearchScreen(
+                navController = navController,
+                viewModel = vm
             )
         }
     }

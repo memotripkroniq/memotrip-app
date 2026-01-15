@@ -1,118 +1,115 @@
 package com.example.memotrip_kroniq.ui.addtrip.components
 
-import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Icon
-import com.example.memotrip_kroniq.R
-import com.example.memotrip_kroniq.data.location.LocationSuggestion
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 
-// ⭐ NOVÉ – prostor pro křížek vpravo
+// 🟢 prostor pro křížek
 private val RemoveIconSpace = 36.dp
-
 
 @Composable
 fun WaypointField(
     index: Int,
-    value: TextFieldValue,
-    suggestions: List<LocationSuggestion>,
+    value: String,
     error: Boolean,
-    onValueChange: (TextFieldValue) -> Unit,
-    onFocusChange: (Boolean) -> Unit,
-    onSuggestionSelected: (LocationSuggestion) -> Unit,
-    onRemoveClick: () -> Unit,
-    focusRequester: FocusRequester? = null
+    onClick: () -> Unit,
+    onRemoveClick: () -> Unit
 ) {
-
-    //--------------------
-    //------UI------------
-    //--------------------
+    val errorGreen = Color(0xFF759F67)
+    val isEmpty = value.isBlank()
 
     Column {
 
-        // ⬇️ OVERLAY KONTEJNER
+        Text(
+            text = "Stop ${index + 1}",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier
+                .height(45.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF383A41))
+                .border(
+                    width = 1.5.dp,
+                    color = if (error) errorGreen else Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
                 )
+                .clickable { onClick() },
+            contentAlignment = Alignment.CenterStart
         ) {
 
-            // INPUT (beze změny)
-            LocationField(
-                label = "Stop ${index + 1}",
-                value = value,
-                onValueChange = {
-                    Log.d("WP_UI", "Typing '${it.text}'")
-                    onValueChange(it)
+            Text(
+                text = if (isEmpty) "Add stop destination" else value,
+                color = if (isEmpty) {
+                    if (error) errorGreen else Color.Gray
+                } else {
+                    Color.White
                 },
-                onFocusChange = onFocusChange,
-                error = error,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = RemoveIconSpace)
+                fontSize = 16.sp,
+                modifier = Modifier.padding(
+                    start = 12.dp,
+                    end = RemoveIconSpace
+                )
             )
 
-            // ❌ KŘÍŽEK UVNITŘ INPUTU
             Icon(
                 painter = painterResource(id = R.drawable.ic_wp_close),
                 contentDescription = "Remove stop",
                 tint = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .offset(y = 10.dp)
-                    .padding(end = 12.dp)   // ⬅️ odsazení nejdřív
-                    .size(15.dp)           // ⬅️ skutečná velikost ikony
+                    .padding(end = 12.dp)
+                    .size(15.dp)
                     .clickable { onRemoveClick() }
             )
         }
     }
-
 }
+
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-fun WaypointFieldPreview() {
+private fun WaypointFieldPreview() {
     MemoTripTheme {
+        Column(Modifier.padding(24.dp)) {
+            WaypointField(
+                index = 0,
+                value = "Vienna, Austria",
+                error = false,
+                onClick = {},
+                onRemoveClick = {}
+            )
 
-        val textState = remember {
-            mutableStateOf(TextFieldValue("Vienna, Austria"))
+            Spacer(Modifier.height(16.dp))
+
+            WaypointField(
+                index = 1,
+                value = "",
+                error = true,
+                onClick = {},
+                onRemoveClick = {}
+            )
         }
-
-        WaypointField(
-            index = 0,
-            value = textState.value,
-            suggestions = listOf(
-                LocationSuggestion(
-                    displayName = "Vienna, Austria",
-                    lat = 48.2082,
-                    lon = 16.3738
-                ),
-                LocationSuggestion(
-                    displayName = "Brno, Czech Republic",
-                    lat = 49.1951,
-                    lon = 16.6068
-                )
-            ),
-            error = false,
-            onValueChange = { textState.value = it },
-            onFocusChange = {},
-            onSuggestionSelected = {},
-            onRemoveClick = {},
-        )
     }
 }

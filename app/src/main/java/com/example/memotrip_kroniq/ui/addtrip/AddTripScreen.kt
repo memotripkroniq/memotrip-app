@@ -2,42 +2,38 @@ package com.example.memotrip_kroniq.ui.addtrip
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
-import PreviewUiScaler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.statusBarsPadding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.coroutines.flow.MutableStateFlow
 
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
-import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
+import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.data.network.HttpClientProvider
+import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
-
+import com.example.memotrip_kroniq.navigation.*
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
-import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -57,11 +53,10 @@ fun AddTripScreen(
         )
     }
 
-    val viewModel: AddTripViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+    val viewModel: AddTripViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val tripMapGenerator: TripMapGenerator =
                     RemoteTripMapGenerator(HttpClientProvider.client)
 
@@ -74,10 +69,65 @@ fun AddTripScreen(
         }
     )
 
-
     val uiState by viewModel.uiState.collectAsState()
 
-    // 🔥 OVLÁDÁNÍ DATEPICKERU
+    // ✅ REAKTIVNĚ sledujeme entry a jeho savedStateHandle
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val handle = currentBackStackEntry?.savedStateHandle
+
+    // --- výsledky z LocationSearch
+    val locationName by remember(handle) {
+        handle?.getStateFlow<String?>(LOCATION_NAME_KEY, null) ?: MutableStateFlow(null)
+    }.collectAsState()
+
+    val locationLat by remember(handle) {
+        handle?.getStateFlow<Double?>(LOCATION_LAT_KEY, null) ?: MutableStateFlow(null)
+    }.collectAsState()
+
+    val locationLon by remember(handle) {
+        handle?.getStateFlow<Double?>(LOCATION_LON_KEY, null) ?: MutableStateFlow(null)
+    }.collectAsState()
+
+    // --- a hlavně TARGET + STOP index (uložené před navigací!)
+    val targetName by remember(handle) {
+        handle?.getStateFlow<String?>(LOCATION_TARGET_KEY, null) ?: MutableStateFlow(null)
+    }.collectAsState()
+
+    // LOCATION_RESULT_KEY použijeme jako stopIndex (Int?)
+    val stopIndex by remember(handle) {
+        handle?.getStateFlow<Int?>(LOCATION_RESULT_KEY, null) ?: MutableStateFlow(null)
+    }.collectAsState()
+
+    // ✅ Jakmile dorazí komplet data, aplikujeme je do VM
+    LaunchedEffect(locationName, locationLat, locationLon, targetName, stopIndex) {
+        if (locationName == null || locationLat == null || locationLon == null) return@LaunchedEffect
+        if (targetName == null) return@LaunchedEffect
+
+        val suggestion = LocationSuggestion(
+            displayName = locationName!!,
+            lat = locationLat!!,
+            lon = locationLon!!
+        )
+
+        when (targetName) {
+            LocationTarget.FROM.name -> viewModel.onFromSuggestionSelected(suggestion)
+            LocationTarget.TO.name -> viewModel.onToSuggestionSelected(suggestion)
+            LocationTarget.STOP.name -> {
+                val index = stopIndex ?: return@LaunchedEffect
+                viewModel.onStopSuggestionSelected(index, suggestion)
+            }
+        }
+
+        // 🧹 cleanup (aby se to nespouštělo znovu)
+        handle?.apply {
+            remove<String>(LOCATION_NAME_KEY)
+            remove<Double>(LOCATION_LAT_KEY)
+            remove<Double>(LOCATION_LON_KEY)
+            remove<String>(LOCATION_TARGET_KEY)
+            remove<Int>(LOCATION_RESULT_KEY)
+        }
+    }
+
     var showDatePicker by remember { mutableStateOf(false) }
 
     Box(
@@ -87,13 +137,9 @@ fun AddTripScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                focusManager.clearFocus() // 🔥 TADY SE ODEBERE FOCUS
+                focusManager.clearFocus()
             }
     ) {
-
-        // ─────────────────────
-        // 🧱 HLAVNÍ OBSAH
-        // ─────────────────────
         Scaffold(
             containerColor = Color.Black,
             topBar = {
@@ -110,7 +156,6 @@ fun AddTripScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .padding(horizontal = 16f.sx(s)),
-
                 uiState = uiState,
 
                 onTripNameChange = viewModel::onTripNameChange,
@@ -122,9 +167,6 @@ fun AddTripScreen(
 
                 onFromLocationChange = viewModel::onFromLocationChange,
                 onToLocationChange = viewModel::onToLocationChange,
-                onFromFocusChange = viewModel::onFromFocusChanged,
-                onToFocusChange = viewModel::onToFocusChanged,
-                onStopFocusChange = viewModel::onStopFocusChanged,
                 onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
                 onToSuggestionSelected = viewModel::onToSuggestionSelected,
                 onAddStop = viewModel::onAddStop,
@@ -134,85 +176,38 @@ fun AddTripScreen(
 
                 onTransportSelectionChange = viewModel::onTransportSelectionChange,
 
-                onGenerateMapClick = viewModel::generateTripMap, // ✅ HERO
-                onCreateClick = viewModel::onCreateClick            // ✅ CREATE (validace)
-            )
+                onGenerateMapClick = viewModel::generateTripMap,
+                onCreateClick = viewModel::onCreateClick,
 
+                // ✅ ukládáme TARGET do savedStateHandle (ne do remember!)
+                onFromClick = {
+                    handle?.set(LOCATION_TARGET_KEY, LocationTarget.FROM.name)
+                    handle?.remove<Int>(LOCATION_RESULT_KEY)
+                    navController.navigate(Screen.LocationSearch.route)
+                },
+                onToClick = {
+                    handle?.set(LOCATION_TARGET_KEY, LocationTarget.TO.name)
+                    handle?.remove<Int>(LOCATION_RESULT_KEY)
+                    navController.navigate(Screen.LocationSearch.route)
+                },
+                onStopClick = { index ->
+                    handle?.set(LOCATION_TARGET_KEY, LocationTarget.STOP.name)
+                    handle?.set(LOCATION_RESULT_KEY, index) // stopIndex
+                    navController.navigate(Screen.LocationSearch.route)
+                }
+            )
         }
 
-
-        // ─────────────────────
-        // 📅 DATE PICKER OVERLAY
-        // ─────────────────────
         if (showDatePicker) {
             AddTripDatePickerOverlay(
                 initialStartDate = uiState.tripStartDate,
                 initialEndDate = uiState.tripEndDate,
                 onDismiss = { showDatePicker = false },
-                onConfirm = { range ->
-                    viewModel.onDateSelected(range)
+                onConfirm = {
+                    viewModel.onDateSelected(it)
                     showDatePicker = false
                 }
             )
         }
     }
 }
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true, widthDp = 412, heightDp = 1110)
-@Composable
-fun AddTripScreenPreview() {
-    CompositionLocalProvider(
-        LocalUiScaler provides PreviewUiScaler
-    ) {
-        MemoTripTheme {
-            Scaffold(
-                containerColor = Color.Black,
-                topBar = {
-                    AppTopBar(
-                        title = "Add Trip",
-                        showBack = true,
-                        onBackClick = {}
-                    )
-                }
-            ) { innerPadding ->
-                AddTripContent(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .padding(horizontal = 16f.sx(LocalUiScaler.current)),
-                    uiState = AddTripUiState(
-                        isThemesLocked = false,   // 🔓 ODEMČENO
-                        selectedTheme = null,
-                        destination = Destination.EUROPE,
-                        transport = emptySet()
-                        // transport = setOf(TransportType.CARAVAN)
-                        // transport = setOf(TransportType.CAR, TransportType.CARAVAN)
-                    ),
-                    onTripNameChange = {},
-                    onCoverPhotoSelected = {},
-                    //generatedMapImageUrl = null,
-                    onDestinationSelected = {},
-                    onThemeSelected = {},
-                    onDateClick = {},
-                    onFromLocationChange = {},
-                    onToLocationChange = {},
-                    onFromFocusChange = {},
-                    onToFocusChange = {},
-                    onStopFocusChange = { _, _ -> },
-                    onFromSuggestionSelected = {},
-                    onToSuggestionSelected = {},
-                    onAddStop = {},
-                    onRemoveStop = {},
-                    onStopLocationChange = { _, _ -> },
-                    onStopSuggestionSelected = { _, _ -> },
-                    onTransportSelectionChange = {},
-                    onGenerateMapClick = {},
-                    onCreateClick = {}
-                )
-            }
-        }
-    }
-}
-
-
-

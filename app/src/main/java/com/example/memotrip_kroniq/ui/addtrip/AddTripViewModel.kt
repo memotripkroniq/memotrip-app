@@ -304,18 +304,17 @@ class AddTripViewModel(
         _uiState.update { state ->
             if (state.stops.size >= 3) return@update state
 
-            val newIndex = state.stops.size
-
             state.copy(
                 stops = state.stops + TextFieldValue(""),
                 stopSuggestions = state.stopSuggestions + emptyList(),
                 showStopErrors = state.showStopErrors + false,
-                focusedStopIndex = newIndex,   // ✅ fokus na nový WP
+                focusedStopIndex = state.stops.size,
                 isFromFocused = false,
                 isToFocused = false
             )
         }
     }
+
 
 
     // 🆕 WAYPOINTS – REMOVE
@@ -395,6 +394,9 @@ class AddTripViewModel(
     // 🆕 WAYPOINTS – SELECT SUGGESTION
     fun onStopSuggestionSelected(index: Int, suggestion: LocationSuggestion) {
         _uiState.update { state ->
+
+            if (index !in state.stops.indices) return@update state
+
             val updatedStops = state.stops.toMutableList().apply {
                 this[index] = TextFieldValue(
                     text = suggestion.displayName,
@@ -402,9 +404,14 @@ class AddTripViewModel(
                 )
             }
 
-            val updatedSuggestions = state.stopSuggestions.toMutableList().apply {
-                this[index] = emptyList()
-            }
+            val updatedSuggestions =
+                if (index in state.stopSuggestions.indices) {
+                    state.stopSuggestions.toMutableList().apply {
+                        this[index] = emptyList()
+                    }
+                } else {
+                    state.stopSuggestions
+                }
 
             state.copy(
                 stops = updatedStops,
