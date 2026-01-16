@@ -16,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
@@ -32,6 +34,9 @@ import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.addtrip.utils.scrollToFirstAddTripError
+import com.example.memotrip_kroniq.ui.addtrip.utils.AddTripScrollIndexMap
+import com.example.memotrip_kroniq.ui.addtrip.utils.resolveFirstAddTripScrollTarget
+
 
 import java.io.File
 
@@ -160,65 +165,62 @@ fun AddTripContent(
         }
 
         item {
-            LocationField(
-                label = "From",
-                value = uiState.fromLocation.text,
-                error = uiState.showFromLocationError,
-                onClick = onFromClick
-            )
 
+            Column {
 
-            LocationSuggestionsDropdown(
-                suggestions = uiState.fromSuggestions,
-                onSelect = onFromSuggestionSelected
-            )
+                // FROM – klikneš jen na input
+                LocationField(
+                    label = "From",
+                    value = uiState.fromLocation.text,
+                    error = uiState.showFromLocationError,
+                    onClick = onFromClick,
+                    bottomSpacing = 4.dp
+                )
+
+                // ADD STOP – NIC HO NEPŘEKRÝVÁ
+                if (uiState.stops.size < 3) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 12.dp)
+                            .offset(y = (-1).dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        AddStopButton(
+                            visible = true,
+                            onClick = onAddStop
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(0.dp))
+
+                // WAYPOINTY
+                uiState.stops.forEachIndexed { index, stop ->
+                    WaypointField(
+                        index = index,
+                        value = stop.text,
+                        error = uiState.showStopErrors.getOrNull(index) == true,
+                        onClick = { onStopClick(index) },
+                        onRemoveClick = { onRemoveStop(index) }
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+                }
+
+                LocationField(
+                    label = "To",
+                    value = uiState.toLocation.text,
+                    error = uiState.showToLocationError,
+                    onClick = onToClick,
+                    modifier = Modifier.offset(y = (-10).dp)
+                )
+            }
         }
+
 
         item {
-            AddStopButton(
-                visible = uiState.stops.size < 3,
-                onClick = onAddStop
-            )
-        }
-
-        items(uiState.stops.size) { index ->
-            val value = uiState.stops[index]
-
-            Spacer(Modifier.height(12f.sy(s)))
-
-            WaypointField(
-                index = index,
-                value = uiState.stops[index].text,
-                error = uiState.showStopErrors.getOrNull(index) == true,
-                onClick = { onStopClick(index) },
-                onRemoveClick = { onRemoveStop(index) }
-            )
-
-
-            LocationSuggestionsDropdown(
-                suggestions = uiState.stopSuggestions.getOrNull(index) ?: emptyList(),
-                onSelect = { onStopSuggestionSelected(index, it) }
-            )
-        }
-
-        item {
-            Spacer(Modifier.height(12f.sy(s)))
-
-            LocationField(
-                label = "To",
-                value = uiState.toLocation.text,
-                error = uiState.showToLocationError,
-                onClick = onToClick
-            )
-
-            LocationSuggestionsDropdown(
-                suggestions = uiState.toSuggestions,
-                onSelect = onToSuggestionSelected
-            )
-        }
-
-        item {
-            Spacer(Modifier.height(20f.sy(s)))
+            Spacer(Modifier.height(6f.sy(s)))
 
             TransportSelector(
                 selected = uiState.transport,
@@ -256,11 +258,12 @@ fun AddTripContent(
         uiState.showToLocationError,
         uiState.showTransportError
     ) {
-        scrollToFirstAddTripError(
-            listState = listState,
-            uiState = uiState
-        )
+        val target = resolveFirstAddTripScrollTarget(uiState) ?: return@LaunchedEffect
+        val index = AddTripScrollIndexMap[target] ?: return@LaunchedEffect
+
+        listState.animateScrollToItem(index)
     }
+
 
     if (showPhotoActionSheet) {
         AddTripPhotoOverlay(

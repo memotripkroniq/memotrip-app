@@ -108,7 +108,7 @@ fun HomeScreenPreview() {
             // ⚠️ NavController v preview NEPOTŘEBUJEME
             HomeScreen(
                 navController = null,
-                initialTab = HomeTab.THEMES
+                initialTab = HomeTab.TRIP_HISTORY
                 // zkus klidně i:
                 // initialTab = HomeTab.TRIP_HISTORY
             )

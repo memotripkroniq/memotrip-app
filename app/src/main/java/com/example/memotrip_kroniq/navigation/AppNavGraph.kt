@@ -42,6 +42,8 @@ sealed class Screen(val route: String) {
     object ForgotPassword : Screen("forgot_password")
     object AddTrip : Screen("add_trip")
     object LocationSearch : Screen("location_search")
+    object SavingTrip : Screen("saving_trip")
+    object TripSuccess : Screen("trip_success")
 }
 
 enum class LocationTarget {

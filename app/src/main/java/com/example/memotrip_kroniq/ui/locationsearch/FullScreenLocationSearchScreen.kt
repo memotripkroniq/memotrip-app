@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerShadow
 import com.example.memotrip_kroniq.ui.core.*
+import androidx.compose.runtime.collectAsState
+
 
 
 @Composable
@@ -69,7 +71,12 @@ fun FullScreenLocationSearchScreen(
 
             Spacer(Modifier.height(8.dp))
 
+            val query by viewModel.query.collectAsState()
             when {
+                query.length < 4 -> {
+                    // ⛔ nic nezobrazujeme
+                }
+
                 isLoading -> {
                     InfoRow("Searching…")
                 }
@@ -117,18 +124,18 @@ private fun SearchInput(
             .height(45f.sy(s))
             .clip(RoundedCornerShape(8.dp))
             .background(Color(0xFF353D4E))
-            .border(
-                width = 1.5.dp,
-                color = Color(0xFF747781),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .innerShadow(
-                color = Color.White,
-                offsetX = 0f,
-                offsetY = 1f,
-                blur = 2f,
-                cornerRadius = 10f
-            )
+            //.border(
+            //    width = 1.5.dp,
+            //    color = Color(0xFF747781),
+            //    shape = RoundedCornerShape(10.dp)
+            //)
+            //.innerShadow(
+            //    color = Color.White,
+            //    offsetX = 0f,
+            //    offsetY = 1f,
+            //    blur = 2f,
+            //    cornerRadius = 10f
+            //)
             .padding(horizontal = 16f.sx(s)),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -153,7 +160,7 @@ private fun SearchInput(
                 ) {
                     if (text.isBlank()) {
                         Text(
-                            text = "Search city, place…",
+                            text = "Add location",
                             color = Color(0xFFB5BEC7),
                             fontSize = 16f.fs(s)
                         )

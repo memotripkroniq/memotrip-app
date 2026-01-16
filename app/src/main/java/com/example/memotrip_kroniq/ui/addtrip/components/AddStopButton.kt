@@ -19,13 +19,14 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 @Composable
 fun AddStopButton(
     visible: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     if (!visible) return
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
+            .wrapContentWidth()
             .padding(top = 5.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically

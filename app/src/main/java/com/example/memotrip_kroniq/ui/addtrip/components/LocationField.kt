@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.R
@@ -27,13 +28,17 @@ fun LocationField(
     value: String,
     error: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomSpacing: Dp = 0.dp
 ) {
     val errorGreen = Color(0xFF759F67)
     val isEmpty = value.isBlank()
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.padding(bottom = bottomSpacing)
+    ) {
 
+        // LABEL – NENÍ KLIKATELNÝ
         Text(
             text = label,
             color = Color.White,
@@ -42,6 +47,7 @@ fun LocationField(
             modifier = Modifier.padding(bottom = 4.dp)
         )
 
+        // INPUT BOX – JEDINÉ KLIKATELNÉ MÍSTO
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -53,7 +59,7 @@ fun LocationField(
                     color = if (error) errorGreen else Color.Transparent,
                     shape = RoundedCornerShape(10.dp)
                 )
-                .clickable { onClick() }
+                .clickable(onClick = onClick)   // ✅ jen input
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -73,7 +79,7 @@ fun LocationField(
 
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = "Select location",
+                contentDescription = null,
                 tint = errorGreen
             )
         }
