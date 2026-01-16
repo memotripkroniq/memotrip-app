@@ -1,5 +1,6 @@
 package com.example.memotrip_kroniq.ui.locationsearch
 
+import PreviewUiScaler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +25,8 @@ import com.example.memotrip_kroniq.navigation.*
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerShadow
 import com.example.memotrip_kroniq.ui.core.*
 
@@ -31,10 +34,12 @@ import com.example.memotrip_kroniq.ui.core.*
 @Composable
 fun FullScreenLocationSearchScreen(
     navController: NavHostController,
-    viewModel: LocationSearchViewModel
+    viewModel: LocationSearchViewModel,
+    modifier: Modifier = Modifier
 ) {
     val suggestions by viewModel.suggestions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val s = LocalUiScaler.current
 
     Column(
         modifier = Modifier
@@ -42,48 +47,56 @@ fun FullScreenLocationSearchScreen(
             .background(Color.Black)
     ) {
 
+        // 🔹 TOP BAR – full width (správně)
         AppTopBar(
             title = "Search location",
             showBack = true,
             onBackClick = { navController.popBackStack() }
         )
 
-        Spacer(Modifier.height(12.dp))
+        // 🔹 CONTENT WRAPPER – JEDNOTNÉ ODSAZENÍ JAKO AddTripScreen
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16f.sx(s))
+        ) {
 
-        SearchInput(
-            onQueryChange = viewModel::onQueryChange
-        )
+            Spacer(Modifier.height(12.dp))
 
-        Spacer(Modifier.height(8.dp))
+            SearchInput(
+                onQueryChange = viewModel::onQueryChange
+            )
 
-        when {
-            isLoading -> {
-                InfoRow("Searching…")
-            }
+            Spacer(Modifier.height(8.dp))
 
-            suggestions.isEmpty() -> {
-                InfoRow("No results")
-            }
+            when {
+                isLoading -> {
+                    InfoRow("Searching…")
+                }
 
-            else -> {
-                LazyColumn {
-                    items(suggestions) { suggestion ->
-                        LocationSearchRow(
-                            suggestion = suggestion,
-                            onClick = {
-                                // 🔑 JEDINÝ SPRÁVNÝ ZPŮSOB
-                                val addTripEntry =
-                                    navController.getBackStackEntry(Screen.AddTrip.route)
+                suggestions.isEmpty() -> {
+                    InfoRow("No results")
+                }
 
-                                addTripEntry.savedStateHandle.apply {
-                                    set(LOCATION_NAME_KEY, suggestion.displayName)
-                                    set(LOCATION_LAT_KEY, suggestion.lat)
-                                    set(LOCATION_LON_KEY, suggestion.lon)
+                else -> {
+                    LazyColumn {
+                        items(suggestions) { suggestion ->
+                            LocationSearchRow(
+                                suggestion = suggestion,
+                                onClick = {
+                                    val addTripEntry =
+                                        navController.getBackStackEntry(Screen.AddTrip.route)
+
+                                    addTripEntry.savedStateHandle.apply {
+                                        set(LOCATION_NAME_KEY, suggestion.displayName)
+                                        set(LOCATION_LAT_KEY, suggestion.lat)
+                                        set(LOCATION_LON_KEY, suggestion.lon)
+                                    }
+
+                                    navController.popBackStack()
                                 }
-
-                                navController.popBackStack()
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -163,7 +176,7 @@ private fun LocationSearchRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(vertical = 12.dp) // ✅ bez horizontal
     ) {
         Text(
             text = suggestion.displayName,
@@ -172,6 +185,7 @@ private fun LocationSearchRow(
         )
     }
 }
+
 
 @Composable
 private fun InfoRow(text: String) {
@@ -186,5 +200,65 @@ private fun InfoRow(text: String) {
             color = Color.Gray,
             fontSize = 14.sp
         )
+    }
+}
+
+@Preview(
+    showBackground = true,
+    widthDp = 412,
+    heightDp = 892
+)
+@Composable
+private fun FullScreenLocationSearchScreenPreview() {
+    CompositionLocalProvider(
+        LocalUiScaler provides PreviewUiScaler
+    ) {
+        FakeFullScreenLocationSearchScreen()
+    }
+}
+
+@Composable
+private fun FakeFullScreenLocationSearchScreen() {
+    val s = LocalUiScaler.current
+
+    val fakeSuggestions = listOf(
+        LocationSuggestion("Rome, Italy", 41.9, 12.5),
+        LocationSuggestion("Roma Termini", 41.9, 12.5),
+        LocationSuggestion("Rome Airport (FCO)", 41.8, 12.2)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // TOP BAR = full width (stejně jako v appce)
+        AppTopBar(
+            title = "Search location",
+            showBack = true,
+            onBackClick = {}
+        )
+
+        // ✅ WRAPPER s paddingem stejně jako AddTripScreen
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16f.sx(s))
+        ) {
+            Spacer(Modifier.height(12.dp))
+
+            SearchInput(onQueryChange = {})
+
+            Spacer(Modifier.height(8.dp))
+
+            LazyColumn {
+                items(fakeSuggestions) { suggestion ->
+                    LocationSearchRow(
+                        suggestion = suggestion,
+                        onClick = {}
+                    )
+                }
+            }
+        }
     }
 }
