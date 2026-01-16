@@ -26,10 +26,13 @@ import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
 import com.example.memotrip_kroniq.data.network.HttpClientProvider
 import com.example.memotrip_kroniq.ui.addtrip.AddTripScreen
+import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
+import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.auth.ForgotPasswordScreen
 import com.example.memotrip_kroniq.ui.auth.LoginScreen
 import com.example.memotrip_kroniq.ui.auth.SignUpScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
+import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
@@ -38,7 +41,9 @@ sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Login : Screen("login")
     object SignUp : Screen("signup")
-    object Home : Screen("home")
+    object Home : Screen("home?tab={tab}") {
+        fun createRoute(tab: HomeTab) = "home?tab=${tab.name}"
+    }
     object ForgotPassword : Screen("forgot_password")
     object AddTrip : Screen("add_trip")
     object LocationSearch : Screen("location_search")
@@ -160,9 +165,20 @@ fun AppNavGraph(navController: NavHostController) {
             route = Screen.Home.route,
             enterTransition = { defaultEnter(initialState, targetState) },
             exitTransition = { defaultExit(initialState, targetState) }
-        ) {
-            HomeScreen(navController = navController)
+        ) { backStackEntry ->
+
+            val tabName = backStackEntry.arguments?.getString("tab")
+
+            val initialTab = HomeTab.values()
+                .firstOrNull { it.name == tabName }
+                ?: HomeTab.THEMES
+
+            HomeScreen(
+                navController = navController,
+                initialTab = initialTab
+            )
         }
+
 
         // =============================================================
         // ⭐ ADD TRIP
@@ -174,8 +190,8 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         // =============================================================
-// ⭐ LOCATION SEARCH (FULLSCREEN)
-// =============================================================
+        // ⭐ LOCATION SEARCH (FULLSCREEN)
+        // =============================================================
         composable(Screen.LocationSearch.route) {
 
             val vm: LocationSearchViewModel = viewModel(
@@ -193,6 +209,23 @@ fun AppNavGraph(navController: NavHostController) {
                 viewModel = vm
             )
         }
+
+        // =============================================================
+        // ⭐ SAVING TRIP
+        // =============================================================
+        composable(Screen.SavingTrip.route) {
+            SavingTripScreen()
+        }
+
+        // =============================================================
+        // ⭐ TRIP SUCCESS
+        // =============================================================
+        composable(Screen.TripSuccess.route) {
+            TripSuccessScreen(
+                navController = navController
+            )
+        }
+
     }
 }
 

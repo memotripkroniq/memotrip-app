@@ -101,7 +101,8 @@ data class AddTripUiState(
     val showDateError: Boolean = false,
     val showFromLocationError: Boolean = false,
     val showToLocationError: Boolean = false,
-    val showTransportError: Boolean = false
+    val showTransportError: Boolean = false,
+    val flowState: AddTripFlowState = AddTripFlowState.IDLE// 🔁 FLOW STATE (saving → success)
 )
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 892)

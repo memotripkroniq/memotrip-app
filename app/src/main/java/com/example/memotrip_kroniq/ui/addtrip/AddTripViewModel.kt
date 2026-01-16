@@ -468,7 +468,6 @@ class AddTripViewModel(
         val state = _uiState.value
         val areStopsValid = validateStops()
 
-        // 🔴 validace (STEJNÁ JAKO TEĎ – OK)
         val hasTripNameError = state.tripName.isBlank()
         val hasDestinationError = state.destination == null
         val hasDateError = state.tripStartDate == null || state.tripEndDate == null
@@ -498,8 +497,68 @@ class AddTripViewModel(
             return
         }
 
-        // ✅ TADY UŽ SE MAPA NEGENERUJE
-        // tady bude save / pokračování flow
+        // 🟢 TADY ZAČÍNÁ SAVE FLOW
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(flowState = AddTripFlowState.SAVING)
+            }
+
+            try {
+                // ⏳ simulace BE (zatím)
+                delay(1200)
+
+                // TODO: tady bude reálný saveTrip() na BE
+
+                // ✅ ÚSPĚCH
+                _uiState.update {
+                    it.copy(flowState = AddTripFlowState.SUCCESS)
+                }
+
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        flowState = AddTripFlowState.IDLE,
+                        errorMessage = e.message
+                    )
+                }
+            }
+        }
     }
+
+
+    private fun saveTrip() {
+        viewModelScope.launch {
+
+            // 1️⃣ přepnutí do SAVING
+            _uiState.update {
+                it.copy(
+                    flowState = AddTripFlowState.SAVING,
+                    errorMessage = null
+                )
+            }
+
+            try {
+                // 2️⃣ zavolání BE (zatím placeholder)
+                // TODO: tady později napojíš skutečné API
+                delay(1200) // simulace uložení
+
+                // 3️⃣ success
+                _uiState.update {
+                    it.copy(
+                        flowState = AddTripFlowState.SUCCESS
+                    )
+                }
+
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        flowState = AddTripFlowState.ERROR,
+                        errorMessage = e.message ?: "Trip saving failed"
+                    )
+                }
+            }
+        }
+    }
+
 
 }
