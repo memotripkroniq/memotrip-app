@@ -46,7 +46,7 @@ class AuthRepository(
             )
 
             // 2️⃣ ULOŽ TOKEN – MUSÍ DOBĚHNOUT
-            tokenStore.saveAccessToken(response.access_token)
+            tokenStore.saveAccessToken(response.accessToken)
 
             // 🔥 3️⃣ TEPRVE TEĎ /me
             return api.getMe()

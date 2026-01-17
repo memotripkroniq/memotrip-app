@@ -1,3 +1,3 @@
 data class LoginResponse(
-    val access_token: String
+    val accessToken: String
 )
