@@ -18,12 +18,20 @@ import kotlinx.coroutines.delay
 import android.util.Log
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
+import com.example.memotrip_kroniq.data.trips.TripsRepository
 
 
+//class AddTripViewModel(
+//    private val authRepository: AuthRepository,
+//    private val locationSearchRepository: LocationSearchRepository,
+//    private val tripMapGenerator: TripMapGenerator
+//) : ViewModel() {
 class AddTripViewModel(
-    private val authRepository: AuthRepository,
-    private val locationSearchRepository: LocationSearchRepository,
-    private val tripMapGenerator: TripMapGenerator
+    private val tripsRepository: TripsRepository,
+    private val authRepository: AuthRepository? = null,
+    private val locationSearchRepository: LocationSearchRepository? = null,
+    private val tripMapGenerator: TripMapGenerator? = null
 ) : ViewModel() {
 
     companion object {
@@ -38,14 +46,19 @@ class AddTripViewModel(
 
 
     init {
-        _uiState.update { it.copy(isLoading = true) }
-        loadMe()
+        if (authRepository != null) {
+            _uiState.update { it.copy(isLoading = true) }
+            loadMe()
+        }
     }
+
 
     // ─────────────────────────
     // 🔐 USER / PREMIUM
     // ─────────────────────────
     private fun loadMe() {
+        val repo = authRepository ?: return
+
         viewModelScope.launch {
             try {
                 val me = authRepository.getMe()
@@ -111,6 +124,12 @@ class AddTripViewModel(
     }
 
     fun generateTripMap() {
+
+        if (tripMapGenerator == null) {
+            Log.w(TAG, "TripMapGenerator not provided yet")
+            return
+        }
+
         val state = _uiState.value
 
         // 🔴 ZMĚNA: tichá validace – ŽÁDNÉ showXxxError
@@ -175,6 +194,8 @@ class AddTripViewModel(
     }
 
     fun onFromLocationChange(value: TextFieldValue) {
+        if (locationSearchRepository == null) return
+
         _uiState.update { it.copy(
             fromLocation = value,
             isMapDirty = true,
@@ -250,6 +271,8 @@ class AddTripViewModel(
     }
 
     fun onToLocationChange(value: TextFieldValue) {
+        if (locationSearchRepository == null) return
+
         _uiState.update { it.copy(
             toLocation = value,
             isMapDirty = true,
@@ -333,6 +356,8 @@ class AddTripViewModel(
 
     // 🆕 WAYPOINTS – TEXT CHANGE + SEARCH
     fun onStopLocationChange(index: Int, value: TextFieldValue) {
+        if (locationSearchRepository == null) return
+
         Log.d("WP_SEARCH", "index=$index text='${value.text}'")
 
         _uiState.update { state ->
@@ -496,40 +521,13 @@ class AddTripViewModel(
             }
             return
         }
-
-        // 🟢 TADY ZAČÍNÁ SAVE FLOW
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(flowState = AddTripFlowState.SAVING)
-            }
-
-            try {
-                // ⏳ simulace BE (zatím)
-                delay(1200)
-
-                // TODO: tady bude reálný saveTrip() na BE
-
-                // ✅ ÚSPĚCH
-                _uiState.update {
-                    it.copy(flowState = AddTripFlowState.SUCCESS)
-                }
-
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        flowState = AddTripFlowState.IDLE,
-                        errorMessage = e.message
-                    )
-                }
-            }
-        }
+        saveTrip()
     }
 
 
     private fun saveTrip() {
         viewModelScope.launch {
 
-            // 1️⃣ přepnutí do SAVING
             _uiState.update {
                 it.copy(
                     flowState = AddTripFlowState.SAVING,
@@ -538,15 +536,24 @@ class AddTripViewModel(
             }
 
             try {
-                // 2️⃣ zavolání BE (zatím placeholder)
-                // TODO: tady později napojíš skutečné API
-                delay(1200) // simulace uložení
+                val state = _uiState.value
 
-                // 3️⃣ success
+                val request = CreateTripRequest(
+                    name = state.tripName,
+                    destination = state.destination!!.name,
+                    dateFrom = state.tripStartDate!!.toString(),
+                    dateTo = state.tripEndDate!!.toString(),
+                    from = state.fromLocation.text,
+                    to = state.toLocation.text,
+                    transport = state.transport.first().name,
+                    waypoints = state.stops.map { it.text },
+                    theme = state.selectedTheme?.name
+                )
+
+                tripsRepository.createTrip(request)
+
                 _uiState.update {
-                    it.copy(
-                        flowState = AddTripFlowState.SUCCESS
-                    )
+                    it.copy(flowState = AddTripFlowState.SUCCESS)
                 }
 
             } catch (e: Exception) {
@@ -559,6 +566,4 @@ class AddTripViewModel(
             }
         }
     }
-
-
 }

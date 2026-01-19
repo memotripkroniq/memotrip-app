@@ -11,11 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
+import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
@@ -36,14 +39,27 @@ fun HomeScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // 🔐 JEDEN TokenDataStore (STEJNÝ VZOR)
-    val tokenStore = remember { TokenDataStore(context) }
+    val navBackStackEntry = navController?.currentBackStackEntryAsState()
 
-    // 🔌 Repository
-    val repository = remember {
+    val tokenStore = remember { TokenDataStore(context) }
+    RetrofitClient.build(tokenStore)
+
+
+
+    //// 🔐 JEDEN TokenDataStore
+    //val tokenStore = remember { TokenDataStore(context) }
+
+    // 🔌 Repositories až POTOM
+    val authRepository = remember {
         AuthRepository(
-            api = RetrofitClient.api,
+            api = RetrofitClient.authApi,
             tokenStore = tokenStore
+        )
+    }
+
+    val tripsRepository = remember {
+        TripsRepository(
+            api = RetrofitClient.tripsApi
         )
     }
 
@@ -53,13 +69,14 @@ fun HomeScreen(
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return HomeViewModel(
-                    authRepository = repository
+                    authRepository = authRepository,
+                    tripsRepository = tripsRepository
                 ) as T
             }
         }
     )
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     fun logout() {
         coroutineScope.launch {
@@ -85,15 +102,18 @@ fun HomeScreen(
         // 🔥🔥🔥 ZMĚNA #2 – HomeContent je čistý obsah
         HomeContent(
             modifier = Modifier
-                .padding(innerPadding)           // 🔥 respektuje topBar
-                .padding(horizontal = 16f.sx(s)), // 🔥 původní padding
+                .padding(innerPadding)
+                .padding(horizontal = 16f.sx(s)),
             selectedTab = selectedTab,
             isThemesLocked = uiState.isThemesLocked,
+            trips = uiState.trips,
+            isTripsLoading = uiState.isTripsLoading,
             onTabSelected = { selectedTab = it },
             onAddTripClick = {
                 navController?.navigate(Screen.AddTrip.route)
             }
         )
+
     }
 }
 

@@ -21,9 +21,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Inicializace RetrofitClientu s TokenDataStore
-        RetrofitClient.init(
-            TokenDataStore(applicationContext)
-        )
+        //RetrofitClient.build(
+        //    TokenDataStore(applicationContext)
+        //)
 
         // Fullscreen edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(window, false)

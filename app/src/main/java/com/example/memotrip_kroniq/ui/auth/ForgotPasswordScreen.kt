@@ -44,7 +44,7 @@ fun ForgotPasswordScreen(
     // 🔌 Repository
     val repository = remember {
         AuthRepository(
-            api = RetrofitClient.api,
+            api = RetrofitClient.authApi,
             tokenStore = tokenStore
         )
     }

@@ -11,68 +11,58 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val TAG = "RetrofitClient"
+    private var retrofit: Retrofit? = null
 
-    private lateinit var tokenStore: TokenDataStore
+    fun build(tokenStore: TokenDataStore) {
+        if (retrofit != null) return
 
-    fun init(tokenDataStore: TokenDataStore) {
-        tokenStore = tokenDataStore
-    }
+        Log.d("RetrofitClient", "🔌 USING BASE_URL = ${BuildConfig.BASE_URL}")
 
-    // BuildConfig už obsahuje správnou URL podle flavoru
-    private val BASE_URL: String = BuildConfig.BASE_URL.also {
-        Log.d(TAG, "🔌 USING BASE_URL → $it")
-    }
-
-    // 🟢 OKHTTP CLIENT S AUTORIZACÍ
-    private val okHttp: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-
-            // =========================
-            // 🔐 AUTH INTERCEPTOR
-            // =========================
+        val okHttp = OkHttpClient.Builder()
             .addInterceptor { chain ->
-                val originalRequest = chain.request()
-
                 val token = runBlocking {
                     tokenStore.accessToken.first()
                 }
 
-                val authorizedRequest =
-                    if (!token.isNullOrEmpty()) {
-                        Log.d(TAG, "🔐 Authorization: Bearer $token")
+                Log.d("RetrofitClient", "🔐 ACCESS TOKEN = ${token?.take(20)}")
 
-                        originalRequest.newBuilder()
-                            .addHeader("Authorization", "Bearer $token")
-                            .build()
-                    } else {
-                        originalRequest
-                    }
+                val request = if (!token.isNullOrEmpty()) {
+                    Log.d("RetrofitClient", "➡️ ADDING Authorization header")
+                    chain.request().newBuilder()
+                        .addHeader("Authorization", "Bearer $token")
+                        .build()
+                } else {
+                    Log.w("RetrofitClient", "⚠️ NO TOKEN, sending request WITHOUT auth")
+                    chain.request()
+                }
 
-                chain.proceed(authorizedRequest)
+                chain.proceed(request)
             }
-
-            // =========================
-            // 🔍 LOG INTERCEPTOR (TVŮJ)
-            // =========================
             .addInterceptor { chain ->
-                val response = chain.proceed(chain.request())
+                val request = chain.request()
+                val response = chain.proceed(request)
 
-                val rawBody = response.peekBody(Long.MAX_VALUE).string()
-                Log.d(TAG, "🔥 RAW RESPONSE BODY: $rawBody")
+                if (request.url.encodedPath.contains("trips")) {
+                    val body = response.peekBody(Long.MAX_VALUE).string()
+                    Log.d("RetrofitClient", "📦 /trips RESPONSE = $body")
+                }
 
                 response
             }
 
             .build()
-    }
 
-    val api: AuthApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL) // musí končit '/'
+        retrofit = Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
             .client(okHttp)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApi::class.java)
     }
+
+    val authApi: AuthApi
+        get() = retrofit!!.create(AuthApi::class.java)
+
+    val tripsApi: TripsApi
+        get() = retrofit!!.create(TripsApi::class.java)
 }
+

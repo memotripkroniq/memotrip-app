@@ -22,6 +22,7 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.home.components.*
+import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,8 @@ fun HomeContent(
     modifier: Modifier = Modifier,
     selectedTab: HomeTab,
     isThemesLocked: Boolean,
+    trips: List<TripHistoryItem>,
+    isTripsLoading: Boolean,
     onTabSelected: (HomeTab) -> Unit,
     onAddTripClick: () -> Unit
 ) {
@@ -63,7 +66,17 @@ fun HomeContent(
                 ThemesGrid(locked = isThemesLocked)
             }
             HomeTab.TRIP_HISTORY -> {
-                TripHistoryEmptyContent()
+                when {
+                    isTripsLoading -> {
+                        TripHistoryLoadingContent() // klidně jen loader
+                    }
+                    trips.isEmpty() -> {
+                        TripHistoryEmptyContent()
+                    }
+                    else -> {
+                        TripHistoryList(trips = trips)
+                    }
+                }
             }
         }
     }
@@ -82,8 +95,21 @@ fun HomeContentPreview_TripHistory() {
     ) {
         MemoTripTheme {
             HomeContent(
-                selectedTab = HomeTab.THEMES,
+                selectedTab = HomeTab.TRIP_HISTORY,
                 isThemesLocked = false,
+                trips = listOf(
+                    TripHistoryItem(
+                        id = "1",
+                        title = "Trip to Italy",
+                        coverImageUrl = null
+                    ),
+                    TripHistoryItem(
+                        id = "2",
+                        title = "Skiing Alps",
+                        coverImageUrl = "https://picsum.photos/400/200"
+                    )
+                ),
+                isTripsLoading = false,
                 onTabSelected = {},
                 onAddTripClick = {}
             )

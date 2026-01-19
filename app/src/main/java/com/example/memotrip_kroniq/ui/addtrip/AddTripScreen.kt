@@ -26,6 +26,7 @@ import com.example.memotrip_kroniq.data.network.HttpClientProvider
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
+import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.navigation.*
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
 import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
@@ -48,24 +49,19 @@ fun AddTripScreen(
     // ─────────────────────────────
     val tokenStore = remember { TokenDataStore(context) }
 
-    val repository = remember {
-        AuthRepository(
-            api = RetrofitClient.api,
-            tokenStore = tokenStore
+    val tripsRepository = remember {
+        TripsRepository(
+            api = RetrofitClient.tripsApi
         )
     }
+
 
     val viewModel: AddTripViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val tripMapGenerator: TripMapGenerator =
-                    RemoteTripMapGenerator(HttpClientProvider.client)
-
                 return AddTripViewModel(
-                    authRepository = repository,
-                    locationSearchRepository = LocationSearchRepository(HttpClientProvider.client),
-                    tripMapGenerator = tripMapGenerator
+                    tripsRepository = tripsRepository
                 ) as T
             }
         }

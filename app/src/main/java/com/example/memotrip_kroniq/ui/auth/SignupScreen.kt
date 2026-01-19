@@ -46,7 +46,7 @@ fun SignUpScreen(
     // 🔌 Repository (už s tokenStore)
     val repository = remember {
         AuthRepository(
-            api = RetrofitClient.api,
+            api = RetrofitClient.authApi,
             tokenStore = tokenStore
         )
     }

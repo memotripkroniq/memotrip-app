@@ -10,6 +10,6 @@ class MemoTripApp : Application() {
         super.onCreate()
 
         val tokenStore = TokenDataStore(this)
-        RetrofitClient.init(tokenStore)
+        RetrofitClient.build(tokenStore)
     }
 }
