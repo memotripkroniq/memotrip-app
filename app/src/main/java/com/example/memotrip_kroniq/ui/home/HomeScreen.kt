@@ -59,7 +59,8 @@ fun HomeScreen(
 
     val tripsRepository = remember {
         TripsRepository(
-            api = RetrofitClient.tripsApi
+            api = RetrofitClient.tripsApi,
+            contentResolver = context.contentResolver
         )
     }
 

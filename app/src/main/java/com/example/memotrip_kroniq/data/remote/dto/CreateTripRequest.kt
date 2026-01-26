@@ -9,5 +9,6 @@ data class CreateTripRequest(
     val to: String,
     val transport: String,        // "CAR" ...
     val waypoints: List<String> = emptyList(),
-    val theme: String? = null
+    val theme: String? = null,
+    val coverImageUrl: String? = null
 )

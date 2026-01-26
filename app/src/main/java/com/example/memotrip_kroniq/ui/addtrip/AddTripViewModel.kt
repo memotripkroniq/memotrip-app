@@ -90,8 +90,45 @@ class AddTripViewModel(
     }
 
     fun onCoverPhotoSelected(uri: Uri?) {
+        Log.d("COVER_UPLOAD", "onCoverPhotoSelected called uri=$uri")
+        if (uri == null) return
+
         _uiState.update {
-            it.copy(coverPhotoUri = uri)
+            it.copy(
+                coverPhotoUri = uri,
+                isLoading = true
+            )
+        }
+
+        viewModelScope.launch {
+            Log.d("COVER_UPLOAD", "UPLOAD_START time=${System.currentTimeMillis()}")
+            try {
+                val uploadedUrl = tripsRepository.uploadCoverImage(uri)
+
+                Log.d("COVER_UPLOAD", "uploadedUrl=$uploadedUrl")
+
+                _uiState.update {
+                    it.copy(
+                        coverImageUrl = uploadedUrl,
+                        isLoading = false,
+                        errorMessage = null
+                    )
+                }
+
+                Log.d("COVER_UPLOAD", "state.coverImageUrl=${_uiState.value.coverImageUrl}")
+
+            } catch (e: Exception) {
+
+                Log.e("COVER_UPLOAD", "UPLOAD_FAIL time=${System.currentTimeMillis()}", e)
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        coverImageUrl = null,
+                        errorMessage = "Upload cover failed"
+                    )
+                }
+            }
         }
     }
 
@@ -538,6 +575,13 @@ class AddTripViewModel(
             try {
                 val state = _uiState.value
 
+                Log.d("CREATE_TRIP", "state.coverPhotoUri=${state.coverPhotoUri}")
+                Log.d("CREATE_TRIP", "state.coverImageUrl=${state.coverImageUrl}")
+                Log.d("CREATE_TRIP", "isLoading=${state.isLoading}")
+
+                // ✅ cover už je uploadnutý v onCoverPhotoSelected()
+                val coverUrl = state.coverImageUrl
+
                 val request = CreateTripRequest(
                     name = state.tripName,
                     destination = state.destination!!.name,
@@ -547,14 +591,15 @@ class AddTripViewModel(
                     to = state.toLocation.text,
                     transport = state.transport.first().name,
                     waypoints = state.stops.map { it.text },
-                    theme = state.selectedTheme?.name
+                    theme = state.selectedTheme?.name,
+                    coverImageUrl = coverUrl // ✅ TADY
                 )
+
+                Log.d("CREATE_TRIP", "request.coverImageUrl=${request.coverImageUrl}")
 
                 tripsRepository.createTrip(request)
 
-                _uiState.update {
-                    it.copy(flowState = AddTripFlowState.SUCCESS)
-                }
+                _uiState.update { it.copy(flowState = AddTripFlowState.SUCCESS) }
 
             } catch (e: Exception) {
                 _uiState.update {
@@ -566,4 +611,5 @@ class AddTripViewModel(
             }
         }
     }
+
 }

@@ -36,6 +36,8 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.addtrip.utils.scrollToFirstAddTripError
 import com.example.memotrip_kroniq.ui.addtrip.utils.AddTripScrollIndexMap
 import com.example.memotrip_kroniq.ui.addtrip.utils.resolveFirstAddTripScrollTarget
+import android.util.Log
+
 
 
 import java.io.File
@@ -68,6 +70,8 @@ fun AddTripContent(
     ) {
     val s = LocalUiScaler.current
 
+    Log.d("COVER_UPLOAD", "AddTripContent composed")
+
     // 🧹 CLEANED – pouze state LazyColumn
     val listState = rememberLazyListState()
 
@@ -79,6 +83,7 @@ fun AddTripContent(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
+        Log.d("COVER_UPLOAD", "AddTripContent gallery uri=$uri")
         if (uri != null) onCoverPhotoSelected(uri)
         showPhotoActionSheet = false
     }
@@ -86,6 +91,7 @@ fun AddTripContent(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
+        Log.d("COVER_UPLOAD", "AddTripContent camera success=$success temp=$tempPhotoUri")
         if (success && tempPhotoUri != null) {
             onCoverPhotoSelected(tempPhotoUri)
         }

@@ -40,11 +40,15 @@ object RetrofitClient {
             }
             .addInterceptor { chain ->
                 val request = chain.request()
+                // užitečné: metoda + url + content-type
+                val contentType = request.body?.contentType()?.toString()
+                Log.d("RetrofitClient", "➡️ ${request.method} ${request.url.encodedPath} contentType=$contentType")
                 val response = chain.proceed(request)
 
-                if (request.url.encodedPath.contains("trips")) {
+                val path = request.url.encodedPath
+                if (path.startsWith("/trips")) {
                     val body = response.peekBody(Long.MAX_VALUE).string()
-                    Log.d("RetrofitClient", "📦 /trips RESPONSE = $body")
+                    Log.d("RetrofitClient", "📦 $path code=${response.code} body=$body")
                 }
 
                 response

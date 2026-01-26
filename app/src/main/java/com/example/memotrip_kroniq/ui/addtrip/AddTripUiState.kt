@@ -53,6 +53,7 @@ data class AddTripUiState(
 
     // 📝 Basic info
     val coverPhotoUri: Uri? = null,
+    val coverImageUrl: String? = null,
     val tripName: String = "",
 
     // Generated map

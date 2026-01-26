@@ -1,6 +1,8 @@
 package com.example.memotrip_kroniq.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -14,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,10 +44,17 @@ fun PrimaryAiButton(
                 heightDp = 8f
             )
     ) {
+        val interactionSource = remember { MutableInteractionSource() }
         Button(
             onClick = onClick,
             enabled = enabled && !isLoading,
-            modifier = Modifier.fillMaxSize(),
+            interactionSource = interactionSource,
+            modifier = Modifier
+                .fillMaxSize()
+                .indication(
+                    interactionSource = interactionSource,
+                    indication = null // 🚫 žádná odezva na klik
+                ),
             shape = RoundedCornerShape(10.dp),
             contentPadding = PaddingValues(0.dp),
             colors = ButtonDefaults.buttonColors(

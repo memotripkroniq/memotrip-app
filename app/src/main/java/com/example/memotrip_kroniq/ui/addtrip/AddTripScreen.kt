@@ -47,24 +47,17 @@ fun AddTripScreen(
     // ─────────────────────────────
     // ViewModel
     // ─────────────────────────────
-    val tokenStore = remember { TokenDataStore(context) }
+    //val tokenStore = remember { TokenDataStore(context) }
 
     val tripsRepository = remember {
         TripsRepository(
-            api = RetrofitClient.tripsApi
+            api = RetrofitClient.tripsApi,
+            contentResolver = context.contentResolver
         )
     }
 
-
     val viewModel: AddTripViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return AddTripViewModel(
-                    tripsRepository = tripsRepository
-                ) as T
-            }
-        }
+        factory = AddTripViewModelFactory(tripsRepository)
     )
 
     val uiState by viewModel.uiState.collectAsState()

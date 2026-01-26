@@ -2,6 +2,7 @@ package com.example.memotrip_kroniq.ui.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.remember
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 
@@ -26,16 +28,21 @@ fun TripHistoryItemRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(45.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(Color(0xFF383A41))
-            .clickable(enabled = onClick != null) {
+            .clickable(
+                enabled = onClick != null,
+                interactionSource = interactionSource,
+                indication = null // 🚫 ripple pryč
+            ) {
                 onClick?.invoke()
             }
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -46,7 +53,7 @@ fun TripHistoryItemRow(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(39.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
 
