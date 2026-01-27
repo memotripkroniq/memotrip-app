@@ -15,7 +15,8 @@ class RemoteTripMapGenerator(
     override suspend fun generate(
         from: String,
         to: String,
-        transport: TransportType
+        transport: TransportType,
+        stops: List<String>
     ): String {
 
         val response: GenerateTripMapResponse =
@@ -25,7 +26,8 @@ class RemoteTripMapGenerator(
                     GenerateTripMapRequest(
                         from = from,
                         to = to,
-                        transports = listOf(transport.name)
+                        transports = listOf(transport.name),
+                        stops = stops
                     )
                 )
             }.body()

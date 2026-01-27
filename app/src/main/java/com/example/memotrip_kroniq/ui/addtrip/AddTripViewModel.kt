@@ -22,18 +22,12 @@ import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 
 
-//class AddTripViewModel(
-//    private val authRepository: AuthRepository,
-//    private val locationSearchRepository: LocationSearchRepository,
-//    private val tripMapGenerator: TripMapGenerator
-//) : ViewModel() {
 class AddTripViewModel(
     private val tripsRepository: TripsRepository,
-    private val authRepository: AuthRepository? = null,
-    private val locationSearchRepository: LocationSearchRepository? = null,
-    private val tripMapGenerator: TripMapGenerator? = null
+    private val authRepository: AuthRepository,
+    private val locationSearchRepository: LocationSearchRepository,
+    private val tripMapGenerator: TripMapGenerator
 ) : ViewModel() {
-
     companion object {
         private const val TAG = "AddTripVM"
     }
@@ -46,10 +40,9 @@ class AddTripViewModel(
 
 
     init {
-        if (authRepository != null) {
-            _uiState.update { it.copy(isLoading = true) }
-            loadMe()
-        }
+
+        _uiState.update { it.copy(isLoading = true) }
+        loadMe()
     }
 
 
@@ -57,8 +50,6 @@ class AddTripViewModel(
     // 🔐 USER / PREMIUM
     // ─────────────────────────
     private fun loadMe() {
-        val repo = authRepository ?: return
-
         viewModelScope.launch {
             try {
                 val me = authRepository.getMe()
@@ -68,12 +59,21 @@ class AddTripViewModel(
                     isLoading = false
                 )
 
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isThemesLocked = true,           // fail-safe
+            //} catch (e: Exception) {
+            //    _uiState.value = _uiState.value.copy(
+            //        isThemesLocked = true,           // fail-safe
+            //        isLoading = false
+            //    )
+            //}
+
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isThemesLocked = true,
                     isLoading = false
                 )
             }
+        }
         }
     }
 
@@ -91,12 +91,26 @@ class AddTripViewModel(
 
     fun onCoverPhotoSelected(uri: Uri?) {
         Log.d("COVER_UPLOAD", "onCoverPhotoSelected called uri=$uri")
-        if (uri == null) return
 
+        // ✅ Delete photo
+        if (uri == null) {
+            _uiState.update {
+                it.copy(
+                    coverPhotoUri = null,
+                    coverImageUrl = null,
+                    errorMessage = null,
+                    isLoading = false
+                )
+            }
+            return
+        }
+
+        // ✅ Upload new photo
         _uiState.update {
             it.copy(
                 coverPhotoUri = uri,
-                isLoading = true
+                isLoading = true,
+                errorMessage = null
             )
         }
 
@@ -105,8 +119,6 @@ class AddTripViewModel(
             try {
                 val uploadedUrl = tripsRepository.uploadCoverImage(uri)
 
-                Log.d("COVER_UPLOAD", "uploadedUrl=$uploadedUrl")
-
                 _uiState.update {
                     it.copy(
                         coverImageUrl = uploadedUrl,
@@ -114,13 +126,8 @@ class AddTripViewModel(
                         errorMessage = null
                     )
                 }
-
-                Log.d("COVER_UPLOAD", "state.coverImageUrl=${_uiState.value.coverImageUrl}")
-
             } catch (e: Exception) {
-
                 Log.e("COVER_UPLOAD", "UPLOAD_FAIL time=${System.currentTimeMillis()}", e)
-
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -161,15 +168,9 @@ class AddTripViewModel(
     }
 
     fun generateTripMap() {
-
-        if (tripMapGenerator == null) {
-            Log.w(TAG, "TripMapGenerator not provided yet")
-            return
-        }
-
         val state = _uiState.value
 
-        // 🔴 ZMĚNA: tichá validace – ŽÁDNÉ showXxxError
+        // 1️⃣ validace
         val isValid = isMapInputValid(state)
         val areStopsValid = validateStops()
 
@@ -185,23 +186,31 @@ class AddTripViewModel(
             return
         }
 
-        // ⛔ už se generuje
         if (state.isGeneratingMap) {
             Log.d(TAG, "⛔ already generating, ignoring click")
             return
         }
 
+        // 2️⃣ 🔑 TADY JE TEN DŮLEŽITÝ KROK – waypointy
+        val stops = state.stops
+            .map { it.text.trim() }
+            .filter { it.isNotBlank() }
+
+        Log.d(TAG, "🧭 GENERATE MAP stops=$stops")
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isGeneratingMap = true) }
+            _uiState.update { it.copy(isGeneratingMap = true, errorMessage = null) }
 
             try {
                 val imageUrl = tripMapGenerator.generate(
                     from = state.fromLocation.text,
                     to = state.toLocation.text,
-                    transport = state.transport.first()
+                    transport = state.transport.first(),
+                    stops = stops // ✅ WAYPOINTY POSLANÉ BACKENDU
                 )
 
                 Log.d(TAG, "✅ generated url=$imageUrl")
+
                 _uiState.update {
                     it.copy(
                         generatedMapImageUrl = imageUrl,
@@ -221,6 +230,8 @@ class AddTripViewModel(
         }
     }
 
+
+
     fun onDestinationSelected(destination: Destination) {
         _uiState.update {
             it.copy(
@@ -231,8 +242,6 @@ class AddTripViewModel(
     }
 
     fun onFromLocationChange(value: TextFieldValue) {
-        if (locationSearchRepository == null) return
-
         _uiState.update { it.copy(
             fromLocation = value,
             isMapDirty = true,
@@ -258,15 +267,6 @@ class AddTripViewModel(
             _uiState.update {
                 it.copy(fromSuggestions = results)
             }
-        }
-    }
-
-    fun onFromFocusChanged(focused: Boolean) {
-        _uiState.update {
-            it.copy(
-                isFromFocused = focused,
-                isToFocused = false // ⛔ zavřeme druhý
-            )
         }
     }
 
@@ -297,19 +297,20 @@ class AddTripViewModel(
     fun onFromSuggestionSelected(suggestion: LocationSuggestion) {
         _uiState.update {
             it.copy(
-                fromLocation = TextFieldValue(              // ⭐ ZMĚNA
+                fromLocation = TextFieldValue(
                     text = suggestion.displayName,
                     selection = TextRange(suggestion.displayName.length)
                 ),
                 fromSuggestions = emptyList(),
-                isFromFocused = false
+                isFromFocused = false,
+                showFromLocationError = false, // ✅ tohle chybělo
+                isMapDirty = true              // 🔸 doporučené (aby se ukázalo, že mapa je “dirty”)
             )
         }
     }
 
-    fun onToLocationChange(value: TextFieldValue) {
-        if (locationSearchRepository == null) return
 
+    fun onToLocationChange(value: TextFieldValue) {
         _uiState.update { it.copy(
             toLocation = value,
             isMapDirty = true,
@@ -337,27 +338,21 @@ class AddTripViewModel(
         }
     }
 
-    fun onToFocusChanged(focused: Boolean) {
-        _uiState.update {
-            it.copy(
-                isToFocused = focused,
-                isFromFocused = false
-            )
-        }
-    }
-
     fun onToSuggestionSelected(suggestion: LocationSuggestion) {
         _uiState.update {
             it.copy(
-                toLocation = TextFieldValue(                // ⭐ ZMĚNA
+                toLocation = TextFieldValue(
                     text = suggestion.displayName,
                     selection = TextRange(suggestion.displayName.length)
                 ),
                 toSuggestions = emptyList(),
-                isToFocused = false
+                isToFocused = false,
+                showToLocationError = false,
+                isMapDirty = true
             )
         }
     }
+
 
     // 🆕 WAYPOINTS – ADD
     fun onAddStop() {
@@ -370,7 +365,8 @@ class AddTripViewModel(
                 showStopErrors = state.showStopErrors + false,
                 focusedStopIndex = state.stops.size,
                 isFromFocused = false,
-                isToFocused = false
+                isToFocused = false,
+                isMapDirty = true
             )
         }
     }
@@ -385,7 +381,9 @@ class AddTripViewModel(
             state.copy(
                 stops = newStops,
                 stopSuggestions = state.stopSuggestions.filterIndexed { i, _ -> i != index },
-                showStopErrors = List(newStops.size) { false }
+                showStopErrors = List(newStops.size) { false },
+                focusedStopIndex = null,   // ✅ ať nezůstane focus na neexistujícím indexu
+                isMapDirty = true
             )
         }
     }
@@ -393,8 +391,6 @@ class AddTripViewModel(
 
     // 🆕 WAYPOINTS – TEXT CHANGE + SEARCH
     fun onStopLocationChange(index: Int, value: TextFieldValue) {
-        if (locationSearchRepository == null) return
-
         Log.d("WP_SEARCH", "index=$index text='${value.text}'")
 
         _uiState.update { state ->
@@ -456,7 +452,6 @@ class AddTripViewModel(
     // 🆕 WAYPOINTS – SELECT SUGGESTION
     fun onStopSuggestionSelected(index: Int, suggestion: LocationSuggestion) {
         _uiState.update { state ->
-
             if (index !in state.stops.indices) return@update state
 
             val updatedStops = state.stops.toMutableList().apply {
@@ -468,17 +463,22 @@ class AddTripViewModel(
 
             val updatedSuggestions =
                 if (index in state.stopSuggestions.indices) {
-                    state.stopSuggestions.toMutableList().apply {
-                        this[index] = emptyList()
-                    }
-                } else {
-                    state.stopSuggestions
-                }
+                    state.stopSuggestions.toMutableList().apply { this[index] = emptyList() }
+                } else state.stopSuggestions
+
+            // ✅ RESET ERROR FLAGU PRO DANÝ WAYPOINT
+            val updatedErrors = state.showStopErrors.toMutableList().apply {
+                // pojistka na velikost
+                while (size < updatedStops.size) add(false)
+                this[index] = false
+            }
 
             state.copy(
                 stops = updatedStops,
                 stopSuggestions = updatedSuggestions,
-                focusedStopIndex = null
+                showStopErrors = updatedErrors,
+                focusedStopIndex = null,
+                isMapDirty = true // 🔸 doporučené
             )
         }
     }

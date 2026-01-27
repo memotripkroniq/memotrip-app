@@ -7,6 +7,7 @@ interface TripMapGenerator {
     suspend fun generate(
         from: String,
         to: String,
-        transport: TransportType
+        transport: TransportType,
+        stops: List<String> = emptyList()
     ): String
 }

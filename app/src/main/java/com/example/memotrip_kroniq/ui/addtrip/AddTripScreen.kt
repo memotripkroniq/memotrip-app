@@ -11,13 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.flow.MutableStateFlow
-
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
@@ -34,6 +30,7 @@ import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -45,20 +42,55 @@ fun AddTripScreen(
     val focusManager = LocalFocusManager.current
 
     // ─────────────────────────────
-    // ViewModel
+    // Token store + Retrofit init (MUSÍ být před api get())
     // ─────────────────────────────
-    //val tokenStore = remember { TokenDataStore(context) }
+    val tokenStore = remember(context) { TokenDataStore(context) }
 
-    val tripsRepository = remember {
+    // Build retrofit přesně jednou
+    remember(tokenStore) {
+        RetrofitClient.build(tokenStore)
+        true
+    }
+
+    // ─────────────────────────────
+    // Dependencies
+    // ─────────────────────────────
+    val tripsRepository = remember(context) {
         TripsRepository(
             api = RetrofitClient.tripsApi,
             contentResolver = context.contentResolver
         )
     }
 
-    val viewModel: AddTripViewModel = viewModel(
-        factory = AddTripViewModelFactory(tripsRepository)
-    )
+    val authRepository = remember(tokenStore) {
+        AuthRepository(
+            api = RetrofitClient.authApi,
+            tokenStore = tokenStore
+        )
+    }
+
+    val locationSearchRepository = remember {
+        LocationSearchRepository(
+            client = HttpClientProvider.client
+        )
+    }
+
+    val tripMapGenerator: TripMapGenerator = remember {
+        RemoteTripMapGenerator(
+            client = HttpClientProvider.client
+        )
+    }
+
+    val factory = remember(tripsRepository, authRepository, locationSearchRepository, tripMapGenerator) {
+        AddTripViewModelFactory(
+            tripsRepository = tripsRepository,
+            authRepository = authRepository,
+            locationSearchRepository = locationSearchRepository,
+            tripMapGenerator = tripMapGenerator
+        )
+    }
+
+    val viewModel: AddTripViewModel = viewModel(factory = factory)
 
     val uiState by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -143,19 +175,9 @@ fun AddTripScreen(
             }
         ) { innerPadding ->
 
-            // ─────────────────────────────
-            // FLOW-DRIVEN UI
-            // ─────────────────────────────
             when (uiState.flowState) {
-
-                AddTripFlowState.SAVING -> {
-                    SavingTripScreen()
-                }
-
-                AddTripFlowState.SUCCESS -> {
-                    TripSuccessScreen(navController)
-                }
-
+                AddTripFlowState.SAVING -> SavingTripScreen()
+                AddTripFlowState.SUCCESS -> TripSuccessScreen(navController)
                 else -> {
                     AddTripContent(
                         modifier = Modifier
@@ -174,6 +196,7 @@ fun AddTripScreen(
                         onToLocationChange = viewModel::onToLocationChange,
                         onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
                         onToSuggestionSelected = viewModel::onToSuggestionSelected,
+
                         onAddStop = viewModel::onAddStop,
                         onRemoveStop = viewModel::onRemoveStop,
                         onStopLocationChange = viewModel::onStopLocationChange,

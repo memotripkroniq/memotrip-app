@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GenerateTripMapRequest(
     val from: String,
+    val stops: List<String> = emptyList(),
     val to: String,
     val transports: List<String>
 )
