@@ -137,6 +137,7 @@ fun AddTripContent(
                 imageUrl = uiState.generatedMapImageUrl,
                 isGenerating = uiState.isGeneratingMap,
                 isMapDirty = uiState.isMapDirty,
+                error = uiState.showGeneratedMapError,
                 onGenerateClick = onGenerateMapClick
             )
             Spacer(Modifier.height(16f.sy(s)))
@@ -257,6 +258,7 @@ fun AddTripContent(
     // ✅ AUTO-SCROLL NA TRIP NAME PŘI CHYBĚ
     LaunchedEffect(
         uiState.showTripNameError,
+        uiState.showGeneratedMapError,
         uiState.showDestinationError,
         uiState.showDateError,
         uiState.showFromLocationError,
@@ -264,10 +266,11 @@ fun AddTripContent(
         uiState.showToLocationError,
         uiState.showTransportError
     ) {
-        val target = resolveFirstAddTripScrollTarget(uiState) ?: return@LaunchedEffect
-        val index = AddTripScrollIndexMap[target] ?: return@LaunchedEffect
-
-        listState.animateScrollToItem(index)
+        //Log.d("ADDTRIP_SCROLL", "showGeneratedMapError=${uiState.showGeneratedMapError}")
+        val target = resolveFirstAddTripScrollTarget(uiState)
+        //Log.d("ADDTRIP_SCROLL", "target=$target")
+        val index = target?.let { AddTripScrollIndexMap[it] }
+        if (index != null) listState.animateScrollToItem(index)
     }
 
 

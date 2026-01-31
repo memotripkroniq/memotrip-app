@@ -38,6 +38,9 @@ class AddTripViewModel(
     private var fromSearchJob: Job? = null
     private var toSearchJob: Job? = null
 
+    private var createAfterMapGeneration: Boolean = false
+
+
 
     init {
 
@@ -215,11 +218,17 @@ class AddTripViewModel(
                     it.copy(
                         generatedMapImageUrl = imageUrl,
                         isGeneratingMap = false,
-                        isMapDirty = false
+                        isMapDirty = false,
+                        showGeneratedMapError = false
                     )
+                }
+                if (createAfterMapGeneration) {
+                    createAfterMapGeneration = false
+                    saveTrip()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "❌ generate failed", e)
+                createAfterMapGeneration = false
                 _uiState.update {
                     it.copy(
                         isGeneratingMap = false,
@@ -536,6 +545,9 @@ class AddTripViewModel(
         val hasFromError = state.fromLocation.text.isBlank()
         val hasToError = state.toLocation.text.isBlank()
         val hasTransportError = state.transport.isEmpty()
+        val isMapMissing = state.generatedMapImageUrl == null
+        val isMapDirty = state.isMapDirty
+
 
         if (
             hasTripNameError ||
@@ -544,6 +556,7 @@ class AddTripViewModel(
             hasFromError ||
             hasToError ||
             hasTransportError ||
+            isMapMissing ||
             !areStopsValid
         ) {
             _uiState.update {
@@ -553,11 +566,20 @@ class AddTripViewModel(
                     showDateError = hasDateError,
                     showFromLocationError = hasFromError,
                     showToLocationError = hasToError,
-                    showTransportError = hasTransportError
+                    showTransportError = hasTransportError,
+                    showGeneratedMapError = isMapMissing,
                 )
             }
             return
         }
+
+        // ✅ Mapa existuje, ale je zastaralá → přegeneruj automaticky a pak ulož
+        if (isMapDirty) {
+            createAfterMapGeneration = true
+            generateTripMap()
+            return
+        }
+
         saveTrip()
     }
 

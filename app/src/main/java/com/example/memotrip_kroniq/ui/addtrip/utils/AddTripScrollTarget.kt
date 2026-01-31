@@ -2,6 +2,7 @@ package com.example.memotrip_kroniq.ui.addtrip.utils
 
 enum class AddTripScrollTarget {
     TRIP_NAME,
+    MAP,
     HERO_BANNER,
     DESTINATION,
     THEME,

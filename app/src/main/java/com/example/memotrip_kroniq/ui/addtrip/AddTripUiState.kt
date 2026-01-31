@@ -103,6 +103,7 @@ data class AddTripUiState(
     val showFromLocationError: Boolean = false,
     val showToLocationError: Boolean = false,
     val showTransportError: Boolean = false,
+    val showGeneratedMapError: Boolean = false,
     val flowState: AddTripFlowState = AddTripFlowState.IDLE// 🔁 FLOW STATE (saving → success)
 )
 

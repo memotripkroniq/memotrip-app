@@ -2,6 +2,7 @@ package com.example.memotrip_kroniq.ui.addtrip.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -27,6 +28,7 @@ fun AddTripHeroBanner(
     imageUrl: String?,
     isGenerating: Boolean,
     isMapDirty: Boolean,
+    error: Boolean,
     onGenerateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -47,6 +49,10 @@ fun AddTripHeroBanner(
     val painter = rememberAsyncImagePainter(
         model = displayedImageUrl ?: R.drawable.add_trip_screen_maps_banner
     )
+
+    val errorGreen = Color(0xFF759F67)
+    val borderColor = if (error) errorGreen else Color.Transparent
+
 
     Box(
         modifier = modifier
@@ -76,18 +82,24 @@ fun AddTripHeroBanner(
                         .background(Color.Black.copy(alpha = 0.35f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    PrimaryAiButton(
-                        text = if (isGenerating) "Generating" else "Generate",
-                        isLoading = isGenerating,
-                        onClick = {
-                            if (!isGenerating) {
-                                onGenerateClick()
-                            }
-                        },
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth(0.48f)
-                            .height(45.dp)
-                    )
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.5.dp, borderColor, RoundedCornerShape(10.dp))
+                    ) {
+                        PrimaryAiButton(
+                            text = if (isGenerating) "Generating" else "Generate",
+                            isLoading = isGenerating,
+                            onClick = {
+                                if (!isGenerating) {
+                                    onGenerateClick()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.48f)
+                                .height(45.dp)
+                        )
+                    }
                 }
             }
         }
@@ -136,6 +148,7 @@ private fun AddTripHeroBannerPreview() {
             isGenerating = false,
             isMapDirty = false,
             onGenerateClick = {},
+            error = false,
             modifier = Modifier.padding(16.dp)
         )
     }
@@ -155,6 +168,7 @@ private fun AddTripHeroBannerPreview_Regenerate() {
             isGenerating = false,
             isMapDirty = true,
             onGenerateClick = {},
+            error = false,
             modifier = Modifier.padding(16.dp)
         )
     }

@@ -9,6 +9,9 @@ fun resolveFirstAddTripScrollTarget(
     return when {
         uiState.showTripNameError -> AddTripScrollTarget.TRIP_NAME
 
+        uiState.showGeneratedMapError ->
+            AddTripScrollTarget.HERO_BANNER
+
         uiState.showDestinationError ->
             AddTripScrollTarget.DESTINATION
 
