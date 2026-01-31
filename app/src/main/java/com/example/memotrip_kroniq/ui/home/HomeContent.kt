@@ -34,6 +34,7 @@ fun HomeContent(
     isThemesLocked: Boolean,
     trips: List<TripHistoryItem>,
     isTripsLoading: Boolean,
+    isKroniq: Boolean,
     onTabSelected: (HomeTab) -> Unit,
     onAddTripClick: () -> Unit
 ) {
@@ -74,7 +75,10 @@ fun HomeContent(
                         TripHistoryEmptyContent()
                     }
                     else -> {
-                        TripHistoryList(trips = trips)
+                        TripHistoryList(
+                            trips = trips,
+                            showUpsell = !isKroniq
+                        )
                     }
                 }
             }
@@ -111,7 +115,8 @@ fun HomeContentPreview_TripHistory() {
                 ),
                 isTripsLoading = false,
                 onTabSelected = {},
-                onAddTripClick = {}
+                onAddTripClick = {},
+                isKroniq = true
             )
         }
     }

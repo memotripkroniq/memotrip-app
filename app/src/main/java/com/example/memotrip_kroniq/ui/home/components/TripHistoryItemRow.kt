@@ -33,7 +33,7 @@ fun TripHistoryItemRow(
         modifier = modifier
             .fillMaxWidth()
             .height(45.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(Color(0xFF383A41))
             .clickable(
                 enabled = onClick != null,

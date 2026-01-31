@@ -30,14 +30,16 @@ class HomeViewModel(
 
                 _uiState.update {
                     it.copy(
+                        isKroniq = me.isKroniq,
                         isThemesLocked = !me.isKroniq,
-                        isLoading = false
+                        isLoading = false,
                     )
                 }
 
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
+                        isKroniq = false,
                         isThemesLocked = true,
                         isLoading = false
                     )

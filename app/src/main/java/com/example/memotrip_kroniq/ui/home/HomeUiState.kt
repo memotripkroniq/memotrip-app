@@ -8,5 +8,6 @@ data class HomeUiState(
     val userEmail: String? = null,
     // 🆕 TRIPS
     val trips: List<TripHistoryItem> = emptyList(),
-    val isTripsLoading: Boolean = false// (volitelné, ale praktické)
+    val isTripsLoading: Boolean = false,
+    val isKroniq: Boolean = false,
 )

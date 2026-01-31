@@ -109,6 +109,7 @@ fun HomeScreen(
             isThemesLocked = uiState.isThemesLocked,
             trips = uiState.trips,
             isTripsLoading = uiState.isTripsLoading,
+            isKroniq = uiState.isKroniq,
             onTabSelected = { selectedTab = it },
             onAddTripClick = {
                 navController?.navigate(Screen.AddTrip.route)
@@ -125,13 +126,9 @@ fun HomeScreenPreview() {
         LocalUiScaler provides PreviewUiScaler
     ) {
         MemoTripTheme {
-
-            // ⚠️ NavController v preview NEPOTŘEBUJEME
             HomeScreen(
                 navController = null,
                 initialTab = HomeTab.TRIP_HISTORY
-                // zkus klidně i:
-                // initialTab = HomeTab.TRIP_HISTORY
             )
         }
     }
