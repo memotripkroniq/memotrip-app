@@ -1,8 +1,8 @@
 package com.example.memotrip_kroniq.data
 
 import LoginRequest
-import LoginResponse
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.model.UserMe
 import com.example.memotrip_kroniq.data.remote.*
 import org.json.JSONObject
@@ -86,12 +86,21 @@ class AuthRepository(
         return Exception(message)
     }
 
+    // ============================================================
     // ⭐ GET ME
+    // ============================================================
     suspend fun getMe() =
         api.getMe()
 
+    // ============================================================
+    // ⭐ GET TRIP LIMITS
+    // ============================================================
+    suspend fun getTripLimits(): TripLimitsResponse =
+        api.getTripLimits()
 
+    // ============================================================
     // ⭐ COMMON ERROR PARSER
+    // ============================================================
     suspend fun forgotPassword(email: String) {
         api.forgotPassword(
             mapOf("email" to email)

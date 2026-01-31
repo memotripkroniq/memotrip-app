@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -25,7 +26,8 @@ import com.example.memotrip_kroniq.ui.core.*
 @UnstableApi
 @Composable
 fun HeroBanner(
-    onAddTripClick: () -> Unit
+    onAddTripClick: () -> Unit,
+    isAddTripEnabled: Boolean
 ) {
     val context = LocalContext.current
 
@@ -54,7 +56,7 @@ fun HeroBanner(
                 )
             }
 
-            // // 🔥 KLIKATELNÉ LOGO
+            // 🔥 KLIKATELNÉ LOGO
             Image(
                 painter = painterResource(R.drawable.homescreen_ic_add_trip_logo),
                 contentDescription = null,
@@ -62,7 +64,9 @@ fun HeroBanner(
                     .size(72f.sx(s))
                     .align(Alignment.Center)
                     .offset(y = (-55).dp)
+                    .alpha(if (isAddTripEnabled) 1f else 0.38f)
                     .clickable(
+                        enabled = isAddTripEnabled,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {

@@ -20,6 +20,7 @@ class HomeViewModel(
 
     init {
         loadMe()
+        loadTripLimits()
         loadTrips()
     }
 
@@ -78,6 +79,26 @@ class HomeViewModel(
     fun refreshTrips() {
         loadTrips()
     }
+
+    private fun loadTripLimits() {
+        viewModelScope.launch {
+            try {
+                val limits = authRepository.getTripLimits()
+                _uiState.update {
+                    it.copy(
+                        isAddTripEnabled = limits.allowed,
+                        tripLimitPlan = limits.plan,
+                        tripLimitUsed = limits.used,
+                        tripLimitLimit = limits.limit
+                    )
+                }
+            } catch (e: Exception) {
+                // MVP: když to selže, necháme tlačítko enabled
+                _uiState.update { it.copy(isAddTripEnabled = true) }
+            }
+        }
+    }
+
 
 
 }

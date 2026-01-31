@@ -110,6 +110,7 @@ fun HomeScreen(
             trips = uiState.trips,
             isTripsLoading = uiState.isTripsLoading,
             isKroniq = uiState.isKroniq,
+            isAddTripEnabled = uiState.isAddTripEnabled,
             onTabSelected = { selectedTab = it },
             onAddTripClick = {
                 navController?.navigate(Screen.AddTrip.route)

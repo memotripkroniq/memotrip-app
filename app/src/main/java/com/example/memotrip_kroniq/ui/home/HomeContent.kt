@@ -35,6 +35,7 @@ fun HomeContent(
     trips: List<TripHistoryItem>,
     isTripsLoading: Boolean,
     isKroniq: Boolean,
+    isAddTripEnabled: Boolean,
     onTabSelected: (HomeTab) -> Unit,
     onAddTripClick: () -> Unit
 ) {
@@ -48,7 +49,8 @@ fun HomeContent(
     ) {
 
         HeroBanner(
-            onAddTripClick = onAddTripClick
+            onAddTripClick = onAddTripClick,
+            isAddTripEnabled = isAddTripEnabled
         )
 
         Spacer(modifier = Modifier.height(13f.sy(s)))
@@ -116,7 +118,8 @@ fun HomeContentPreview_TripHistory() {
                 isTripsLoading = false,
                 onTabSelected = {},
                 onAddTripClick = {},
-                isKroniq = true
+                isKroniq = true,
+                isAddTripEnabled = true
             )
         }
     }

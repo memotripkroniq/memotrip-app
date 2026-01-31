@@ -9,6 +9,8 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
+import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
+
 
 interface AuthApi {
 
@@ -38,5 +40,9 @@ interface AuthApi {
 
     @POST("/auth/forgot-password")
     suspend fun forgotPassword(@Body body: Map<String, String>)
+
+    @GET("auth/limits/trips")
+    suspend fun getTripLimits(): TripLimitsResponse
+
 
 }
