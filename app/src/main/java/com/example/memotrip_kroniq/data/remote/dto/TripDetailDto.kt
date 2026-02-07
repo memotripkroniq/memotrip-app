@@ -10,7 +10,7 @@ data class TripDetailDto(
     val transport: String,
     val from: String,
     val to: String,
-    val waypoints: List<String> = emptyList(), // nebo správný typ, pokud máš
+    val waypoints: List<String> = emptyList(),
     val startDate: String,
     val endDate: String,
     val theme: String? = null,

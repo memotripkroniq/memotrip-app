@@ -14,13 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.R
-import com.example.memotrip_kroniq.ui.addtrip.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripThemeCard
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.AppTheme
+// TODO: -----------------------------------------------------------------------------------
+// TODO: Legacy ThemeSection – currently unused (replaced by ThemeSelector for consistency)
+// TODO: -----------------------------------------------------------------------------------
 
 data class ThemeUi(
     val type: ThemeType,

@@ -1,6 +1,6 @@
 package com.example.memotrip_kroniq.data.tripmap
 
-import com.example.memotrip_kroniq.ui.addtrip.TransportType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 
 interface TripMapGenerator {
 

@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.memotrip_kroniq.ui.addtrip.DateRange
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
-import com.example.memotrip_kroniq.data.network.HttpClientProvider
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,6 +18,9 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.trips.TripsRepository
+import com.example.memotrip_kroniq.ui.core.model.Destination
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 
 
 class AddTripViewModel(

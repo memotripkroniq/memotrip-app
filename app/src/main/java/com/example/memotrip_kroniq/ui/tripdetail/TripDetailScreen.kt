@@ -21,7 +21,6 @@ import androidx.navigation.NavHostController
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.trips.TripsRepository
-import com.example.memotrip_kroniq.ui.addtrip.AddTripScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme

@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,20 +23,18 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
-import com.example.memotrip_kroniq.navigation.LOCATION_TARGET_KEY
-import com.example.memotrip_kroniq.navigation.LocationTarget
-import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.addtrip.components.*
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import com.example.memotrip_kroniq.ui.addtrip.utils.scrollToFirstAddTripError
 import com.example.memotrip_kroniq.ui.addtrip.utils.AddTripScrollIndexMap
 import com.example.memotrip_kroniq.ui.addtrip.utils.resolveFirstAddTripScrollTarget
 import android.util.Log
-
+import com.example.memotrip_kroniq.ui.core.model.Destination
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 
 
 import java.io.File

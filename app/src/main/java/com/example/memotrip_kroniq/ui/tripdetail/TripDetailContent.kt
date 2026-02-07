@@ -8,18 +8,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.R
-import com.example.memotrip_kroniq.ui.addtrip.ThemeType
-import com.example.memotrip_kroniq.ui.addtrip.TransportType
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sy
-import com.example.memotrip_kroniq.ui.theme.AppTheme
 import com.example.memotrip_kroniq.ui.tripdetail.components.*
 import PreviewUiScaler
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
-import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
@@ -76,15 +74,13 @@ fun TripDetailContent(
         }
 
         item {
-            ThemeSection(
+            ThemeSelector(
                 selected = uiState.selectedTheme,
                 locked = uiState.isThemesLocked,
-                themes = uiState.themes,
                 onSelect = { /* zatím */ }
             )
             Spacer(Modifier.height(20f.sy(s)))
         }
-
 
         item {
             TripInfoCard(
@@ -92,7 +88,8 @@ fun TripDetailContent(
                 fromText = uiState.fromText,
                 toText = uiState.toText,
                 transport = uiState.transport,
-                onEditClick = { /* zatím nic */ }
+                onEditClick = { /* zatím nic */ },
+                theme = uiState.selectedTheme
             )
             Spacer(Modifier.height(20f.sy(s)))
         }
@@ -195,7 +192,7 @@ private fun TripDetailContentPreview() {
                         ThemeUi(ThemeType.NATURE, R.drawable.homescreen_theme_nature)
                     ),
                     selectedTheme = ThemeType.SUMMER,
-                    isThemesLocked = true,
+                    isThemesLocked = false,
 
                     tripDateText = "28 June 2025 - 11 July 2025",
                     fromText = "Slovenský Grob, Slovakia",

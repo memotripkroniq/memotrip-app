@@ -1,8 +1,7 @@
 package com.example.memotrip_kroniq.ui.tripdetail
 
-import com.example.memotrip_kroniq.ui.addtrip.ThemeType
-import com.example.memotrip_kroniq.ui.addtrip.TransportType
-import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetUi
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 import com.example.memotrip_kroniq.ui.tripdetail.components.ChecklistItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripMemberUi

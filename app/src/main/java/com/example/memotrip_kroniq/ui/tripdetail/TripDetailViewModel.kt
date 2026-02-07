@@ -1,21 +1,17 @@
 package com.example.memotrip_kroniq.ui.tripdetail
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.trips.TripsRepository
-import com.example.memotrip_kroniq.ui.addtrip.ThemeType
-import com.example.memotrip_kroniq.ui.addtrip.TransportType
+import com.example.memotrip_kroniq.ui.core.model.ThemeType
+import com.example.memotrip_kroniq.ui.core.model.TransportType
 import com.example.memotrip_kroniq.ui.tripdetail.components.ThemeUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 
 class TripDetailViewModel(
     private val tripsRepository: TripsRepository,
