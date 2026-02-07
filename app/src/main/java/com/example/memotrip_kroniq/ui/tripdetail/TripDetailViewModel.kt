@@ -43,6 +43,7 @@ class TripDetailViewModel(
                 _uiState.value = _uiState.value.copy(
                     coverImageUrl = trip.coverImageUrl,
                     mapImageUrl = trip.mapImageUrl,
+                    mapFullImageUrl = trip.mapImageFullUrl ?: trip.mapImageUrl,
                     tripDateText = formatTripDate(trip.startDate, trip.endDate),
                     fromText = trip.from,
                     toText = trip.to,

@@ -15,11 +15,17 @@ import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.tripdetail.components.*
 import PreviewUiScaler
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import com.example.memotrip_kroniq.ui.tripdetail.components.ZoomableImageDialog
+
 
 
 @Composable
@@ -39,11 +45,26 @@ fun TripDetailContent(
     ) {
 
         item {
+            var showMap by remember { mutableStateOf(false) }
+
             TripHeroSection(
                 coverUrl = uiState.coverImageUrl,
                 mapUrl = uiState.mapImageUrl,
-                onChangeCoverClick = { /* UI only */ }
+                onChangeCoverClick = { /* ... */ },
+                onMapClick = {
+                    if (!uiState.mapImageUrl.isNullOrBlank()) showMap = true
+                }
             )
+
+            val fullUrl = uiState.mapFullImageUrl
+
+            if (showMap && !fullUrl.isNullOrBlank()) {
+                ZoomableImageDialog(
+                    imageUrl = fullUrl,
+                    onDismiss = { showMap = false }
+                )
+            }
+
             Spacer(Modifier.height(16f.sy(s)))
         }
 

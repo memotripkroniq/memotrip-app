@@ -16,4 +16,5 @@ data class TripDetailDto(
     val theme: String? = null,
     val coverImageUrl: String? = null,
     val mapImageUrl: String? = null,
+    val mapImageFullUrl: String? = null,
 )
