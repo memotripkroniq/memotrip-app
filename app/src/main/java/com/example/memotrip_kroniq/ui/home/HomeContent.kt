@@ -37,7 +37,8 @@ fun HomeContent(
     isKroniq: Boolean,
     isAddTripEnabled: Boolean,
     onTabSelected: (HomeTab) -> Unit,
-    onAddTripClick: () -> Unit
+    onAddTripClick: () -> Unit,
+    onTripClick: (String) -> Unit
 ) {
     val s = LocalUiScaler.current
 
@@ -79,7 +80,8 @@ fun HomeContent(
                     else -> {
                         TripHistoryList(
                             trips = trips,
-                            showUpsell = !isKroniq
+                            showUpsell = !isKroniq,
+                            onTripClick = onTripClick
                         )
                     }
                 }
@@ -102,7 +104,7 @@ fun HomeContentPreview_TripHistory() {
         MemoTripTheme {
             HomeContent(
                 selectedTab = HomeTab.TRIP_HISTORY,
-                isThemesLocked = false,
+                isThemesLocked = true,
                 trips = listOf(
                     TripHistoryItem(
                         id = "1",
@@ -118,8 +120,9 @@ fun HomeContentPreview_TripHistory() {
                 isTripsLoading = false,
                 onTabSelected = {},
                 onAddTripClick = {},
-                isKroniq = true,
-                isAddTripEnabled = true
+                isKroniq = false,
+                isAddTripEnabled = true,
+                onTripClick = {}
             )
         }
     }

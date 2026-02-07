@@ -1,5 +1,6 @@
 package com.example.memotrip_kroniq.ui.addtrip
 
+import PreviewUiScaler
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -11,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -29,7 +31,10 @@ import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
 import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
+import com.example.memotrip_kroniq.ui.home.HomeScreen
+import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
+import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -236,6 +241,23 @@ fun AddTripScreen(
                     viewModel.onDateSelected(it)
                     showDatePicker = false
                 }
+            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true, widthDp = 412, heightDp = 1090)
+@Composable
+fun AddTripScreenPreview() {
+    CompositionLocalProvider(
+        LocalUiScaler provides PreviewUiScaler
+    ) {
+        MemoTripTheme {
+            val navController = androidx.navigation.compose.rememberNavController()
+
+            AddTripScreen(
+                navController = navController
             )
         }
     }

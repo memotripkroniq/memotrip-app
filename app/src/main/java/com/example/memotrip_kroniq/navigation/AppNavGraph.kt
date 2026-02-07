@@ -36,6 +36,8 @@ import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
+import com.example.memotrip_kroniq.ui.tripdetail.TripDetailScreen
+
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -49,6 +51,9 @@ sealed class Screen(val route: String) {
     object LocationSearch : Screen("location_search")
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
+    object TripDetail : Screen("trip_detail/{tripId}") {
+        fun createRoute(tripId: String) = "trip_detail/$tripId"
+    }
 }
 
 enum class LocationTarget {
@@ -223,6 +228,22 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.TripSuccess.route) {
             TripSuccessScreen(
                 navController = navController
+            )
+        }
+
+        // =============================================================
+        // ⭐ TRIP DETAIL
+        // =============================================================
+        composable(
+            route = Screen.TripDetail.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId").orEmpty()
+
+            TripDetailScreen(
+                navController = navController,
+                tripId = tripId
             )
         }
 

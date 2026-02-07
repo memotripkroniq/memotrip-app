@@ -603,6 +603,8 @@ class AddTripViewModel(
 
                 // ✅ cover už je uploadnutý v onCoverPhotoSelected()
                 val coverUrl = state.coverImageUrl
+                val mapUrl = state.generatedMapImageUrl
+                    ?: throw IllegalStateException("Map is missing - generate map before saving trip")
 
                 val request = CreateTripRequest(
                     name = state.tripName,
@@ -614,7 +616,8 @@ class AddTripViewModel(
                     transport = state.transport.first().name,
                     waypoints = state.stops.map { it.text },
                     theme = state.selectedTheme?.name,
-                    coverImageUrl = coverUrl // ✅ TADY
+                    coverImageUrl = coverUrl,
+                    mapImageUrl = mapUrl
                 )
 
                 Log.d("CREATE_TRIP", "request.coverImageUrl=${request.coverImageUrl}")

@@ -2,6 +2,7 @@ package com.example.memotrip_kroniq.data.remote
 
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import com.example.memotrip_kroniq.data.remote.dto.UploadCoverResponse
 import okhttp3.MultipartBody
@@ -10,6 +11,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
 
 interface TripsApi {
 
@@ -26,4 +28,10 @@ interface TripsApi {
 
     @GET("trips/my")
     suspend fun getMyTrips(): List<TripDto>
+
+    @GET("trips/{tripId}")
+    suspend fun getTripDetail(
+        @Path("tripId") tripId: String
+    ): TripDetailDto
+
 }

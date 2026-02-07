@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.memotrip_kroniq.data.remote.TripsApi
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -24,6 +25,10 @@ class TripsRepository(
 
     suspend fun getMyTrips(): List<TripDto> =
         api.getMyTrips()
+
+    suspend fun getTripDetail(tripId: String): TripDetailDto =
+        api.getTripDetail(tripId)
+
 
     suspend fun uploadCoverImage(uri: Uri): String {
         val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }

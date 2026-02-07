@@ -35,7 +35,7 @@ fun ThemeSelector(
 ) {
     val s = LocalUiScaler.current
 
-    Column {
+
 
         // 🔹 HLAVIČKA "Theme + 🔒" (už ji máš hotovou)
         Row(
@@ -82,6 +82,6 @@ fun ThemeSelector(
                 )
             }
         }
-    }
+
 }
 

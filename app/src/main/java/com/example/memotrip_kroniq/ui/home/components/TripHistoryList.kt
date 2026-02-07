@@ -26,7 +26,9 @@ import com.example.memotrip_kroniq.ui.home.components.upsell.UpsellPromptBox
 @Composable
 fun TripHistoryList(
     trips: List<TripHistoryItem>,
-    showUpsell: Boolean
+    showUpsell: Boolean,
+    onTripClick: (String) -> Unit
+
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -36,9 +38,7 @@ fun TripHistoryList(
         items(trips) { trip ->
             TripHistoryItemRow(
                 item = trip,
-                onClick = {
-                    // navController.navigate("tripDetail/${trip.id}")
-                }
+                onClick = { onTripClick(trip.id) }
             )
         }
 
@@ -80,7 +80,8 @@ private fun TripHistoryListPreview_UpsellOn() {
                             coverImageUrl = null
                         )
                     ),
-                    showUpsell = true
+                    showUpsell = true,
+                    onTripClick = {}
                 )
             }
         }
@@ -108,7 +109,8 @@ private fun TripHistoryListPreview_UpsellOff() {
                             coverImageUrl = null
                         )
                     ),
-                    showUpsell = false
+                    showUpsell = false,
+                    onTripClick = {}
                 )
             }
         }

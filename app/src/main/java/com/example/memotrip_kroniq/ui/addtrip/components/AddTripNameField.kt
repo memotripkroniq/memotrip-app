@@ -102,7 +102,7 @@ fun AddTripNameField(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer (modifier = Modifier.width(12.dp))
 
         BasicTextField(
             value = textFieldValue, // 🔴 CHANGE 4: TextFieldValue místo String

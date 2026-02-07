@@ -112,9 +112,8 @@ fun HomeScreen(
             isKroniq = uiState.isKroniq,
             isAddTripEnabled = uiState.isAddTripEnabled,
             onTabSelected = { selectedTab = it },
-            onAddTripClick = {
-                navController?.navigate(Screen.AddTrip.route)
-            }
+            onAddTripClick = { navController?.navigate(Screen.AddTrip.route) },
+            onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
         )
 
     }
@@ -129,7 +128,7 @@ fun HomeScreenPreview() {
         MemoTripTheme {
             HomeScreen(
                 navController = null,
-                initialTab = HomeTab.TRIP_HISTORY
+                initialTab = HomeTab.TRIP_HISTORY,
             )
         }
     }
