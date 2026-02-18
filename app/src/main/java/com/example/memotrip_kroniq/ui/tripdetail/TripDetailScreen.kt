@@ -84,14 +84,32 @@ fun TripDetailScreen(
                 uiState = uiState,
                 onTabSelected = vm::onTabSelected,
                 onAddMemberClick = vm::onAddMemberClick,
-                onDeleteTripClick = vm::onDeleteTripClick
-            )
+                onAddChecklistItem = vm::addChecklistItem,
+                onToggleChecklistItem = vm::toggleChecklistItem,
+                onRemoveChecklistItem = vm::removeChecklistItem,
+                onDeleteTripClick = vm::onDeleteTripClick,
+                onStartEditChecklistItem = vm::startEditChecklistItem,
+                onEditingChecklistTextChange = vm::updateEditingChecklistText,
+                onCommitEditChecklistItem = vm::commitEditChecklistItem,
+                onCancelEditChecklistItem = vm::cancelEditChecklistItem,
+                onAddNoteItem = vm::addNoteItem,
+                onRemoveNoteItem = vm::removeNoteItem,
+                onStartEditNoteItem = vm::startEditNoteItem,
+                onEditingNoteTextChange = vm::updateEditingNoteText,
+                onCommitEditNoteItem = vm::commitEditNoteItem,
+                onCancelEditNoteItem = vm::cancelEditNoteItem,
+                onToggleBudgetVisibility = vm::toggleBudgetVisibility,
+                onStartEditBudget = vm::startEditBudget,
+                onEditingBudgetTextChange = vm::updateEditingBudgetText,
+                onCommitEditBudget = vm::commitEditBudget,
+
+                )
         }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true, widthDp = 412, heightDp = 1090)
+@Preview(showBackground = true, widthDp = 412, heightDp = 1290)
 @Composable
 fun TripDetailScreenPreview() {
     CompositionLocalProvider(

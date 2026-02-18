@@ -1,7 +1,9 @@
 package com.example.memotrip_kroniq.ui.tripdetail
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.core.model.TransportType
+import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
 import com.example.memotrip_kroniq.ui.tripdetail.components.ChecklistItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripMemberUi
@@ -37,14 +39,22 @@ data class TripDetailUiState(
 
     // Checklist
     val checklistItems: List<ChecklistItemUi> = emptyList(),
+    val editingChecklistIndex: Int? = null,
+    val editingChecklistText: TextFieldValue = TextFieldValue(""),
+
 
     // Notes
     val notes: List<NoteItemUi> = emptyList(),
+    val editingNoteIndex: Int? = null,
+    val editingNoteText: TextFieldValue = TextFieldValue(""),
+
 
     //Budget
     val plannedBudget: String = "",
     val spentBudget: String = "",
-    val isBudgetVisible: Boolean = true, // TODO: Zatím neřešíme
+    val isBudgetVisible: Boolean = true,
+    val editingBudgetField: BudgetEditField? = null,
+    val editingBudgetText: TextFieldValue = TextFieldValue(""),
 
     // Tips & Trips
     val tipsAndTripsItems: List<TipsAndTripsItemUi> = emptyList(),

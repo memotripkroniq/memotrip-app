@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.sx
@@ -34,8 +35,26 @@ fun TripDetailContent(
     uiState: TripDetailUiState,
     onTabSelected: (TripDetailTab) -> Unit,
     onAddMemberClick: () -> Unit,
-    onDeleteTripClick: () -> Unit
-) {
+    onDeleteTripClick: () -> Unit,
+    onAddChecklistItem: () -> Unit,
+    onToggleChecklistItem: (Int) -> Unit,
+    onRemoveChecklistItem: (Int) -> Unit,
+    onStartEditChecklistItem: (Int) -> Unit,
+    onEditingChecklistTextChange: (TextFieldValue) -> Unit,
+    onCommitEditChecklistItem: () -> Unit,
+    onCancelEditChecklistItem: () -> Unit,
+    onAddNoteItem: () -> Unit,
+    onRemoveNoteItem: (Int) -> Unit,
+    onStartEditNoteItem: (Int) -> Unit,
+    onEditingNoteTextChange: (TextFieldValue) -> Unit,
+    onCommitEditNoteItem: () -> Unit,
+    onCancelEditNoteItem: () -> Unit,
+    onToggleBudgetVisibility: () -> Unit,
+    onStartEditBudget: (BudgetEditField) -> Unit,
+    onEditingBudgetTextChange: (TextFieldValue) -> Unit,
+    onCommitEditBudget: () -> Unit,
+
+    ) {
     val s = LocalUiScaler.current
 
     LazyColumn(
@@ -115,31 +134,43 @@ fun TripDetailContent(
             Spacer(Modifier.height(20f.sy(s)))
         }
 
-
         item {
             ChecklistCard(
                 items = uiState.checklistItems,
-                onAddClick = {
-                    // TODO: otevřít input / přidat nový item
-                },
-                onToggleChecked = { index ->
-                    // TODO: toggle checked u položky index
-                },
-                onRemoveItem = { index ->
-                    // TODO: odstranit položku index
-                }
+                editingIndex = uiState.editingChecklistIndex,
+                editingText = uiState.editingChecklistText, // TextFieldValue
+
+                onAddClick = onAddChecklistItem,
+                onToggleChecked = onToggleChecklistItem,
+                onRemoveItem = onRemoveChecklistItem,
+
+                onStartEdit = onStartEditChecklistItem,
+                onEditingTextChange = onEditingChecklistTextChange, // TextFieldValue -> Unit
+                onCommitEdit = onCommitEditChecklistItem,
+                onCancelEdit = onCancelEditChecklistItem
             )
+
             Spacer(Modifier.height(16f.sy(s)))
         }
+
 
         item {
             NotesCard(
                 items = uiState.notes,
-                onAddClick = { /* TODO */ },
-                onRemoveItem = { /* TODO */ }
+                onAddClick = onAddNoteItem,
+                onRemoveItem = { index -> onRemoveNoteItem(index) },
+
+                editingIndex = uiState.editingNoteIndex,
+                editingText = uiState.editingNoteText,
+                onStartEdit = { index -> onStartEditNoteItem(index) },
+                onEditingTextChange = onEditingNoteTextChange,
+                onCommitEdit = onCommitEditNoteItem,
+                onCancelEdit = onCancelEditNoteItem
             )
             Spacer(Modifier.height(16f.sy(s)))
         }
+
+
 
 
         item {
@@ -147,8 +178,15 @@ fun TripDetailContent(
                 plannedAmount = uiState.plannedBudget,
                 spentAmount = uiState.spentBudget,
                 isVisible = uiState.isBudgetVisible,
-                onToggleVisibility = { /* zatím prázdné – napojíme později */ }
+                onToggleVisibility = onToggleBudgetVisibility,
+
+                editingField = uiState.editingBudgetField,
+                editingText = uiState.editingBudgetText,
+                onStartEdit = onStartEditBudget,
+                onEditingTextChange = onEditingBudgetTextChange,
+                onCommitEdit = onCommitEditBudget
             )
+
             Spacer(Modifier.height(16f.sy(s)))
         }
 
@@ -239,8 +277,26 @@ private fun TripDetailContentPreview() {
                 ),
                 onTabSelected = {},
                 onAddMemberClick = {},
-                onDeleteTripClick = {}
-            )
+                onAddChecklistItem = {},
+                onToggleChecklistItem = {},
+                onStartEditChecklistItem = {},
+                onEditingChecklistTextChange = {},
+                onCommitEditChecklistItem = {},
+                onCancelEditChecklistItem = {},
+                onRemoveChecklistItem = {},
+                onDeleteTripClick = {},
+                onAddNoteItem = {},
+                onRemoveNoteItem = {},
+                onStartEditNoteItem = {},
+                onEditingNoteTextChange = {},
+                onCommitEditNoteItem = {},
+                onCancelEditNoteItem = {},
+                onToggleBudgetVisibility = {},
+                onStartEditBudget = { _: BudgetEditField -> },
+                onEditingBudgetTextChange = { _: TextFieldValue -> },
+                onCommitEditBudget = {},
+
+                )
         }
     }
 }
