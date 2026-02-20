@@ -102,6 +102,15 @@ fun TripDetailScreen(
                 onStartEditBudget = vm::startEditBudget,
                 onEditingBudgetTextChange = vm::updateEditingBudgetText,
                 onCommitEditBudget = vm::commitEditBudget,
+                onTipsAddClick = vm::addTipsAndTripsItem,
+                onTipsCancelAddClick = vm::cancelAddTipsAndTrips,
+                onTipsRemoveItem = vm::removeTipsAndTripsItem,
+                onStartEditTipsItem = vm::startEditTipsAndTripsItem,
+                onEditingTipsTextChange = vm::updateEditingTipsText,
+                onCommitEditTipsItem = vm::commitEditTipsAndTrips,
+                onTipsRequestPickPhoto = vm::requestPickTipsPhoto,
+                onTipsPhotoPicked = vm::onTipsPhotoPicked,
+
 
                 )
         }

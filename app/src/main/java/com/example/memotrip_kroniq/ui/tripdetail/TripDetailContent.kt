@@ -14,6 +14,7 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.tripdetail.components.*
 import PreviewUiScaler
+import android.net.Uri
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,9 @@ import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.tripdetail.components.ZoomableImageDialog
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+
 
 
 
@@ -53,6 +57,17 @@ fun TripDetailContent(
     onStartEditBudget: (BudgetEditField) -> Unit,
     onEditingBudgetTextChange: (TextFieldValue) -> Unit,
     onCommitEditBudget: () -> Unit,
+    onTipsAddClick: () -> Unit,
+    onTipsCancelAddClick: () -> Unit,
+    onTipsRemoveItem: (Int) -> Unit,
+
+    onStartEditTipsItem: (Int) -> Unit,
+    onEditingTipsTextChange: (TextFieldValue) -> Unit,
+    onCommitEditTipsItem: () -> Unit,
+
+    onTipsRequestPickPhoto: (Int) -> Unit,
+    onTipsPhotoPicked: (Uri?) -> Unit,
+
 
     ) {
     val s = LocalUiScaler.current
@@ -192,17 +207,46 @@ fun TripDetailContent(
 
 
         item {
+            // ✅ picker pro fotku
+            val tipsImagePicker = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                onTipsPhotoPicked(uri)
+            }
+
             TipsAndTripsCard(
                 items = uiState.tipsAndTripsItems,
                 isAdding = uiState.isTipsAndTripsAdding,
-                onAddClick = { /* state.isTipsAndTripsAdding = true */ },
-                onCancelAddClick = { /* state.isTipsAndTripsAdding = false */ },
-                onPickImageClick = { /* UI only */ },
-                onAddItemPhotoClick = { index -> /* UI only */ },
-                onRemoveItem = { index -> /* UI only */ }
+
+                // ✅ inline edit (Keep-like)
+                editingIndex = uiState.editingTipsIndex,
+                editingText = uiState.editingTipsText,
+                onStartEdit = onStartEditTipsItem,
+                onEditingTextChange = onEditingTipsTextChange,
+                onCommitEdit = onCommitEditTipsItem,
+
+                // ✅ akce
+                onAddClick = onTipsAddClick,
+                onCancelAddClick = onTipsCancelAddClick,
+                onPickImageClick = {
+                    // pokud chceš použít pro "aktuálně editovaný" item
+                    val idx = uiState.editingTipsIndex
+                        ?: uiState.tipsAndTripsItems.lastIndex.takeIf { it >= 0 }
+                        ?: return@TipsAndTripsCard
+
+                    onTipsRequestPickPhoto(idx)
+                    tipsImagePicker.launch("image/*")
+                },
+                onAddItemPhotoClick = { index ->
+                    onTipsRequestPickPhoto(index)
+                    tipsImagePicker.launch("image/*")
+                },
+                onRemoveItem = onTipsRemoveItem
             )
+
             Spacer(Modifier.height(24f.sy(s)))
         }
+
 
         item {
             Box(
@@ -295,6 +339,15 @@ private fun TripDetailContentPreview() {
                 onStartEditBudget = { _: BudgetEditField -> },
                 onEditingBudgetTextChange = { _: TextFieldValue -> },
                 onCommitEditBudget = {},
+                onTipsAddClick = {},
+                onTipsCancelAddClick = {},
+                onTipsRemoveItem = {},
+                onStartEditTipsItem = {},
+                onEditingTipsTextChange = {},
+                onCommitEditTipsItem = {},
+                onTipsRequestPickPhoto = {},
+                onTipsPhotoPicked = {},
+
 
                 )
         }

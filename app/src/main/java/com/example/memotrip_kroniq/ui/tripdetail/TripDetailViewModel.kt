@@ -18,8 +18,8 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
-
-
+import android.net.Uri
+import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 
 class TripDetailViewModel(
     private val tripsRepository: TripsRepository,
@@ -343,6 +343,157 @@ class TripDetailViewModel(
             BudgetEditField.SPENT -> state.copy(spentBudget = text)
         }
     }
+
+    // -------- TIPS & TRIPS (Keep-like) --------
+
+    fun addTipsAndTripsItem() {
+        _uiState.update { state ->
+            val items = state.tipsAndTripsItems.toMutableList()
+
+            // 1) commit rozeditovaného itemu, pokud existuje
+            val editingIndex = state.editingTipsIndex
+            if (editingIndex != null && editingIndex in items.indices) {
+                val text = state.editingTipsText.text.trim()
+                if (text.isBlank()) {
+                    items.removeAt(editingIndex)
+                } else {
+                    items[editingIndex] = items[editingIndex].copy(title = text)
+                }
+            }
+
+            // 2) přidat nový item a přepnout editaci na něj
+            val newIndex = items.size
+            items.add(TipsAndTripsItemUi(title = "", imageUri = null))
+
+            state.copy(
+                tipsAndTripsItems = items,
+                isTipsAndTripsAdding = true,
+                editingTipsIndex = newIndex,
+                editingTipsText = TextFieldValue(""),
+                pickingTipsPhotoIndex = null
+            )
+        }
+    }
+
+    fun cancelAddTipsAndTrips() {
+        _uiState.update { state ->
+            state.copy(
+                isTipsAndTripsAdding = false,
+                editingTipsIndex = null,
+                editingTipsText = TextFieldValue(""),
+                pickingTipsPhotoIndex = null
+            )
+        }
+    }
+
+    fun startEditTipsAndTripsItem(index: Int) {
+        _uiState.update { state ->
+            val current = state.tipsAndTripsItems.getOrNull(index)?.title ?: ""
+            state.copy(
+                isTipsAndTripsAdding = true,
+                editingTipsIndex = index,
+                editingTipsText = TextFieldValue(
+                    text = current,
+                    selection = TextRange(current.length) // kurzor na konec
+                )
+            )
+        }
+    }
+
+    fun updateEditingTipsText(value: TextFieldValue) {
+        _uiState.update { it.copy(editingTipsText = value) }
+    }
+
+    fun commitEditTipsAndTrips() {
+        _uiState.update { state ->
+            val index = state.editingTipsIndex ?: return@update state
+            val text = state.editingTipsText.text.trim()
+
+            val items = state.tipsAndTripsItems.toMutableList()
+            if (index !in items.indices) {
+                return@update state.copy(
+                    editingTipsIndex = null,
+                    editingTipsText = TextFieldValue(""),
+                    isTipsAndTripsAdding = false,
+                    pickingTipsPhotoIndex = null
+                )
+            }
+
+            if (text.isBlank()) {
+                items.removeAt(index)
+            } else {
+                items[index] = items[index].copy(title = text)
+            }
+
+            state.copy(
+                tipsAndTripsItems = items,
+                isTipsAndTripsAdding = false,
+                editingTipsIndex = null,
+                editingTipsText = TextFieldValue(""),
+                pickingTipsPhotoIndex = null
+            )
+        }
+    }
+
+    fun removeTipsAndTripsItem(index: Int) {
+        _uiState.update { state ->
+            val items = state.tipsAndTripsItems.toMutableList()
+            if (index !in items.indices) return@update state
+
+            val editingIndex = state.editingTipsIndex
+            val pickingIndex = state.pickingTipsPhotoIndex
+
+            items.removeAt(index)
+
+            val newEditingIndex = when {
+                editingIndex == null -> null
+                index == editingIndex -> null                 // smazal jsem editovaný -> konec editace
+                index < editingIndex -> editingIndex - 1      // smazal jsem před editovaným -> posun indexu
+                else -> editingIndex                           // smazal jsem za editovaným -> beze změny
+            }
+
+            val newPickingIndex = when {
+                pickingIndex == null -> null
+                index == pickingIndex -> null
+                index < pickingIndex -> pickingIndex - 1
+                else -> pickingIndex
+            }
+
+            state.copy(
+                tipsAndTripsItems = items,
+                editingTipsIndex = newEditingIndex,
+                editingTipsText = if (newEditingIndex == null) TextFieldValue("") else state.editingTipsText,
+                isTipsAndTripsAdding = newEditingIndex != null,
+                pickingTipsPhotoIndex = newPickingIndex
+            )
+        }
+    }
+
+
+    // UI si zavolá před otevřením galerie (řekneme, pro který item vybíráme fotku)
+    fun requestPickTipsPhoto(index: Int) {
+        _uiState.update { it.copy(pickingTipsPhotoIndex = index) }
+    }
+
+    // callback z pickeru v UI
+    fun onTipsPhotoPicked(uri: Uri?) {
+        if (uri == null) return
+
+        _uiState.update { state ->
+            val index = state.pickingTipsPhotoIndex ?: return@update state
+            val items = state.tipsAndTripsItems.toMutableList()
+            if (index !in items.indices) return@update state.copy(pickingTipsPhotoIndex = null)
+
+            items[index] = items[index].copy(imageUri = uri)
+
+            state.copy(
+                tipsAndTripsItems = items,
+                pickingTipsPhotoIndex = null
+            )
+        }
+    }
+
+
 
 
 

@@ -9,6 +9,8 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripMemberUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.ThemeUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
+import android.net.Uri
+
 
 data class TripDetailUiState(
     // Cover + maps
@@ -58,7 +60,10 @@ data class TripDetailUiState(
 
     // Tips & Trips
     val tipsAndTripsItems: List<TipsAndTripsItemUi> = emptyList(),
-    val isTipsAndTripsAdding: Boolean = false
+    val isTipsAndTripsAdding: Boolean = false,
+    val editingTipsIndex: Int? = null,
+    val editingTipsText: TextFieldValue = TextFieldValue(""),
+    val pickingTipsPhotoIndex: Int? = null,
 
 ) {
     // Derived state
