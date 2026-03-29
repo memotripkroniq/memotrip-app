@@ -56,13 +56,15 @@ class HomeViewModel(
 
             try {
                 val trips = tripsRepository.getMyTrips()
+                android.util.Log.d("HOME_TRIPS", trips.toString())
 
                 _uiState.value = _uiState.value.copy(
                     trips = trips.map {
                         TripHistoryItem(
                             id = it.id,
                             title = it.title,
-                            coverImageUrl = it.coverImageUrl // může být null
+                            coverImageUrl = it.coverImageUrl, // může být null
+                            theme = it.theme
                         )
                     },
                     isTripsLoading = false
@@ -96,6 +98,38 @@ class HomeViewModel(
                 // MVP: když to selže, necháme tlačítko enabled
                 _uiState.update { it.copy(isAddTripEnabled = true) }
             }
+        }
+    }
+
+    fun onThemeClick(theme: String) {
+        android.util.Log.d("HOME_THEME", "clicked theme = $theme")
+
+        _uiState.update {
+            it.copy(
+                themesContentState = ThemesContentState.ThemeTrips(theme)
+            )
+        }
+    }
+
+    fun onThemesBackClick() {
+        android.util.Log.d("HOME_THEME", "back to grid")
+
+        _uiState.update {
+            it.copy(
+                themesContentState = ThemesContentState.Grid
+            )
+        }
+    }
+
+    fun getTripsForSelectedTheme(): List<TripHistoryItem> {
+        val contentState = _uiState.value.themesContentState
+
+        return if (contentState is ThemesContentState.ThemeTrips) {
+            _uiState.value.trips.filter { trip ->
+                trip.theme.equals(contentState.theme, ignoreCase = true)
+            }
+        } else {
+            emptyList()
         }
     }
 

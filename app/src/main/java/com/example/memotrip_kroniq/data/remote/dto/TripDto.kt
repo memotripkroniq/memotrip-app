@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class TripDto(
     val id: String,
     val title: String,
-    val coverImageUrl: String? = null
+    val coverImageUrl: String? = null,
+    val theme: String? = null
 )

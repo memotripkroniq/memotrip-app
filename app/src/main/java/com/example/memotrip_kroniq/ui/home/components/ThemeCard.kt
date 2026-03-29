@@ -19,19 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.*
+import androidx.compose.foundation.clickable
 
 @Composable
 fun ThemeCard(
     modifier: Modifier = Modifier,
     title: String,
     imageRes: Int,
-    locked: Boolean = true      // 🔒 výchozí stav: zamčeno
+    locked: Boolean = true,      // 🔒 výchozí stav: zamčeno
+    onClick: () -> Unit = {}
 ) {
     val s = LocalUiScaler.current
 
     Box(
         modifier = modifier
             .height(150f.sy(s))
+            .clickable { onClick() }
     ) {
         // --- IMAGE POZADÍ (vždy dole)---
         Image(

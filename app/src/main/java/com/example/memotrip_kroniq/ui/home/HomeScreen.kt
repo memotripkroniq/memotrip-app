@@ -26,6 +26,8 @@ import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.home.components.*
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -34,17 +36,16 @@ fun HomeScreen(
     initialTab: HomeTab = HomeTab.THEMES
 ) {
     val s = LocalUiScaler.current
-    var selectedTab by remember { mutableStateOf(initialTab) }
+    var selectedTab by rememberSaveable { mutableStateOf(initialTab) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val navBackStackEntry = navController?.currentBackStackEntryAsState()
+    val currentBackStackEntry = navController?.currentBackStackEntryAsState()?.value
+    val savedStateHandle = currentBackStackEntry?.savedStateHandle
 
     val tokenStore = remember { TokenDataStore(context) }
     RetrofitClient.build(tokenStore)
-
-
 
     //// 🔐 JEDEN TokenDataStore
     //val tokenStore = remember { TokenDataStore(context) }
@@ -79,6 +80,18 @@ fun HomeScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val showThemesBack = selectedTab == HomeTab.THEMES &&
+            uiState.themesContentState is ThemesContentState.ThemeTrips
+
+    LaunchedEffect(savedStateHandle) {
+        val deleted = savedStateHandle?.get<Boolean>("trip_deleted") ?: false
+        if (deleted) {
+            savedStateHandle["trip_deleted"] = false
+            selectedTab = HomeTab.TRIP_HISTORY
+            viewModel.refreshTrips()
+        }
+    }
+
     fun logout() {
         coroutineScope.launch {
             tokenStore.clearTokens()
@@ -94,7 +107,8 @@ fun HomeScreen(
         topBar = {
             AppTopBar(
                 title = "Add Trip",
-                showBack = false,
+                showBack = showThemesBack,
+                onBackClick = { viewModel.onThemesBackClick() },
                 onMenuClick = ::logout
             )
         }
@@ -108,10 +122,14 @@ fun HomeScreen(
             selectedTab = selectedTab,
             isThemesLocked = uiState.isThemesLocked,
             trips = uiState.trips,
+            themeTrips = viewModel.getTripsForSelectedTheme(),
+            themesContentState = uiState.themesContentState,
             isTripsLoading = uiState.isTripsLoading,
             isKroniq = uiState.isKroniq,
             isAddTripEnabled = uiState.isAddTripEnabled,
             onTabSelected = { selectedTab = it },
+            onThemeClick = viewModel::onThemeClick,
+            onThemesBackClick = viewModel::onThemesBackClick,
             onAddTripClick = { navController?.navigate(Screen.AddTrip.route) },
             onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
         )

@@ -67,6 +67,10 @@ fun TripDetailContent(
 
     onTipsRequestPickPhoto: (Int) -> Unit,
     onTipsPhotoPicked: (Uri?) -> Unit,
+    onFromTextChange: (String) -> Unit,
+    onToTextChange: (String) -> Unit,
+    onThemeSelected: (ThemeType?) -> Unit,
+    onToggleTransport: (TransportType) -> Unit,
 
 
     ) {
@@ -347,7 +351,10 @@ private fun TripDetailContentPreview() {
                 onCommitEditTipsItem = {},
                 onTipsRequestPickPhoto = {},
                 onTipsPhotoPicked = {},
-
+                onFromTextChange = {},
+                onToTextChange = {},
+                onThemeSelected = {},
+                onToggleTransport = {},
 
                 )
         }

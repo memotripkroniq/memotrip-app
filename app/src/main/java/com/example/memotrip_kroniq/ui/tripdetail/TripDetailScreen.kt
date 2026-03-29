@@ -24,6 +24,7 @@ import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import androidx.activity.compose.BackHandler
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -57,6 +58,17 @@ fun TripDetailScreen(
 
     val vm: TripDetailViewModel = viewModel(factory = factory)
     val uiState by vm.uiState.collectAsState()
+    val onBack = remember(vm, navController) {
+        {
+            // nečti uiState z closure, ať máš vždy aktuální hodnotu ve VM
+            if (vm.uiState.value.isSaving) return@remember
+            vm.save { navController.popBackStack() }
+        }
+    }
+
+    BackHandler {
+        onBack()
+    }
 
     Box(
         modifier = Modifier
@@ -73,7 +85,7 @@ fun TripDetailScreen(
                     modifier = Modifier, // případně .statusBarsPadding()
                     title = "Trip detail",
                     showBack = true,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { onBack() }
                 )
             }
         ) { innerPadding ->
@@ -87,7 +99,15 @@ fun TripDetailScreen(
                 onAddChecklistItem = vm::addChecklistItem,
                 onToggleChecklistItem = vm::toggleChecklistItem,
                 onRemoveChecklistItem = vm::removeChecklistItem,
-                onDeleteTripClick = vm::onDeleteTripClick,
+                onDeleteTripClick = {
+                    vm.onDeleteTripClick {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("trip_deleted", true)
+
+                        navController.popBackStack()
+                    }
+                },
                 onStartEditChecklistItem = vm::startEditChecklistItem,
                 onEditingChecklistTextChange = vm::updateEditingChecklistText,
                 onCommitEditChecklistItem = vm::commitEditChecklistItem,
@@ -110,6 +130,10 @@ fun TripDetailScreen(
                 onCommitEditTipsItem = vm::commitEditTipsAndTrips,
                 onTipsRequestPickPhoto = vm::requestPickTipsPhoto,
                 onTipsPhotoPicked = vm::onTipsPhotoPicked,
+                onFromTextChange = vm::onFromTextChange,
+                onToTextChange = vm::onToTextChange,
+                onThemeSelected = vm::onThemeSelected,
+                onToggleTransport = vm::toggleTransport,
 
 
                 )

@@ -33,10 +33,14 @@ fun HomeContent(
     selectedTab: HomeTab,
     isThemesLocked: Boolean,
     trips: List<TripHistoryItem>,
+    themeTrips: List<TripHistoryItem>,
+    themesContentState: ThemesContentState,
     isTripsLoading: Boolean,
     isKroniq: Boolean,
     isAddTripEnabled: Boolean,
     onTabSelected: (HomeTab) -> Unit,
+    onThemeClick: (String) -> Unit,
+    onThemesBackClick: () -> Unit,
     onAddTripClick: () -> Unit,
     onTripClick: (String) -> Unit
 ) {
@@ -67,7 +71,34 @@ fun HomeContent(
 
         when (selectedTab) {
             HomeTab.THEMES -> {
-                ThemesGrid(locked = isThemesLocked)
+                when (val contentState = themesContentState) {
+                    ThemesContentState.Grid -> {
+                        ThemesGrid(
+                            locked = isThemesLocked,
+                            onThemeClick = onThemeClick
+                        )
+                    }
+
+                    is ThemesContentState.ThemeTrips -> {
+                        android.util.Log.d("HOME_THEME", "render ThemeTrips for ${contentState.theme}")
+
+                        when {
+                            isTripsLoading -> {
+                                TripHistoryLoadingContent()
+                            }
+                            themeTrips.isEmpty() -> {
+                                TripHistoryEmptyContent()
+                            }
+                            else -> {
+                                TripHistoryList(
+                                    trips = themeTrips,
+                                    showUpsell = false,
+                                    onTripClick = onTripClick
+                                )
+                            }
+                        }
+                    }
+                }
             }
             HomeTab.TRIP_HISTORY -> {
                 when {
@@ -109,16 +140,22 @@ fun HomeContentPreview_TripHistory() {
                     TripHistoryItem(
                         id = "1",
                         title = "Trip to Italy",
-                        coverImageUrl = null
+                        coverImageUrl = null,
+                        theme = "Summer"
                     ),
                     TripHistoryItem(
                         id = "2",
                         title = "Skiing Alps",
-                        coverImageUrl = "https://picsum.photos/400/200"
+                        coverImageUrl = "https://picsum.photos/400/200",
+                        theme = "Winter"
                     )
                 ),
+                themeTrips = emptyList(),
+                themesContentState = ThemesContentState.Grid,
                 isTripsLoading = false,
                 onTabSelected = {},
+                onThemeClick = {},
+                onThemesBackClick = {},
                 onAddTripClick = {},
                 isKroniq = false,
                 isAddTripEnabled = true,

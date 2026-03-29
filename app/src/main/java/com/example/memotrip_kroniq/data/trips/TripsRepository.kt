@@ -11,6 +11,7 @@ import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 
 class TripsRepository(
     private val api: TripsApi,
@@ -55,5 +56,12 @@ class TripsRepository(
         Log.d("COVER_UPLOAD", "coverImageUrl=${response.coverImageUrl}")
 
         return response.coverImageUrl
+    }
+
+    suspend fun updateTripDetail(tripId: String, body: TripDetailUpdateDto): TripDetailDto =
+        api.updateTripDetail(tripId, body)
+
+    suspend fun deleteTrip(tripId: String) {
+        api.deleteTrip(tripId)
     }
 }

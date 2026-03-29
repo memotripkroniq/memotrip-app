@@ -19,7 +19,10 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
 import android.net.Uri
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
+
 
 class TripDetailViewModel(
     private val tripsRepository: TripsRepository,
@@ -35,6 +38,8 @@ class TripDetailViewModel(
 
     private fun loadTrip() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
             try {
                 Log.d("TripDetailVM", "Loading tripId=$tripId")
                 val trip = tripsRepository.getTripDetail(tripId)
@@ -48,45 +53,152 @@ class TripDetailViewModel(
                     runCatching { ThemeType.valueOf(raw.uppercase()) }.getOrNull()
                 }
 
-                _uiState.value = _uiState.value.copy(
-                    coverImageUrl = trip.coverImageUrl,
-                    mapImageUrl = trip.mapImageUrl,
-                    mapFullImageUrl = trip.mapImageFullUrl ?: trip.mapImageUrl,
-                    tripDateText = formatTripDate(trip.startDate, trip.endDate),
-                    fromText = trip.from,
-                    toText = trip.to,
-                    transport = transportEnum?.let { setOf(it) } ?: emptySet(),
-                    themes = listOf(
-                        ThemeUi(ThemeType.SUMMER, R.drawable.homescreen_theme_summer),
-                        ThemeUi(ThemeType.WINTER, R.drawable.homescreen_theme_winter),
-                        ThemeUi(ThemeType.CAMPING, R.drawable.homescreen_theme_camping),
-                        ThemeUi(ThemeType.CITIES, R.drawable.homescreen_theme_cities),
-                        ThemeUi(ThemeType.NATURE, R.drawable.homescreen_theme_nature),
-                        ThemeUi(ThemeType.EXOTIC, R.drawable.homescreen_theme_exotic)
-                    ),
-                    selectedTheme = themeEnum,
-                    isThemesLocked = false,     // debug
-                    hasKroniqPackage = true
-                    // members/themes/notes/checklist zatím necháváme default (UI-only)
-                )
+                // ✅ checklist / notes / tips (seřadit podle order, ošetřit nulls)
+                val checklistUi = trip.tripChecklistItems
+                    .sortedBy { it.order ?: Int.MAX_VALUE }
+                    .map {
+                        ChecklistItemUi(
+                            text = it.text.orEmpty(),
+                            checked = it.checked ?: false
+                        )
+                    }
 
+                val notesUi = trip.tripNotes
+                    .sortedBy { it.order ?: Int.MAX_VALUE }
+                    .map { NoteItemUi(text = it.text.orEmpty()) }
+
+                val tipsUi = trip.tripTipsAndTrips
+                    .sortedBy { it.order ?: Int.MAX_VALUE }
+                    .map {
+                        TipsAndTripsItemUi(
+                            title = it.title.orEmpty(),
+                            imageUri = it.imageUrl?.let(Uri::parse)
+                        )
+                    }
+
+                _uiState.update { state ->
+                    state.copy(
+                        // core (v dto některé non-null, ale dávám safe i tak)
+                        coverImageUrl = trip.coverImageUrl,
+                        mapImageUrl = trip.mapImageUrl,
+                        mapFullImageUrl = trip.mapImageFullUrl ?: trip.mapImageUrl,
+                        tripDateText = formatTripDate(
+                            trip.startDate.orEmpty(),
+                            trip.endDate.orEmpty()
+                        ),
+                        fromText = trip.from.orEmpty(),
+                        toText = trip.to.orEmpty(),
+                        transport = transportEnum?.let { setOf(it) } ?: emptySet(),
+
+                        // themes
+                        themes = listOf(
+                            ThemeUi(ThemeType.SUMMER, R.drawable.homescreen_theme_summer),
+                            ThemeUi(ThemeType.WINTER, R.drawable.homescreen_theme_winter),
+                            ThemeUi(ThemeType.CAMPING, R.drawable.homescreen_theme_camping),
+                            ThemeUi(ThemeType.CITIES, R.drawable.homescreen_theme_cities),
+                            ThemeUi(ThemeType.NATURE, R.drawable.homescreen_theme_nature),
+                            ThemeUi(ThemeType.EXOTIC, R.drawable.homescreen_theme_exotic),
+                        ),
+                        selectedTheme = themeEnum,
+                        isThemesLocked = false,
+
+                        // budget
+                        plannedBudget = trip.plannedBudget.orEmpty(),
+                        spentBudget = trip.spentBudget.orEmpty(),
+
+                        // lists
+                        checklistItems = checklistUi,
+                        editingChecklistIndex = null,
+                        editingChecklistText = TextFieldValue(""),
+
+                        notes = notesUi,
+                        editingNoteIndex = null,
+                        editingNoteText = TextFieldValue(""),
+
+                        tipsAndTripsItems = tipsUi,
+                        isTipsAndTripsAdding = false,
+                        editingTipsIndex = null,
+                        editingTipsText = TextFieldValue(""),
+                        pickingTipsPhotoIndex = null,
+
+                        // flags
+                        hasKroniqPackage = true,
+                        hasUnsavedChanges = false,
+                        isLoading = false,
+                        errorMessage = null
+                    )
+                }
+
+                markClean()
             } catch (e: Exception) {
                 Log.e("TripDetailVM", "loadTrip failed", e)
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
     }
 
-    private fun formatTripDate(start: String, end: String): String {
-        // ISO: "2026-02-04T00:00:00.000Z" → vezmeme jen YYYY-MM-DD
-        val s = start.take(10)
-        val e = end.take(10)
-        return "$s - $e"
+    private fun formatTripDate(start: String?, end: String?): String {
+        val s = start.orEmpty().take(10)
+        val e = end.orEmpty().take(10)
+
+        return when {
+            s.isNotBlank() && e.isNotBlank() -> "$s - $e"
+            s.isNotBlank() -> s
+            e.isNotBlank() -> e
+            else -> ""
+        }
     }
 
+    private fun markClean() {
+        _uiState.update { it.copy(hasUnsavedChanges = false) }
+    }
 
+    private fun markDirty() {
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
+    }
 
     fun onTabSelected(tab: TripDetailTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+    }
+
+    fun onFromTextChange(text: String) {
+        _uiState.update { it.copy(fromText = text, hasUnsavedChanges = true) }
+    }
+
+    fun onToTextChange(text: String) {
+        _uiState.update { it.copy(toText = text, hasUnsavedChanges = true) }
+    }
+
+    fun onThemeSelected(theme: ThemeType?) {
+        _uiState.update { it.copy(selectedTheme = theme, hasUnsavedChanges = true) }
+    }
+
+    fun toggleTransport(transport: TransportType) {
+        _uiState.update { state ->
+            val current = state.transport.toMutableSet()
+
+            val next = when {
+                // už je vybraný -> odeber
+                current.contains(transport) -> {
+                    current.remove(transport)
+                    current
+                }
+
+                // ještě není vybraný a máme místo (<2) -> přidej
+                current.size < 2 -> {
+                    current.add(transport)
+                    current
+                }
+
+                // už jsou 2 a uživatel klikl na třetí -> ignoruj (nebo změň chování níže)
+                else -> current
+            }
+
+            state.copy(
+                transport = next,
+                hasUnsavedChanges = state.hasUnsavedChanges || (next != state.transport)
+            )
+        }
     }
 
     fun addChecklistItem() {
@@ -142,21 +254,15 @@ class TripDetailViewModel(
 
             if (text.isBlank()) {
                 if (index in items.indices) items.removeAt(index)
-                return@update state.copy(
-                    checklistItems = items,
-                    editingChecklistIndex = null,
-                    editingChecklistText = TextFieldValue("")   // ✅
-                )
-            }
-
-            if (index in items.indices) {
-                items[index] = items[index].copy(text = text)
+            } else {
+                if (index in items.indices) items[index] = items[index].copy(text = text)
             }
 
             state.copy(
                 checklistItems = items,
                 editingChecklistIndex = null,
-                editingChecklistText = TextFieldValue("")     // ✅
+                editingChecklistText = TextFieldValue(""),
+                hasUnsavedChanges = true
             )
         }
     }
@@ -175,7 +281,7 @@ class TripDetailViewModel(
                 val item = items[index]
                 items[index] = item.copy(checked = !item.checked)
             }
-            state.copy(checklistItems = items)
+            state.copy(checklistItems = items, hasUnsavedChanges = true)
         }
     }
 
@@ -183,7 +289,7 @@ class TripDetailViewModel(
         _uiState.update { state ->
             val items = state.checklistItems.toMutableList()
             if (index in items.indices) items.removeAt(index)
-            state.copy(checklistItems = items)
+            state.copy(checklistItems = items, hasUnsavedChanges = true)
         }
     }
 
@@ -241,21 +347,15 @@ class TripDetailViewModel(
 
             if (text.isBlank()) {
                 if (index in items.indices) items.removeAt(index)
-                return@update state.copy(
-                    notes = items,
-                    editingNoteIndex = null,
-                    editingNoteText = TextFieldValue("")
-                )
-            }
-
-            if (index in items.indices) {
-                items[index] = items[index].copy(text = text)
+            } else {
+                if (index in items.indices) items[index] = items[index].copy(text = text)
             }
 
             state.copy(
                 notes = items,
                 editingNoteIndex = null,
-                editingNoteText = TextFieldValue("")
+                editingNoteText = TextFieldValue(""),
+                hasUnsavedChanges = true
             )
         }
     }
@@ -270,7 +370,7 @@ class TripDetailViewModel(
         _uiState.update { state ->
             val items = state.notes.toMutableList()
             if (index in items.indices) items.removeAt(index)
-            state.copy(notes = items)
+            state.copy(notes = items, hasUnsavedChanges = true)
         }
     }
 
@@ -322,7 +422,8 @@ class TripDetailViewModel(
             val committed = commitBudgetEditInternal(state)
             committed.copy(
                 editingBudgetField = null,
-                editingBudgetText = TextFieldValue("")
+                editingBudgetText = TextFieldValue(""),
+                hasUnsavedChanges = true
             )
         }
     }
@@ -410,27 +511,18 @@ class TripDetailViewModel(
             val text = state.editingTipsText.text.trim()
 
             val items = state.tipsAndTripsItems.toMutableList()
-            if (index !in items.indices) {
-                return@update state.copy(
-                    editingTipsIndex = null,
-                    editingTipsText = TextFieldValue(""),
-                    isTipsAndTripsAdding = false,
-                    pickingTipsPhotoIndex = null
-                )
-            }
+            if (index !in items.indices) return@update state
 
-            if (text.isBlank()) {
-                items.removeAt(index)
-            } else {
-                items[index] = items[index].copy(title = text)
-            }
+            if (text.isBlank()) items.removeAt(index)
+            else items[index] = items[index].copy(title = text)
 
             state.copy(
                 tipsAndTripsItems = items,
                 isTipsAndTripsAdding = false,
                 editingTipsIndex = null,
                 editingTipsText = TextFieldValue(""),
-                pickingTipsPhotoIndex = null
+                pickingTipsPhotoIndex = null,
+                hasUnsavedChanges = true
             )
         }
     }
@@ -439,11 +531,10 @@ class TripDetailViewModel(
         _uiState.update { state ->
             val items = state.tipsAndTripsItems.toMutableList()
             if (index !in items.indices) return@update state
+            items.removeAt(index)
 
             val editingIndex = state.editingTipsIndex
             val pickingIndex = state.pickingTipsPhotoIndex
-
-            items.removeAt(index)
 
             val newEditingIndex = when {
                 editingIndex == null -> null
@@ -461,6 +552,7 @@ class TripDetailViewModel(
 
             state.copy(
                 tipsAndTripsItems = items,
+                hasUnsavedChanges = true,
                 editingTipsIndex = newEditingIndex,
                 editingTipsText = if (newEditingIndex == null) TextFieldValue("") else state.editingTipsText,
                 isTipsAndTripsAdding = newEditingIndex != null,
@@ -488,21 +580,230 @@ class TripDetailViewModel(
 
             state.copy(
                 tipsAndTripsItems = items,
-                pickingTipsPhotoIndex = null
+                pickingTipsPhotoIndex = null,
+                hasUnsavedChanges = true
             )
         }
     }
 
+    private fun commitAllEditingBeforeSave() {
 
+        // Budget
+        _uiState.update { state ->
+            val beforePlanned = state.plannedBudget
+            val beforeSpent = state.spentBudget
+            val beforeField = state.editingBudgetField
+            val beforeText = state.editingBudgetText
 
+            val committed = commitBudgetEditInternal(state)
 
+            val budgetChanged =
+                (committed.plannedBudget != beforePlanned) ||
+                        (committed.spentBudget != beforeSpent) ||
+                        (beforeField != null) || (beforeText.text.isNotBlank())
 
+            committed.copy(
+                editingBudgetField = null,
+                editingBudgetText = TextFieldValue(""),
+                hasUnsavedChanges = committed.hasUnsavedChanges || budgetChanged
+            )
+        }
+
+        // Checklist
+        _uiState.update { state ->
+            val index = state.editingChecklistIndex ?: return@update state
+            val text = state.editingChecklistText.text.trim()
+
+            val before = state.checklistItems
+            val items = state.checklistItems.toMutableList()
+
+            if (index !in items.indices) {
+                return@update state.copy(
+                    editingChecklistIndex = null,
+                    editingChecklistText = TextFieldValue("")
+                )
+            }
+
+            if (text.isBlank()) items.removeAt(index)
+            else items[index] = items[index].copy(text = text)
+
+            val after = items.toList()
+
+            state.copy(
+                checklistItems = after,
+                editingChecklistIndex = null,
+                editingChecklistText = TextFieldValue(""),
+                hasUnsavedChanges = state.hasUnsavedChanges || (before != after)
+            )
+        }
+
+        // Notes
+        _uiState.update { state ->
+            val index = state.editingNoteIndex ?: return@update state
+            val text = state.editingNoteText.text.trim()
+
+            val before = state.notes
+            val items = state.notes.toMutableList()
+
+            if (index !in items.indices) {
+                return@update state.copy(
+                    editingNoteIndex = null,
+                    editingNoteText = TextFieldValue("")
+                )
+            }
+
+            if (text.isBlank()) items.removeAt(index)
+            else items[index] = items[index].copy(text = text)
+
+            val after = items.toList()
+
+            state.copy(
+                notes = after,
+                editingNoteIndex = null,
+                editingNoteText = TextFieldValue(""),
+                hasUnsavedChanges = state.hasUnsavedChanges || (before != after)
+            )
+        }
+
+        // Tips & Trips
+        _uiState.update { state ->
+            val index = state.editingTipsIndex ?: return@update state
+            val text = state.editingTipsText.text.trim()
+
+            val before = state.tipsAndTripsItems
+            val items = state.tipsAndTripsItems.toMutableList()
+
+            if (index !in items.indices) {
+                return@update state.copy(
+                    isTipsAndTripsAdding = false,
+                    editingTipsIndex = null,
+                    editingTipsText = TextFieldValue(""),
+                    pickingTipsPhotoIndex = null
+                )
+            }
+
+            if (text.isBlank()) items.removeAt(index)
+            else items[index] = items[index].copy(title = text)
+
+            val after = items.toList()
+
+            state.copy(
+                tipsAndTripsItems = after,
+                isTipsAndTripsAdding = false,
+                editingTipsIndex = null,
+                editingTipsText = TextFieldValue(""),
+                pickingTipsPhotoIndex = null,
+                hasUnsavedChanges = state.hasUnsavedChanges || (before != after)
+            )
+        }
+    }
+
+    fun save(onDone: () -> Unit) {
+        Log.d("TRIP_DETAIL_SAVE", "save() called, hasUnsavedChanges=${_uiState.value.hasUnsavedChanges}")
+        val current = _uiState.value
+        if (current.isSaving) return
+
+        // 1) propsat rozeditované věci do state (aby se neztratil poslední znak)
+        commitAllEditingBeforeSave()
+
+        val state = _uiState.value
+        if (!state.hasUnsavedChanges) {
+            onDone()
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+
+            runCatching {
+                val dto = buildUpdateDto(_uiState.value)
+                Log.d("TRIP_DETAIL_SAVE", "PATCH dto=$dto")
+                tripsRepository.updateTripDetail(tripId, dto)
+            }.onSuccess {
+                _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
+                loadTrip()
+                onDone()
+            }.onFailure { e ->
+                _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }
+            }
+        }
+    }
+
+    private fun buildUpdateDto(state: TripDetailUiState): TripDetailUpdateDto {
+        val checklistDtos = state.checklistItems
+            .map { it.copy(text = it.text.trim()) }
+            .filter { it.text.isNotBlank() }
+            .mapIndexed { idx, i ->
+                TripDetailUpdateDto.ChecklistItemDto(
+                    text = i.text,
+                    checked = i.checked,
+                    order = idx
+                )
+            }
+
+        val noteDtos = state.notes
+            .map { it.copy(text = it.text.trim()) }
+            .filter { it.text.isNotBlank() }
+            .mapIndexed { idx, n ->
+                TripDetailUpdateDto.NoteDto(
+                    text = n.text,
+                    order = idx
+                )
+            }
+
+        val tipsDtos = state.tipsAndTripsItems
+            .map { it.copy(title = it.title.trim()) }
+            .filter { it.title.isNotBlank() }
+            .mapIndexed { idx, t ->
+                TripDetailUpdateDto.TipAndTripDto(
+                    title = t.title,
+                    imageUrl = t.imageUri?.toString(),
+                    order = idx
+                )
+            }
+
+        return TripDetailUpdateDto(
+            from = state.fromText.trim().takeIf { it.isNotBlank() },
+            to = state.toText.trim().takeIf { it.isNotBlank() },
+            transport = state.transport.firstOrNull()?.name?.lowercase(),
+            theme = state.selectedTheme?.name?.lowercase(),
+            coverImageUrl = state.coverImageUrl,
+            mapImageUrl = state.mapImageUrl,
+            mapImageFullUrl = state.mapFullImageUrl,
+            plannedBudget = state.plannedBudget.trim().takeIf { it.isNotBlank() },
+            spentBudget = state.spentBudget.trim().takeIf { it.isNotBlank() },
+
+            // ✅ vždy posíláme
+            checklistItems = checklistDtos,
+            notes = noteDtos,
+            tipsAndTrips = tipsDtos
+        )
+    }
 
     fun onAddMemberClick() {
         // TODO
     }
 
-    fun onDeleteTripClick() {
-        // TODO
+    fun onDeleteTripClick(onDone: () -> Unit) {
+        if (_uiState.value.isSaving) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+
+            runCatching {
+                tripsRepository.deleteTrip(tripId)
+            }.onSuccess {
+                _uiState.update { it.copy(isSaving = false) }
+                onDone()
+            }.onFailure { e ->
+                Log.e("TRIP_DETAIL_DELETE", "delete failed", e)
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = e.message
+                    )
+                }
+            }
+        }
     }
 }

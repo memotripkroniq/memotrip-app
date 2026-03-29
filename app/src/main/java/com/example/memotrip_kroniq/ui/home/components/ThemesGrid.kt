@@ -9,7 +9,8 @@ import com.example.memotrip_kroniq.ui.core.*
 
 @Composable
 fun ThemesGrid(
-    locked: Boolean     // 🔥 nový parametr – globální lock/unlock
+    locked: Boolean,     // 🔥 nový parametr – globální lock/unlock
+    onThemeClick: (String) -> Unit
 ) {
     val s = LocalUiScaler.current
     val spacingX = 14f.sx(s)
@@ -28,13 +29,23 @@ fun ThemesGrid(
                 modifier = Modifier.weight(1f),
                 title = "Summer",
                 imageRes = R.drawable.homescreen_theme_summer,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Summer")
+                    }
+                }
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
                 title = "Winter",
                 imageRes = R.drawable.homescreen_theme_winter,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Winter")
+                    }
+                }
             )
         }
 
@@ -46,13 +57,23 @@ fun ThemesGrid(
                 modifier = Modifier.weight(1f),
                 title = "Camping",
                 imageRes = R.drawable.homescreen_theme_camping,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Camping")
+                    }
+                }
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
                 title = "Cities",
                 imageRes = R.drawable.homescreen_theme_cities,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Cities")
+                    }
+                }
             )
         }
 
@@ -64,13 +85,23 @@ fun ThemesGrid(
                 modifier = Modifier.weight(1f),
                 title = "Nature",
                 imageRes = R.drawable.homescreen_theme_nature,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Nature")
+                    }
+                }
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
                 title = "Exotic",
                 imageRes = R.drawable.homescreen_theme_exotic,
-                locked = locked
+                locked = locked,
+                onClick = {
+                    if (!locked) {
+                        onThemeClick("Exotic")
+                    }
+                }
             )
         }
     }

@@ -9,10 +9,14 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripMemberUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.ThemeUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
-import android.net.Uri
-
 
 data class TripDetailUiState(
+    // --- Saving / dirty ---
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val hasUnsavedChanges: Boolean = false,
+    val errorMessage: String? = null,
+
     // Cover + maps
     val coverImageUrl: String? = null,
     val mapImageUrl: String? = null,

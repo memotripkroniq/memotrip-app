@@ -12,6 +12,9 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
+import retrofit2.http.DELETE
+import retrofit2.http.PATCH
 
 interface TripsApi {
 
@@ -33,5 +36,16 @@ interface TripsApi {
     suspend fun getTripDetail(
         @Path("tripId") tripId: String
     ): TripDetailDto
+
+    @PATCH("trips/{tripId}")
+    suspend fun updateTripDetail(
+        @Path("tripId") tripId: String,
+        @Body body: TripDetailUpdateDto
+    ): TripDetailDto
+
+    @DELETE("trips/{tripId}")
+    suspend fun deleteTrip(
+        @Path("tripId") tripId: String
+    )
 
 }
