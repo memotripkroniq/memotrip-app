@@ -35,14 +35,13 @@ class SignupViewModel(
                     country = "EN"       // 🔥 sem patří
                 )
 
-                tokenStore.saveToken(response.access_token)
+                tokenStore.saveToken(response.accessToken)
 
-                _state.value = SignupState.Success(response.access_token)
+                _state.value = SignupState.Success(response.accessToken)
 
             } catch (e: Exception) {
-                _state.value = SignupState.Error(
-                    e.localizedMessage ?: "Signup failed"
-                )
+                e.printStackTrace()
+                _state.value = SignupState.Error("Signup failed")
             }
         }
     }
