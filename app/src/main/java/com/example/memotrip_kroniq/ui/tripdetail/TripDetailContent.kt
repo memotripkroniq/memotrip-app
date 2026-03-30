@@ -136,7 +136,9 @@ fun TripDetailContent(
             ThemeSelector(
                 selected = uiState.selectedTheme,
                 locked = uiState.isThemesLocked,
-                onSelect = { /* zatím */ }
+                onSelect = { theme ->
+                    onThemeSelected(theme)
+                }
             )
             Spacer(Modifier.height(20f.sy(s)))
         }

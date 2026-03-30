@@ -50,36 +50,40 @@ class HomeViewModel(
     }
 
 
-    private fun loadTrips() {
+    private fun loadTrips(showLoader: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isTripsLoading = true)
+            if (showLoader) {
+                _uiState.update { it.copy(isTripsLoading = true) }
+            }
 
             try {
                 val trips = tripsRepository.getMyTrips()
                 android.util.Log.d("HOME_TRIPS", trips.toString())
 
-                _uiState.value = _uiState.value.copy(
-                    trips = trips.map {
-                        TripHistoryItem(
-                            id = it.id,
-                            title = it.title,
-                            coverImageUrl = it.coverImageUrl, // může být null
-                            theme = it.theme
-                        )
-                    },
-                    isTripsLoading = false
-                )
+                _uiState.update { state ->
+                    state.copy(
+                        trips = trips.map { trip ->
+                            TripHistoryItem(
+                                id = trip.id,
+                                title = trip.title,
+                                coverImageUrl = trip.coverImageUrl,
+                                theme = trip.theme
+                            )
+                        },
+                        isTripsLoading = false
+                    )
+                }
 
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isTripsLoading = false
-                )
+                _uiState.update {
+                    it.copy(isTripsLoading = false)
+                }
             }
         }
     }
 
     fun refreshTrips() {
-        loadTrips()
+        loadTrips(showLoader = false)
     }
 
     private fun loadTripLimits() {

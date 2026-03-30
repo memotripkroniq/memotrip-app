@@ -179,12 +179,14 @@ private fun BudgetInlineRow(
         Spacer(Modifier.width(12.dp))
 
         if (!isVisible) {
-            Text(
-                text = "******",
-                color = Color.White,
-                fontSize = 16f.fs(ui),
-                fontWeight = FontWeight.SemiBold
-            )
+            if (value.isNotBlank()) {
+                Text(
+                    text = "******",
+                    color = Color.White,
+                    fontSize = 16f.fs(ui),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
             return
         }
 
@@ -234,9 +236,11 @@ private fun BudgetInlineRow(
                 }
             )
         } else {
+            val isEmpty = value.isBlank()
+
             Text(
-                text = value,
-                color = Color.White,
+                text = if (isEmpty) "Amount" else value,
+                color = if (isEmpty) Color.White.copy(alpha = 0.35f) else Color.White,
                 fontSize = 16f.fs(ui),
                 fontWeight = FontWeight.SemiBold
             )
@@ -279,6 +283,25 @@ private fun BudgetCardPreview_Hidden() {
             plannedAmount = "1 200 €",
             spentAmount = "340 €",
             isVisible = false,
+            onToggleVisibility = {}
+        )
+    }
+}
+
+@Preview(
+    name = "Budget - empty visible (placeholder)",
+    showBackground = true,
+    backgroundColor = 0xFF000000,
+    widthDp = 412,
+    heightDp = 160
+)
+@Composable
+private fun BudgetCardPreview_EmptyVisible() {
+    AppTheme {
+        BudgetCard(
+            plannedAmount = "",
+            spentAmount = "",
+            isVisible = true,
             onToggleVisibility = {}
         )
     }
