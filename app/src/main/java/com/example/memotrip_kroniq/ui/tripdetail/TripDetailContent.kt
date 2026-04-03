@@ -29,8 +29,8 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.tripdetail.components.ZoomableImageDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-
-
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripPhotoOverlay
+import com.example.memotrip_kroniq.ui.addtrip.createImageFile
 
 
 @Composable
@@ -67,6 +67,7 @@ fun TripDetailContent(
 
     onTipsRequestPickPhoto: (Int) -> Unit,
     onTipsPhotoPicked: (Uri?) -> Unit,
+    onCoverPhotoSelected: (Uri?) -> Unit,
     onFromTextChange: (String) -> Unit,
     onToTextChange: (String) -> Unit,
     onThemeSelected: (ThemeType?) -> Unit,
@@ -75,6 +76,55 @@ fun TripDetailContent(
 
     ) {
     val s = LocalUiScaler.current
+
+    var showPhotoActionSheet by remember { mutableStateOf(false) }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) onCoverPhotoSelected(uri)
+        showPhotoActionSheet = false
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempPhotoUri != null) {
+            onCoverPhotoSelected(tempPhotoUri)
+        }
+        showPhotoActionSheet = false
+    }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                val photoFile = createImageFile(context)
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    photoFile
+                )
+                tempPhotoUri = uri
+                cameraLauncher.launch(uri)
+            }
+        }
+
+    if (uiState.isInitialLoading) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            androidx.compose.material3.CircularProgressIndicator()
+        }
+        return
+    }
 
     LazyColumn(
         modifier = modifier
@@ -86,9 +136,9 @@ fun TripDetailContent(
             var showMap by remember { mutableStateOf(false) }
 
             TripHeroSection(
-                coverUrl = uiState.coverImageUrl,
+                coverUrl = uiState.localCoverPhotoUri?.toString() ?: uiState.coverImageUrl,
                 mapUrl = uiState.mapImageUrl,
-                onChangeCoverClick = { /* ... */ },
+                onChangeCoverClick = { showPhotoActionSheet = true },
                 onMapClick = {
                     if (!uiState.mapImageUrl.isNullOrBlank()) showMap = true
                 }
@@ -270,6 +320,37 @@ fun TripDetailContent(
             Spacer(Modifier.height(24f.sy(s)))
         }
     }
+
+    if (showPhotoActionSheet) {
+        AddTripPhotoOverlay(
+            canDelete = uiState.coverImageUrl != null,
+            onTakePhoto = {
+                if (
+                    androidx.core.content.ContextCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.CAMERA
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    val photoFile = createImageFile(context)
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        photoFile
+                    )
+                    tempPhotoUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                }
+            },
+            onPickFromGallery = { galleryLauncher.launch("image/*") },
+            onDeletePhoto = {
+                onCoverPhotoSelected(null)
+                showPhotoActionSheet = false
+            },
+            onDismiss = { showPhotoActionSheet = false }
+        )
+    }
 }
 
 @Preview(
@@ -287,6 +368,7 @@ private fun TripDetailContentPreview() {
         MemoTripTheme {
             TripDetailContent(
                 uiState = TripDetailUiState(
+                    isInitialLoading = false,
                     members = listOf(
                         TripMemberUi("1", "Kristin", avatarRes = R.drawable.some_avatar_kristin),
                         TripMemberUi("2", "Peetr", avatarRes = R.drawable.some_avatar_peetr),
@@ -353,6 +435,7 @@ private fun TripDetailContentPreview() {
                 onCommitEditTipsItem = {},
                 onTipsRequestPickPhoto = {},
                 onTipsPhotoPicked = {},
+                onCoverPhotoSelected = {},
                 onFromTextChange = {},
                 onToTextChange = {},
                 onThemeSelected = {},

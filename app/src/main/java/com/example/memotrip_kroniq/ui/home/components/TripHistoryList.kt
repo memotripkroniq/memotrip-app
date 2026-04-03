@@ -35,7 +35,10 @@ fun TripHistoryList(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
-        items(trips) { trip ->
+        items(
+            items = trips,
+            key = { trip -> trip.id }
+        ) { trip ->
             TripHistoryItemRow(
                 item = trip,
                 onClick = { onTripClick(trip.id) }

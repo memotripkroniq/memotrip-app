@@ -38,7 +38,13 @@ class TripDetailViewModel(
 
     private fun loadTrip() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    errorMessage = null,
+                    localCoverPhotoUri = null,
+                    isInitialLoading = true
+                )
+            }
 
             try {
                 Log.d("TripDetailVM", "Loading tripId=$tripId")
@@ -53,7 +59,6 @@ class TripDetailViewModel(
                     runCatching { ThemeType.valueOf(raw.uppercase()) }.getOrNull()
                 }
 
-                // ✅ checklist / notes / tips (seřadit podle order, ošetřit nulls)
                 val checklistUi = trip.tripChecklistItems
                     .sortedBy { it.order ?: Int.MAX_VALUE }
                     .map {
@@ -78,10 +83,10 @@ class TripDetailViewModel(
 
                 _uiState.update { state ->
                     state.copy(
-                        // core (v dto některé non-null, ale dávám safe i tak)
                         coverImageUrl = trip.coverImageUrl,
                         mapImageUrl = trip.mapImageUrl,
                         mapFullImageUrl = trip.mapImageFullUrl ?: trip.mapImageUrl,
+
                         tripDateText = formatTripDate(
                             trip.startDate.orEmpty(),
                             trip.endDate.orEmpty()
@@ -90,7 +95,6 @@ class TripDetailViewModel(
                         toText = trip.to.orEmpty(),
                         transport = transportEnum?.let { setOf(it) } ?: emptySet(),
 
-                        // themes
                         themes = listOf(
                             ThemeUi(ThemeType.SUMMER, R.drawable.homescreen_theme_summer),
                             ThemeUi(ThemeType.WINTER, R.drawable.homescreen_theme_winter),
@@ -102,11 +106,9 @@ class TripDetailViewModel(
                         selectedTheme = themeEnum,
                         isThemesLocked = false,
 
-                        // budget
                         plannedBudget = trip.plannedBudget.orEmpty(),
                         spentBudget = trip.spentBudget.orEmpty(),
 
-                        // lists
                         checklistItems = checklistUi,
                         editingChecklistIndex = null,
                         editingChecklistText = TextFieldValue(""),
@@ -121,10 +123,10 @@ class TripDetailViewModel(
                         editingTipsText = TextFieldValue(""),
                         pickingTipsPhotoIndex = null,
 
-                        // flags
                         hasKroniqPackage = true,
                         hasUnsavedChanges = false,
-                        isLoading = false,
+                        isInitialLoading = false,
+                        isHeroLoading = false,
                         errorMessage = null
                     )
                 }
@@ -132,7 +134,30 @@ class TripDetailViewModel(
                 markClean()
             } catch (e: Exception) {
                 Log.e("TripDetailVM", "loadTrip failed", e)
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                _uiState.update {
+                    it.copy(
+                        isInitialLoading = false,
+                        isHeroLoading = false,
+                        errorMessage = e.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun onCoverPhotoSelected(uri: Uri?) {
+        _uiState.update { state ->
+            if (uri == null) {
+                state.copy(
+                    coverImageUrl = null,
+                    localCoverPhotoUri = null,
+                    hasUnsavedChanges = true
+                )
+            } else {
+                state.copy(
+                    localCoverPhotoUri = uri,
+                    hasUnsavedChanges = true
+                )
             }
         }
     }
@@ -716,7 +741,27 @@ class TripDetailViewModel(
             _uiState.update { it.copy(isSaving = true, errorMessage = null) }
 
             runCatching {
-                val dto = buildUpdateDto(_uiState.value)
+                val currentState = _uiState.value
+
+                val uploadedCoverUrl = when {
+                    currentState.localCoverPhotoUri != null -> {
+                        tripsRepository.uploadCoverImage(currentState.localCoverPhotoUri)
+                    }
+                    currentState.coverImageUrl == null -> {
+                        null
+                    }
+                    else -> {
+                        currentState.coverImageUrl
+                    }
+                }
+
+                val dto = buildUpdateDto(
+                    currentState.copy(
+                        coverImageUrl = uploadedCoverUrl,
+                        localCoverPhotoUri = null
+                    )
+                )
+
                 Log.d("TRIP_DETAIL_SAVE", "PATCH dto=$dto")
                 tripsRepository.updateTripDetail(tripId, dto)
             }.onSuccess {

@@ -25,6 +25,7 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -60,9 +61,15 @@ fun TripDetailScreen(
     val uiState by vm.uiState.collectAsState()
     val onBack = remember(vm, navController) {
         {
-            // nečti uiState z closure, ať máš vždy aktuální hodnotu ve VM
             if (vm.uiState.value.isSaving) return@remember
-            vm.save { navController.popBackStack() }
+
+            vm.save {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("trip_updated", true)
+
+                navController.popBackStack()
+            }
         }
     }
 
@@ -130,6 +137,7 @@ fun TripDetailScreen(
                 onCommitEditTipsItem = vm::commitEditTipsAndTrips,
                 onTipsRequestPickPhoto = vm::requestPickTipsPhoto,
                 onTipsPhotoPicked = vm::onTipsPhotoPicked,
+                onCoverPhotoSelected = vm::onCoverPhotoSelected,
                 onFromTextChange = vm::onFromTextChange,
                 onToTextChange = vm::onToTextChange,
                 onThemeSelected = vm::onThemeSelected,
@@ -137,6 +145,17 @@ fun TripDetailScreen(
 
 
                 )
+
+            if (uiState.isSaving) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.25f)),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator()
+                }
+            }
         }
     }
 }

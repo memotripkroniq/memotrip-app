@@ -110,6 +110,12 @@ fun HomeScreen(
             selectedTab = HomeTab.TRIP_HISTORY
             viewModel.refreshTrips()
         }
+
+        val updated = savedStateHandle?.get<Boolean>("trip_updated") ?: false
+        if (updated) {
+            savedStateHandle["trip_updated"] = false
+            viewModel.refreshTrips()
+        }
     }
 
     fun logout() {

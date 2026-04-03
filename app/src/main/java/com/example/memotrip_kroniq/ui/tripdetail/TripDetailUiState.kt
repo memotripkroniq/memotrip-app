@@ -1,5 +1,6 @@
 package com.example.memotrip_kroniq.ui.tripdetail
 
+import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.core.model.TransportType
@@ -12,13 +13,15 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 
 data class TripDetailUiState(
     // --- Saving / dirty ---
-    val isLoading: Boolean = false,
+    val isInitialLoading: Boolean = true,
+    val isHeroLoading: Boolean = true,
     val isSaving: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
     val errorMessage: String? = null,
 
     // Cover + maps
     val coverImageUrl: String? = null,
+    val localCoverPhotoUri: Uri? = null,
     val mapImageUrl: String? = null,
     val mapFullImageUrl: String? = null,
 
@@ -69,7 +72,7 @@ data class TripDetailUiState(
     val editingTipsText: TextFieldValue = TextFieldValue(""),
     val pickingTipsPhotoIndex: Int? = null,
 
-) {
+    ) {
     // Derived state
     val isKroniqLocked: Boolean get() = !hasKroniqPackage
 }

@@ -16,11 +16,18 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.example.memotrip_kroniq.R
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoBackground() {
+fun VideoBackground(
+    modifier: Modifier = Modifier,
+    onReady: () -> Unit = {}
+) {
     val context = LocalContext.current
+
+    val currentOnReady by rememberUpdatedState(onReady)
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -29,6 +36,15 @@ fun VideoBackground() {
             )
             setMediaItem(mediaItem)
             repeatMode = Player.REPEAT_MODE_ONE
+
+            addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_READY) {
+                        currentOnReady()
+                    }
+                }
+            })
+
             prepare()
             playWhenReady = true
         }
@@ -41,7 +57,7 @@ fun VideoBackground() {
     }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         factory = {
             PlayerView(context).apply {
                 useController = false

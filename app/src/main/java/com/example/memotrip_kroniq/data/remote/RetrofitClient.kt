@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.google.gson.GsonBuilder
 
 object RetrofitClient {
 
@@ -56,10 +57,14 @@ object RetrofitClient {
 
             .build()
 
+        val gson = GsonBuilder()
+            .serializeNulls()
+            .create()
+
         retrofit = Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(okHttp)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
