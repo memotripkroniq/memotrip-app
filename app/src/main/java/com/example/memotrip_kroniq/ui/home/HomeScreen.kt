@@ -2,15 +2,24 @@ package com.example.memotrip_kroniq.ui.home
 
 import PreviewUiScaler
 import androidx.annotation.OptIn
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
@@ -22,16 +31,8 @@ import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
-import com.example.memotrip_kroniq.ui.core.sy
-import com.example.memotrip_kroniq.ui.home.components.*
+import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -43,7 +44,6 @@ fun HomeScreen(
     var selectedTab by rememberSaveable { mutableStateOf(initialTab) }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val currentBackStackEntry = navController?.currentBackStackEntryAsState()?.value
     val savedStateHandle = currentBackStackEntry?.savedStateHandle
@@ -118,14 +118,6 @@ fun HomeScreen(
         }
     }
 
-    fun logout() {
-        coroutineScope.launch {
-            tokenStore.clearTokens()
-            navController?.navigate(Screen.Login.route) {
-                popUpTo(Screen.Home.route) { inclusive = true }
-            }
-        }
-    }
 
     // 🔥🔥🔥 ZMĚNA #1 – Scaffold přebírá layout a top bar
     Scaffold(
@@ -135,7 +127,11 @@ fun HomeScreen(
                 title = "Add Trip",
                 showBack = showThemesBack,
                 onBackClick = { viewModel.onThemesBackClick() },
-                onMenuClick = ::logout
+                onMenuClick = {
+                    navController?.navigate(Screen.Settings.route) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
     ) { innerPadding ->

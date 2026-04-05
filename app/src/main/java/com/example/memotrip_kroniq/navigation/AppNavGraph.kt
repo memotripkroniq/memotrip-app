@@ -2,26 +2,27 @@ package com.example.memotrip_kroniq.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
-
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
 import com.example.memotrip_kroniq.data.network.HttpClientProvider
@@ -35,8 +36,12 @@ import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
+import com.example.memotrip_kroniq.ui.settings.SettingsScreen
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
 import com.example.memotrip_kroniq.ui.tripdetail.TripDetailScreen
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable
+import kotlinx.coroutines.launch
 
 
 sealed class Screen(val route: String) {
@@ -46,11 +51,13 @@ sealed class Screen(val route: String) {
     object Home : Screen("home?tab={tab}") {
         fun createRoute(tab: HomeTab) = "home?tab=${tab.name}"
     }
+
     object ForgotPassword : Screen("forgot_password")
     object AddTrip : Screen("add_trip")
     object LocationSearch : Screen("location_search")
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
+    object Settings : Screen("settings")
     object TripDetail : Screen("trip_detail/{tripId}") {
         fun createRoute(tripId: String) = "trip_detail/$tripId"
     }
@@ -67,8 +74,6 @@ const val LOCATION_TARGET_KEY = "location_target"
 const val LOCATION_NAME_KEY = "location_name"
 const val LOCATION_LAT_KEY = "location_lat"
 const val LOCATION_LON_KEY = "location_lon"
-
-
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -247,6 +252,31 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // =============================================================
+        // ⭐ SETTINGS
+        // =============================================================
+        composable(
+            route = Screen.Settings.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val coroutineScope = rememberCoroutineScope()
+
+            SettingsScreen(
+                navController = navController,
+                onLogoutClick = {
+                    coroutineScope.launch {
+                        tokenStore.clearTokens()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0)
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
