@@ -1,18 +1,36 @@
 package com.example.memotrip_kroniq.ui.addtrip
 
+
 import PreviewUiScaler
-import android.content.Context
+import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,21 +41,27 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
-import com.example.memotrip_kroniq.ui.addtrip.components.*
-import com.example.memotrip_kroniq.ui.components.PrimaryButton
-import com.example.memotrip_kroniq.ui.core.LocalUiScaler
-import com.example.memotrip_kroniq.ui.core.sx
-import com.example.memotrip_kroniq.ui.core.sy
-import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import com.example.memotrip_kroniq.ui.addtrip.components.AddStopButton
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripHeroBanner
+import com.example.memotrip_kroniq.ui.addtrip.components.AddTripNameField
+import com.example.memotrip_kroniq.ui.addtrip.components.DateField
+import com.example.memotrip_kroniq.ui.addtrip.components.DestinationSelector
+import com.example.memotrip_kroniq.ui.addtrip.components.LocationField
+import com.example.memotrip_kroniq.ui.components.PhotoPickerOverlay
+import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
+import com.example.memotrip_kroniq.ui.addtrip.components.TransportSelector
+import com.example.memotrip_kroniq.ui.addtrip.components.WaypointField
 import com.example.memotrip_kroniq.ui.addtrip.utils.AddTripScrollIndexMap
 import com.example.memotrip_kroniq.ui.addtrip.utils.resolveFirstAddTripScrollTarget
-import android.util.Log
+import com.example.memotrip_kroniq.ui.components.PrimaryButton
+import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.model.Destination
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.core.model.TransportType
-
-
-import java.io.File
+import com.example.memotrip_kroniq.ui.core.sx
+import com.example.memotrip_kroniq.ui.core.sy
+import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import com.example.memotrip_kroniq.ui.utils.createImageFile
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -272,13 +296,13 @@ fun AddTripContent(
 
 
     if (showPhotoActionSheet) {
-        AddTripPhotoOverlay(
+        PhotoPickerOverlay(
             canDelete = uiState.coverPhotoUri != null,
             onTakePhoto = {
                 if (
                     ContextCompat.checkSelfPermission(
                         context,
-                        android.Manifest.permission.CAMERA
+                        Manifest.permission.CAMERA
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     val photoFile = createImageFile(context)
@@ -290,7 +314,7 @@ fun AddTripContent(
                     tempPhotoUri = uri
                     cameraLauncher.launch(uri)
                 } else {
-                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             },
             onPickFromGallery = { galleryLauncher.launch("image/*") },
@@ -301,12 +325,6 @@ fun AddTripContent(
             onDismiss = { showPhotoActionSheet = false }
         )
     }
-}
-
-fun createImageFile(context: Context): File {
-    val dir = File(context.cacheDir, "images")
-    if (!dir.exists()) dir.mkdirs()
-    return File(dir, "photo_${System.currentTimeMillis()}.jpg")
 }
 
 

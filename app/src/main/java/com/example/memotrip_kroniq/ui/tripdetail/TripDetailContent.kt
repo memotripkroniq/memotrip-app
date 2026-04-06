@@ -14,6 +14,8 @@ import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.tripdetail.components.*
 import PreviewUiScaler
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -29,8 +31,10 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.tripdetail.components.ZoomableImageDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.memotrip_kroniq.ui.addtrip.components.AddTripPhotoOverlay
-import com.example.memotrip_kroniq.ui.addtrip.createImageFile
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import com.example.memotrip_kroniq.ui.components.PhotoPickerOverlay
+import com.example.memotrip_kroniq.ui.utils.createImageFile
 
 
 @Composable
@@ -322,17 +326,17 @@ fun TripDetailContent(
     }
 
     if (showPhotoActionSheet) {
-        AddTripPhotoOverlay(
+        PhotoPickerOverlay(
             canDelete = uiState.coverImageUrl != null,
             onTakePhoto = {
                 if (
-                    androidx.core.content.ContextCompat.checkSelfPermission(
+                    ContextCompat.checkSelfPermission(
                         context,
-                        android.Manifest.permission.CAMERA
-                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     val photoFile = createImageFile(context)
-                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                    val uri = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.fileprovider",
                         photoFile
@@ -340,7 +344,7 @@ fun TripDetailContent(
                     tempPhotoUri = uri
                     cameraLauncher.launch(uri)
                 } else {
-                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             },
             onPickFromGallery = { galleryLauncher.launch("image/*") },

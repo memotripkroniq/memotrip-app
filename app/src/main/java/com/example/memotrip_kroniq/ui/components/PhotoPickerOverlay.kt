@@ -1,37 +1,38 @@
-package com.example.memotrip_kroniq.ui.addtrip.components
+package com.example.memotrip_kroniq.ui.components
 
-import PreviewUiScaler
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.R
-import com.example.memotrip_kroniq.ui.core.LocalUiScaler
-import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import innerShadow
-import androidx.compose.ui.platform.LocalInspectionMode
-
-
 
 @Composable
-fun AddTripPhotoOverlay(
+fun PhotoPickerOverlay(
     canDelete: Boolean,
     onTakePhoto: () -> Unit,
     onPickFromGallery: () -> Unit,
@@ -40,25 +41,25 @@ fun AddTripPhotoOverlay(
 ) {
     val isPreview = LocalInspectionMode.current
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.Companion.fillMaxSize()) {
 
         // SCRIM
         Box(
-            modifier = Modifier
+            modifier = Modifier.Companion
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.25f))
+                .background(Color.Companion.Black.copy(alpha = 0.25f))
                 .then(
                     if (!isPreview)
-                        Modifier.clickable { onDismiss() }
+                        Modifier.Companion.clickable { onDismiss() }
                     else
-                        Modifier
+                        Modifier.Companion
                 )
         )
 
         // CONTENT
         Box(
-            modifier = Modifier
-                .align(Alignment.Center)
+            modifier = Modifier.Companion
+                .align(Alignment.Companion.Center)
                 .padding(16.dp)
                 .clip(RoundedCornerShape(10.dp))
         ) {
@@ -81,21 +82,21 @@ private fun AddTripPhotoContent(
     onDeletePhoto: () -> Unit
 ) {
     Column(
-        modifier = Modifier
+        modifier = Modifier.Companion
             .widthIn(max = 320.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
             .background(Color(0xFF383A41))
             .innerShadow()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Companion.CenterHorizontally
     ) {
 
         Text(
             text = "Add your picture",
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
+            color = Color.Companion.White,
+            fontWeight = FontWeight.Companion.SemiBold,
             fontSize = 20.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.Companion.padding(bottom = 16.dp)
         )
 
         PhotoActionButton(
@@ -104,7 +105,7 @@ private fun AddTripPhotoContent(
             onClick = onTakePhoto
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.Companion.height(10.dp))
 
         PhotoActionButton(
             icon = R.drawable.ic_gallery,
@@ -112,7 +113,7 @@ private fun AddTripPhotoContent(
             onClick = onPickFromGallery
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.Companion.height(10.dp))
 
         PhotoActionButton(
             icon = R.drawable.ic_delete,
@@ -141,28 +142,28 @@ private fun PhotoActionButton(
     val contentAlpha = if (enabled) 1f else 0.4f
 
     Row(
-        modifier = Modifier
+        modifier = Modifier.Companion
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
             .background(background)
             .then(
                 if (enabled)
-                    Modifier.clickable(
+                    Modifier.Companion.clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { onClick() }
-                else Modifier
+                else Modifier.Companion
             )
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(10.dp)),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
+        verticalAlignment = Alignment.Companion.CenterVertically
     ) {
 
         Box(
-            modifier = Modifier
+            modifier = Modifier.Companion
                 .width(24.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Companion.Center
         ) {
             Icon(
                 painter = painterResource(icon),
@@ -171,13 +172,13 @@ private fun PhotoActionButton(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.Companion.width(12.dp))
 
         Text(
             text = text,
-            color = Color.White.copy(alpha = contentAlpha),
+            color = Color.Companion.White.copy(alpha = contentAlpha),
             fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Companion.Bold
         )
     }
 }
@@ -190,13 +191,13 @@ private fun PhotoActionButton(
     heightDp = 892
 )
 @Composable
-private fun AddTripPhotoOverlayPreview() {
+private fun PhotoPickerOverlayPreview() {
     Box(
-        modifier = Modifier
+        modifier = Modifier.Companion
             .fillMaxSize()
-            .background(Color.DarkGray)
+            .background(Color.Companion.DarkGray)
     ) {
-        AddTripPhotoOverlay(
+        PhotoPickerOverlay(
             canDelete = false,
             onTakePhoto = {},
             onPickFromGallery = {},
@@ -205,8 +206,3 @@ private fun AddTripPhotoOverlayPreview() {
         )
     }
 }
-
-
-
-
-
