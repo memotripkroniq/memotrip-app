@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 fun HomeContent(
     modifier: Modifier = Modifier,
     selectedTab: HomeTab,
+    isHomeLoading: Boolean,
     isThemesLocked: Boolean,
     trips: List<TripHistoryItem>,
     themeTrips: List<TripHistoryItem>,
@@ -111,7 +112,7 @@ fun HomeContent(
                     else -> {
                         TripHistoryList(
                             trips = trips,
-                            showUpsell = !isKroniq,
+                            showUpsell = !isHomeLoading && !isKroniq,
                             onTripClick = onTripClick
                         )
                     }
@@ -135,6 +136,7 @@ fun HomeContentPreview_TripHistory() {
         MemoTripTheme {
             HomeContent(
                 selectedTab = HomeTab.TRIP_HISTORY,
+                isHomeLoading = false,
                 isThemesLocked = true,
                 trips = listOf(
                     TripHistoryItem(

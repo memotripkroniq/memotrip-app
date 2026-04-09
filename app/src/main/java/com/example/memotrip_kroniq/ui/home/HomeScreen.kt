@@ -2,7 +2,11 @@ package com.example.memotrip_kroniq.ui.home
 
 import PreviewUiScaler
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -135,6 +139,18 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(Color.Black),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+            return@Scaffold
+        }
 
         // 🔥🔥🔥 ZMĚNA #2 – HomeContent je čistý obsah
         HomeContent(
@@ -142,6 +158,7 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16f.sx(s)),
             selectedTab = selectedTab,
+            isHomeLoading = uiState.isLoading,
             isThemesLocked = uiState.isThemesLocked,
             trips = uiState.trips,
             themeTrips = viewModel.getTripsForSelectedTheme(),

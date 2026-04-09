@@ -107,7 +107,7 @@ fun CustomInputBox(
 
                     when {
                         // 🔴 ERROR – jen pokud není fokus a není co editovat
-                        error != null && showError -> {
+                        error != null && showError && (!isFocused || value.isEmpty()) -> {
                             Text(
                                 text = error,
                                 color = Color(0xFF759F67),

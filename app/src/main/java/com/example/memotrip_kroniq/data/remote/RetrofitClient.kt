@@ -44,6 +44,7 @@ object RetrofitClient {
                 // užitečné: metoda + url + content-type
                 val contentType = request.body?.contentType()?.toString()
                 Log.d("RetrofitClient", "➡️ ${request.method} ${request.url.encodedPath} contentType=$contentType")
+
                 val response = chain.proceed(request)
 
                 val path = request.url.encodedPath

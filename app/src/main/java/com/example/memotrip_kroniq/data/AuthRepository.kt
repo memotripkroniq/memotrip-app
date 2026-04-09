@@ -1,10 +1,15 @@
 package com.example.memotrip_kroniq.data
 
+import android.content.ContentResolver
+import android.net.Uri
 import LoginRequest
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.model.UserMe
 import com.example.memotrip_kroniq.data.remote.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import retrofit2.HttpException
 
@@ -106,6 +111,41 @@ class AuthRepository(
             mapOf("email" to email)
         )
     }
+
+    // ============================================================
+    // ⭐ UPDATE PROFILE
+    // ============================================================
+    suspend fun updateMe(request: Map<String, String>): UserMe {
+        return api.updateMe(request)
+    }
+
+    suspend fun uploadProfilePhoto(
+        contentResolver: ContentResolver,
+        uri: Uri
+    ): String {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+
+        val mime = contentResolver.getType(uri) ?: "image/jpeg"
+        val ext = when (mime.lowercase()) {
+            "image/png" -> "png"
+            "image/webp" -> "webp"
+            else -> "jpg"
+        }
+
+        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val part = MultipartBody.Part.createFormData(
+            name = "file",
+            filename = "profile.$ext",
+            body = requestBody
+        )
+
+        return api.uploadProfilePhoto(part).profileImageUrl
+            ?: throw IllegalStateException("Profile photo upload returned null profileImageUrl")
+    }
+
+    suspend fun deleteProfilePhoto(): Boolean =
+        api.deleteProfilePhoto().success
 
 
 }

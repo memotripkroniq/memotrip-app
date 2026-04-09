@@ -40,44 +40,79 @@ import com.example.memotrip_kroniq.ui.profile.components.ProfileDateField
 import com.example.memotrip_kroniq.ui.profile.components.ProfileHeaderSection
 import com.example.memotrip_kroniq.ui.profile.components.ProfileInputField
 import com.example.memotrip_kroniq.ui.profile.components.ProfileSectionLabel
-import com.example.memotrip_kroniq.ui.profile.components.ProfileSegmentedSelector
+import com.example.memotrip_kroniq.ui.profile.components.ProfileSegmentSelector
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.utils.createImageFile
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.memotrip_kroniq.ui.profile.components.ProfileDatePickerOverlay
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(
-    navController: NavHostController? = null
+    navController: NavHostController? = null,
+    initialName: String = "",
+    initialAccountType: String = "Free",
+    initialEmail: String = "",
+    initialGender: String = "",
+    initialFirstName: String = "",
+    initialLastName: String = "",
+    initialDateOfBirth: String = "",
+    initialProfileImageUrl: String = "",
+    onSaveClick: (
+        photoUri: Uri?,
+        isPhotoRemoved: Boolean,
+        name: String,
+        accountType: String,
+        kroniqRole: String,
+        gender: String,
+        firstName: String,
+        lastName: String,
+        email: String,
+        dateOfBirth: String
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> }
 ) {
     val context = LocalContext.current
 
     val photoUri = remember { mutableStateOf<Uri?>(null) }
-    val name = remember { mutableStateOf("") }
-    val accountType = remember { mutableStateOf("Free") }
+    val profileImageUrl = remember(initialProfileImageUrl) { mutableStateOf(initialProfileImageUrl) }
+    val name = remember(initialName) { mutableStateOf(initialName) }
+    val accountType = remember(initialAccountType) { mutableStateOf(initialAccountType) }
     val kroniqRole = remember { mutableStateOf("Admin") }
-    val gender = remember { mutableStateOf("Female") }
-    val firstName = remember { mutableStateOf("") }
-    val lastName = remember { mutableStateOf("") }
-    val email = remember { mutableStateOf("") }
-    val dateOfBirth = remember { mutableStateOf("") }
-    val selectedDateOfBirth = remember { mutableStateOf<LocalDate?>(null) }
+    val gender = remember(initialGender) { mutableStateOf(initialGender) }
+    val firstName = remember(initialFirstName) { mutableStateOf(initialFirstName) }
+    val lastName = remember(initialLastName) { mutableStateOf(initialLastName) }
+    val email = remember(initialEmail) { mutableStateOf(initialEmail) }
+    val parsedInitialDateOfBirth = remember(initialDateOfBirth) {
+        parseInitialDateOfBirth(initialDateOfBirth)
+    }
+    val dateOfBirth = remember(initialDateOfBirth) {
+        mutableStateOf(
+            parsedInitialDateOfBirth?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")).orEmpty()
+        )
+    }
+    val selectedDateOfBirth = remember(initialDateOfBirth) {
+        mutableStateOf(parsedInitialDateOfBirth)
+    }
     var showDatePicker by remember { mutableStateOf(false) }
+    val showGenderError = remember { mutableStateOf(false) }
     val showFirstNameError = remember { mutableStateOf(false) }
     val showLastNameError = remember { mutableStateOf(false) }
     val showDateOfBirthError = remember { mutableStateOf(false) }
     var showPhotoActionSheet by remember { mutableStateOf(false) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var isPhotoRemoved by remember(initialProfileImageUrl) { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
             photoUri.value = uri
+            profileImageUrl.value = ""
+            isPhotoRemoved = false
         }
         showPhotoActionSheet = false
     }
@@ -87,6 +122,8 @@ fun ProfileScreen(
     ) { success ->
         if (success && tempPhotoUri != null) {
             photoUri.value = tempPhotoUri
+            profileImageUrl.value = ""
+            isPhotoRemoved = false
         }
         showPhotoActionSheet = false
     }
@@ -128,7 +165,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             ProfileHeaderSection(
-                photoUri = photoUri.value,
+                photoModel = photoUri.value ?: profileImageUrl.value.takeIf { it.isNotBlank() },
                 name = name.value,
                 onPhotoClick = { showPhotoActionSheet = true },
                 onNameChange = { name.value = it }
@@ -148,7 +185,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            ProfileSegmentedSelector(
+            ProfileSegmentSelector(
                 modifier = Modifier.fillMaxWidth(),
                 options = listOf("Free", "Premium", "KroniQ"),
                 selectedOption = accountType.value,
@@ -165,7 +202,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            ProfileSegmentedSelector(
+            ProfileSegmentSelector(
                 modifier = Modifier.fillMaxWidth(),
                 options = listOf("Admin", "Member", "Host"),
                 selectedOption = kroniqRole.value,
@@ -181,12 +218,16 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            ProfileSegmentedSelector(
+            ProfileSegmentSelector(
                 modifier = Modifier.fillMaxWidth(),
                 options = listOf("Female", "Male"),
                 selectedOption = gender.value,
-                onOptionSelected = { gender.value = it },
-                selectedColor = Color(0xFF1686D9)
+                onOptionSelected = {
+                    gender.value = it
+                    showGenderError.value = false
+                },
+                selectedColor = Color(0xFF1686D9),
+                error = showGenderError.value
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -264,12 +305,39 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 PrimaryButton(
-                    text = "Next",
+                    text = "Save",
                     modifier = Modifier.padding(horizontal = 52.dp),
                     onClick = {
-                        showFirstNameError.value = firstName.value.isBlank()
-                        showLastNameError.value = lastName.value.isBlank()
-                        showDateOfBirthError.value = dateOfBirth.value.isBlank()
+                        val genderEmpty = gender.value.isBlank()
+                        val firstNameEmpty = firstName.value.isBlank()
+                        val lastNameEmpty = lastName.value.isBlank()
+                        val dateOfBirthEmpty = dateOfBirth.value.isBlank()
+
+                        showGenderError.value = genderEmpty
+                        showFirstNameError.value = firstNameEmpty
+                        showLastNameError.value = lastNameEmpty
+                        showDateOfBirthError.value = dateOfBirthEmpty
+
+                        val hasError =
+                            genderEmpty ||
+                                    firstNameEmpty ||
+                                    lastNameEmpty ||
+                                    dateOfBirthEmpty
+
+                        if (!hasError) {
+                            onSaveClick(
+                                photoUri.value,
+                                isPhotoRemoved,
+                                name.value,
+                                accountType.value,
+                                kroniqRole.value,
+                                gender.value,
+                                firstName.value,
+                                lastName.value,
+                                email.value,
+                                dateOfBirth.value
+                            )
+                        }
                     }
                 )
             }
@@ -278,7 +346,7 @@ fun ProfileScreen(
 
     if (showPhotoActionSheet) {
         PhotoPickerOverlay(
-            canDelete = photoUri.value != null,
+            canDelete = photoUri.value != null || profileImageUrl.value.isNotBlank(),
             onTakePhoto = {
                 if (
                     ContextCompat.checkSelfPermission(
@@ -301,6 +369,10 @@ fun ProfileScreen(
             onPickFromGallery = { galleryLauncher.launch("image/*") },
             onDeletePhoto = {
                 photoUri.value = null
+                if (profileImageUrl.value.isNotBlank() || initialProfileImageUrl.isNotBlank()) {
+                    profileImageUrl.value = ""
+                    isPhotoRemoved = true
+                }
                 showPhotoActionSheet = false
             },
             onDismiss = { showPhotoActionSheet = false }
@@ -316,7 +388,7 @@ fun ProfileScreen(
             onConfirm = { selectedDate ->
                 selectedDateOfBirth.value = selectedDate
                 dateOfBirth.value = selectedDate.format(
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                    DateTimeFormatter.ofPattern("dd.MM.yyyy")
                 )
                 showDateOfBirthError.value = false
                 showDatePicker = false
@@ -336,6 +408,23 @@ fun ProfileScreenPreview() {
             ProfileScreen(
                 navController = rememberNavController()
             )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun parseInitialDateOfBirth(dateOfBirth: String): LocalDate? {
+    if (dateOfBirth.isBlank()) return null
+
+    return runCatching {
+        OffsetDateTime.parse(dateOfBirth).toLocalDate()
+    }.getOrElse {
+        runCatching {
+            LocalDate.parse(dateOfBirth)
+        }.getOrElse {
+            runCatching {
+            LocalDate.parse(dateOfBirth, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+            }.getOrNull()
         }
     }
 }

@@ -4,11 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,44 +28,58 @@ import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sy
 
 @Composable
-fun ProfileSegmentedSelector(
+fun ProfileSegmentSelector(
     options: List<String>,
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     selectedColor: Color,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    error: Boolean = false
 ) {
     val s = LocalUiScaler.current
+    val errorGreen = Color(0xFF759F67)
+    val borderColor = if (error) errorGreen else Color(0xFF747781)
 
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(38f.sy(s))
-            .background(Color(0xFF383A41), RoundedCornerShape(10.dp))
-            .clip(RoundedCornerShape(10.dp))
-            .border(
-                width = 1.dp,
-                color = Color(0xFF747781),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .padding(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .height(45f.sy(s))
     ) {
-        options.forEachIndexed { index, option ->
-            ProfileSegmentButton(
-                title = option,
-                selected = selectedOption == option,
-                selectedColor = selectedColor,
-                enabled = enabled,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(
+                    width = 1.5.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .padding(4.dp)
+        ) {
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp)),
-                onClick = { onOptionSelected(option) }
-            )
+                    .fillMaxSize()
+                    .background(Color(0xFF383A41), RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                options.forEachIndexed { index, option ->
+                    ProfileSegmentButton(
+                        title = option,
+                        selected = selectedOption == option,
+                        selectedColor = selectedColor,
+                        enabled = enabled,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp)),
+                        onClick = { onOptionSelected(option) }
+                    )
 
-            if (index != options.lastIndex) {
-                Spacer(modifier = Modifier.width(4.dp))
+                    if (index != options.lastIndex) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                }
             }
         }
     }

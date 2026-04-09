@@ -1,6 +1,5 @@
 package com.example.memotrip_kroniq.ui.profile.components
 
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +41,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ProfileHeaderSection(
-    photoUri: Uri?,
+    photoModel: Any?,
     name: String,
     onPhotoClick: () -> Unit,
     onNameChange: (String) -> Unit,
@@ -74,9 +73,9 @@ fun ProfileHeaderSection(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (photoUri != null) {
+        if (photoModel != null) {
             AsyncImage(
-                model = photoUri,
+                model = photoModel,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
