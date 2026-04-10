@@ -2,6 +2,8 @@ package com.example.memotrip_kroniq.ui.home
 
 import PreviewUiScaler
 import androidx.annotation.OptIn
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -139,40 +141,43 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .background(Color.Black),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
+        Crossfade(
+            targetState = uiState.isLoading,
+            animationSpec = tween(durationMillis = 220),
+            label = "home_loading_transition"
+        ) { isLoading ->
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(Color.Black),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            } else {
+                HomeContent(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(horizontal = 16f.sx(s)),
+                    selectedTab = selectedTab,
+                    isHomeLoading = uiState.isLoading,
+                    isThemesLocked = uiState.isThemesLocked,
+                    trips = uiState.trips,
+                    themeTrips = viewModel.getTripsForSelectedTheme(),
+                    themesContentState = uiState.themesContentState,
+                    isTripsLoading = uiState.isTripsLoading,
+                    isKroniq = uiState.isKroniq,
+                    isAddTripEnabled = uiState.isAddTripEnabled,
+                    onTabSelected = { selectedTab = it },
+                    onThemeClick = viewModel::onThemeClick,
+                    onThemesBackClick = viewModel::onThemesBackClick,
+                    onAddTripClick = { navController?.navigate(Screen.AddTrip.route) },
+                    onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
+                )
             }
-            return@Scaffold
         }
-
-        // 🔥🔥🔥 ZMĚNA #2 – HomeContent je čistý obsah
-        HomeContent(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 16f.sx(s)),
-            selectedTab = selectedTab,
-            isHomeLoading = uiState.isLoading,
-            isThemesLocked = uiState.isThemesLocked,
-            trips = uiState.trips,
-            themeTrips = viewModel.getTripsForSelectedTheme(),
-            themesContentState = uiState.themesContentState,
-            isTripsLoading = uiState.isTripsLoading,
-            isKroniq = uiState.isKroniq,
-            isAddTripEnabled = uiState.isAddTripEnabled,
-            onTabSelected = { selectedTab = it },
-            onThemeClick = viewModel::onThemeClick,
-            onThemesBackClick = viewModel::onThemesBackClick,
-            onAddTripClick = { navController?.navigate(Screen.AddTrip.route) },
-            onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
-        )
-
     }
 }
 

@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -12,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -344,81 +346,87 @@ fun AppNavGraph(navController: NavHostController) {
                 }
             }
 
-            if (isProfileLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color.White)
-                }
-            } else {
-                ProfileScreen(
-                    navController = navController,
-                    initialName = initialName,
-                    initialAccountType = initialAccountType,
-                    initialEmail = initialEmail,
-                    initialGender = initialGender,
-                    initialFirstName = initialFirstName,
-                    initialLastName = initialLastName,
-                    initialDateOfBirth = initialDateOfBirth,
-                    initialProfileImageUrl = initialProfileImageUrl,
-                    onSaveClick = { photoUri, isPhotoRemoved, name, accountType, kroniqRole, gender, firstName, lastName, email, dateOfBirth ->
-                        coroutineScope.launch {
-                            try {
-                                val apiDateOfBirth = formatProfileDateForApi(dateOfBirth)
-                                val request = linkedMapOf<String, String>().apply {
-                                    name.takeIf { it != initialName }?.let { put("name", it) }
-                                    gender.takeIf { it != initialGender }?.let { put("gender", it) }
-                                    firstName.takeIf { it != initialFirstName }?.let { put("firstName", it) }
-                                    lastName.takeIf { it != initialLastName }?.let { put("lastName", it) }
-                                    apiDateOfBirth.takeIf { it != initialDateOfBirth }?.let {
-                                        put("dateOfBirth", it)
+            Crossfade(
+                targetState = isProfileLoading,
+                animationSpec = tween(durationMillis = 220),
+                label = "profile_loading_transition"
+            ) { loading ->
+                if (loading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                } else {
+                    ProfileScreen(
+                        navController = navController,
+                        initialName = initialName,
+                        initialAccountType = initialAccountType,
+                        initialEmail = initialEmail,
+                        initialGender = initialGender,
+                        initialFirstName = initialFirstName,
+                        initialLastName = initialLastName,
+                        initialDateOfBirth = initialDateOfBirth,
+                        initialProfileImageUrl = initialProfileImageUrl,
+                        onSaveClick = { photoUri, isPhotoRemoved, name, accountType, kroniqRole, gender, firstName, lastName, email, dateOfBirth ->
+                            coroutineScope.launch {
+                                try {
+                                    val apiDateOfBirth = formatProfileDateForApi(dateOfBirth)
+                                    val request = linkedMapOf<String, String>().apply {
+                                        name.takeIf { it != initialName }?.let { put("name", it) }
+                                        gender.takeIf { it != initialGender }?.let { put("gender", it) }
+                                        firstName.takeIf { it != initialFirstName }?.let { put("firstName", it) }
+                                        lastName.takeIf { it != initialLastName }?.let { put("lastName", it) }
+                                        apiDateOfBirth.takeIf { it != initialDateOfBirth }?.let {
+                                            put("dateOfBirth", it)
+                                        }
                                     }
-                                }
 
-                                val hasPhotoUpload = photoUri != null
-                                val hasPhotoDelete = isPhotoRemoved && initialProfileImageUrl.isNotBlank()
+                                    val hasPhotoUpload = photoUri != null
+                                    val hasPhotoDelete = isPhotoRemoved && initialProfileImageUrl.isNotBlank()
 
-                                if (!hasPhotoUpload && !hasPhotoDelete && request.isEmpty()) {
+                                    if (!hasPhotoUpload && !hasPhotoDelete && request.isEmpty()) {
+                                        navController.navigate(Screen.Home.createRoute(HomeTab.TRIP_HISTORY)) {
+                                            popUpTo(Screen.Profile.route) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                        return@launch
+                                    }
+
+                                    if (hasPhotoUpload) {
+                                        authRepository.uploadProfilePhoto(
+                                            contentResolver = context.contentResolver,
+                                            uri = photoUri
+                                        )
+                                    } else if (hasPhotoDelete) {
+                                        authRepository.deleteProfilePhoto()
+                                    }
+
+                                    val updatedUser = if (request.isNotEmpty()) {
+                                        authRepository.updateMe(request)
+                                    } else {
+                                        authRepository.getMe()
+                                    }
+
+                                    Log.d(
+                                        "PROFILE_SAVE",
+                                        "Profile updated successfully for userId=${updatedUser.id}, photoUri=$photoUri, accountType=$accountType, kroniqRole=$kroniqRole, email=$email"
+                                    )
+
                                     navController.navigate(Screen.Home.createRoute(HomeTab.TRIP_HISTORY)) {
                                         popUpTo(Screen.Profile.route) { inclusive = true }
                                         launchSingleTop = true
                                     }
-                                    return@launch
+                                } catch (e: Exception) {
+                                    Log.e("PROFILE_SAVE", "Profile update failed", e)
                                 }
-
-                                if (hasPhotoUpload) {
-                                    authRepository.uploadProfilePhoto(
-                                        contentResolver = context.contentResolver,
-                                        uri = photoUri
-                                    )
-                                } else if (hasPhotoDelete) {
-                                    authRepository.deleteProfilePhoto()
-                                }
-
-                                val updatedUser = if (request.isNotEmpty()) {
-                                    authRepository.updateMe(request)
-                                } else {
-                                    authRepository.getMe()
-                                }
-
-                                Log.d(
-                                    "PROFILE_SAVE",
-                                    "Profile updated successfully for userId=${updatedUser.id}, photoUri=$photoUri, accountType=$accountType, kroniqRole=$kroniqRole, email=$email"
-                                )
-
-                                navController.navigate(Screen.Home.createRoute(HomeTab.TRIP_HISTORY)) {
-                                    popUpTo(Screen.Profile.route) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            } catch (e: Exception) {
-                                Log.e("PROFILE_SAVE", "Profile update failed", e)
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
