@@ -1,13 +1,26 @@
-package com.example.memotrip_kroniq.ui.addtrip
+package com.example.memotrip_kroniq.ui.edittrip
 
 import PreviewUiScaler
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -25,41 +38,38 @@ import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
 import com.example.memotrip_kroniq.data.trips.TripsRepository
-import com.example.memotrip_kroniq.navigation.*
+import com.example.memotrip_kroniq.navigation.LOCATION_LAT_KEY
+import com.example.memotrip_kroniq.navigation.LOCATION_LON_KEY
+import com.example.memotrip_kroniq.navigation.LOCATION_NAME_KEY
+import com.example.memotrip_kroniq.navigation.LOCATION_RESULT_KEY
+import com.example.memotrip_kroniq.navigation.LOCATION_TARGET_KEY
+import com.example.memotrip_kroniq.navigation.LocationTarget
+import com.example.memotrip_kroniq.navigation.Screen
+import com.example.memotrip_kroniq.ui.addtrip.AddTripContent
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripDatePickerOverlay
-import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
-import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
-import com.example.memotrip_kroniq.ui.home.HomeScreen
-import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AddTripScreen(
-    navController: NavHostController
+fun EditTripScreen(
+    navController: NavHostController,
+    tripId: String
 ) {
     val context = LocalContext.current
     val s = LocalUiScaler.current
     val focusManager = LocalFocusManager.current
+    var showDatePicker by remember { mutableStateOf(false) }
 
-    // ─────────────────────────────
-    // Token store + Retrofit init (MUSÍ být před api get())
-    // ─────────────────────────────
     val tokenStore = remember(context) { TokenDataStore(context) }
-
-    // Build retrofit přesně jednou
     remember(tokenStore) {
         RetrofitClient.build(tokenStore)
         true
     }
 
-    // ─────────────────────────────
-    // Dependencies
-    // ─────────────────────────────
     val tripsRepository = remember(context) {
         TripsRepository(
             api = RetrofitClient.tripsApi,
@@ -86,23 +96,18 @@ fun AddTripScreen(
         )
     }
 
-    val factory = remember(tripsRepository, authRepository, locationSearchRepository, tripMapGenerator) {
-        AddTripViewModelFactory(
+    val factory = remember(tripsRepository, authRepository, tripMapGenerator, tripId) {
+        EditTripViewModelFactory(
             tripsRepository = tripsRepository,
             authRepository = authRepository,
-            locationSearchRepository = locationSearchRepository,
-            tripMapGenerator = tripMapGenerator
+            tripMapGenerator = tripMapGenerator,
+            tripId = tripId
         )
     }
 
-    val viewModel: AddTripViewModel = viewModel(factory = factory)
-
+    val viewModel: EditTripViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
-    var showDatePicker by remember { mutableStateOf(false) }
 
-    // ─────────────────────────────
-    // SavedStateHandle (LocationSearch)
-    // ─────────────────────────────
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val handle = currentBackStackEntry?.savedStateHandle
 
@@ -126,7 +131,6 @@ fun AddTripScreen(
         handle?.getStateFlow<Int?>(LOCATION_RESULT_KEY, null) ?: MutableStateFlow(null)
     }.collectAsState()
 
-    // Apply selected location back to ViewModel
     LaunchedEffect(locationName, locationLat, locationLon, targetName, stopIndex) {
         if (locationName == null || locationLat == null || locationLon == null) return@LaunchedEffect
         if (targetName == null) return@LaunchedEffect
@@ -155,9 +159,6 @@ fun AddTripScreen(
         }
     }
 
-    // ─────────────────────────────
-    // Root layout
-    // ─────────────────────────────
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -173,73 +174,78 @@ fun AddTripScreen(
             topBar = {
                 AppTopBar(
                     modifier = Modifier.statusBarsPadding(),
-                    title = "Add Trip",
-                    showBack = uiState.flowState == AddTripFlowState.IDLE,
+                    title = "Edit Trip",
+                    showBack = true,
                     onBackClick = { navController.popBackStack() }
                 )
             }
         ) { innerPadding ->
-
-            when (uiState.flowState) {
-                AddTripFlowState.SAVING -> SavingTripScreen()
-                AddTripFlowState.SUCCESS -> TripSuccessScreen(navController)
-                else -> {
-                    AddTripContent(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(horizontal = 16f.sx(s)),
-                        uiState = uiState,
-                        submitButtonText = "Create",
-                        isSubmitEnabled = !uiState.isGeneratingMap,
-                        showCoverPhotoPicker = true,
-                        showThemeSelector = true,
-
-                        onTripNameChange = viewModel::onTripNameChange,
-                        onCoverPhotoSelected = viewModel::onCoverPhotoSelected,
-
-                        onDestinationSelected = viewModel::onDestinationSelected,
-                        onThemeSelected = viewModel::onThemeSelected,
-                        onDateClick = { showDatePicker = true },
-
-                        onFromLocationChange = viewModel::onFromLocationChange,
-                        onToLocationChange = viewModel::onToLocationChange,
-                        onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
-                        onToSuggestionSelected = viewModel::onToSuggestionSelected,
-
-                        onAddStop = viewModel::onAddStop,
-                        onRemoveStop = viewModel::onRemoveStop,
-                        onStopLocationChange = viewModel::onStopLocationChange,
-                        onStopSuggestionSelected = viewModel::onStopSuggestionSelected,
-
-                        onTransportSelectionChange = viewModel::onTransportSelectionChange,
-
-                        onGenerateMapClick = viewModel::generateTripMap,
-                        onSubmitClick = viewModel::onCreateClick,
-
-                        onFromClick = {
-                            handle?.set(LOCATION_TARGET_KEY, LocationTarget.FROM.name)
-                            handle?.remove<Int>(LOCATION_RESULT_KEY)
-                            navController.navigate(Screen.LocationSearch.route)
-                        },
-                        onToClick = {
-                            handle?.set(LOCATION_TARGET_KEY, LocationTarget.TO.name)
-                            handle?.remove<Int>(LOCATION_RESULT_KEY)
-                            navController.navigate(Screen.LocationSearch.route)
-                        },
-                        onStopClick = { index ->
-                            handle?.set(LOCATION_TARGET_KEY, LocationTarget.STOP.name)
-                            handle?.set(LOCATION_RESULT_KEY, index)
-                            navController.navigate(Screen.LocationSearch.route)
-                        }
-                    )
+            if (uiState.isInitialLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(Color.Black),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
                 }
+            } else {
+                AddTripContent(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(horizontal = 16f.sx(s)),
+                    uiState = uiState.formState,
+                    submitButtonText = if (uiState.isSaving) "Saving" else "Save",
+                    isSubmitEnabled = !uiState.isSaving && !uiState.formState.isGeneratingMap,
+                    showCoverPhotoPicker = false,
+                    showThemeSelector = false,
+                    onTripNameChange = viewModel::onTripNameChange,
+                    onCoverPhotoSelected = viewModel::onCoverPhotoSelected,
+                    onDestinationSelected = viewModel::onDestinationSelected,
+                    onThemeSelected = viewModel::onThemeSelected,
+                    onDateClick = { showDatePicker = true },
+                    onFromLocationChange = {},
+                    onToLocationChange = {},
+                    onFromSuggestionSelected = viewModel::onFromSuggestionSelected,
+                    onToSuggestionSelected = viewModel::onToSuggestionSelected,
+                    onAddStop = viewModel::onAddStop,
+                    onRemoveStop = viewModel::onRemoveStop,
+                    onStopLocationChange = { _, _ -> },
+                    onStopSuggestionSelected = viewModel::onStopSuggestionSelected,
+                    onTransportSelectionChange = viewModel::onTransportSelectionChange,
+                    onGenerateMapClick = viewModel::generateTripMap,
+                    onSubmitClick = {
+                        viewModel.onSaveClick {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("trip_updated", true)
+                            navController.popBackStack()
+                        }
+                    },
+                    onFromClick = {
+                        handle?.set(LOCATION_TARGET_KEY, LocationTarget.FROM.name)
+                        handle?.remove<Int>(LOCATION_RESULT_KEY)
+                        navController.navigate(Screen.LocationSearch.route)
+                    },
+                    onToClick = {
+                        handle?.set(LOCATION_TARGET_KEY, LocationTarget.TO.name)
+                        handle?.remove<Int>(LOCATION_RESULT_KEY)
+                        navController.navigate(Screen.LocationSearch.route)
+                    },
+                    onStopClick = { index ->
+                        handle?.set(LOCATION_TARGET_KEY, LocationTarget.STOP.name)
+                        handle?.set(LOCATION_RESULT_KEY, index)
+                        navController.navigate(Screen.LocationSearch.route)
+                    }
+                )
             }
         }
 
         if (showDatePicker) {
             AddTripDatePickerOverlay(
-                initialStartDate = uiState.tripStartDate,
-                initialEndDate = uiState.tripEndDate,
+                initialStartDate = uiState.formState.tripStartDate,
+                initialEndDate = uiState.formState.tripEndDate,
                 onDismiss = { showDatePicker = false },
                 onConfirm = {
                     viewModel.onDateSelected(it)
@@ -247,21 +253,32 @@ fun AddTripScreen(
                 }
             )
         }
+
+        if (uiState.isSaving) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.25f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+        }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, widthDp = 412, heightDp = 1090)
 @Composable
-fun AddTripScreenPreview() {
+fun EditTripScreenPreview() {
     CompositionLocalProvider(
         LocalUiScaler provides PreviewUiScaler
     ) {
         MemoTripTheme {
             val navController = androidx.navigation.compose.rememberNavController()
-
-            AddTripScreen(
-                navController = navController
+            EditTripScreen(
+                navController = navController,
+                tripId = "preview-trip-id"
             )
         }
     }

@@ -33,6 +33,7 @@ fun AddTripNameField(
     modifier: Modifier = Modifier,
     value: String,
     coverPhotoUri: Uri?,
+    showPhotoPicker: Boolean = true,
     onValueChange: (String) -> Unit,
     onAddPhotoClick: () -> Unit,
     error: Boolean
@@ -75,34 +76,36 @@ fun AddTripNameField(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        if (coverPhotoUri != null) {
-            AsyncImage(
-                model = coverPhotoUri,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onAddPhotoClick() },
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Icon(
-                painter = painterResource(R.drawable.add_trip_name_field),
-                contentDescription = null,
-                tint = Color(0xFF747781).copy(alpha = 0.8f),
-                modifier = Modifier
-                    .size(38.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onAddPhotoClick() }
-            )
-        }
+        if (showPhotoPicker) {
+            if (coverPhotoUri != null) {
+                AsyncImage(
+                    model = coverPhotoUri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onAddPhotoClick() },
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.add_trip_name_field),
+                    contentDescription = null,
+                    tint = Color(0xFF747781).copy(alpha = 0.8f),
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onAddPhotoClick() }
+                )
+            }
 
-        Spacer (modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+        }
 
         BasicTextField(
             value = textFieldValue, // 🔴 CHANGE 4: TextFieldValue místo String

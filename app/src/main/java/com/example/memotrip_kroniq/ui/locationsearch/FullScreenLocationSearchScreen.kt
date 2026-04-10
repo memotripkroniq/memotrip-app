@@ -91,10 +91,7 @@ fun FullScreenLocationSearchScreen(
                             LocationSearchRow(
                                 suggestion = suggestion,
                                 onClick = {
-                                    val addTripEntry =
-                                        navController.getBackStackEntry(Screen.AddTrip.route)
-
-                                    addTripEntry.savedStateHandle.apply {
+                                    navController.previousBackStackEntry?.savedStateHandle?.apply {
                                         set(LOCATION_NAME_KEY, suggestion.displayName)
                                         set(LOCATION_LAT_KEY, suggestion.lat)
                                         set(LOCATION_LON_KEY, suggestion.lon)

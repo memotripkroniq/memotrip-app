@@ -68,6 +68,10 @@ import com.example.memotrip_kroniq.ui.utils.createImageFile
 fun AddTripContent(
     modifier: Modifier = Modifier,
     uiState: AddTripUiState,
+    submitButtonText: String = "Create",
+    isSubmitEnabled: Boolean = !uiState.isGeneratingMap,
+    showCoverPhotoPicker: Boolean = true,
+    showThemeSelector: Boolean = true,
     onTripNameChange: (String) -> Unit,
     onDestinationSelected: (Destination) -> Unit,
     onThemeSelected: (ThemeType) -> Unit,
@@ -81,7 +85,7 @@ fun AddTripContent(
     onStopLocationChange: (index: Int, value: TextFieldValue) -> Unit,
     onStopSuggestionSelected: (index: Int, suggestion: LocationSuggestion) -> Unit,
     onTransportSelectionChange: (Set<TransportType>) -> Unit,
-    onCreateClick: () -> Unit,
+    onSubmitClick: () -> Unit,
     onGenerateMapClick: () -> Unit,
     onCoverPhotoSelected: (Uri?) -> Unit,
     onFromClick: () -> Unit,
@@ -146,6 +150,7 @@ fun AddTripContent(
             AddTripNameField(
                 value = uiState.tripName,
                 coverPhotoUri = uiState.coverPhotoUri,
+                showPhotoPicker = showCoverPhotoPicker,
                 onValueChange = onTripNameChange,
                 onAddPhotoClick = { showPhotoActionSheet = true },
                 error = uiState.showTripNameError
@@ -173,13 +178,15 @@ fun AddTripContent(
             Spacer(Modifier.height(20f.sy(s)))
         }
 
-        item {
-            ThemeSelector(
-                selected = uiState.selectedTheme,
-                locked = uiState.isThemesLocked,
-                onSelect = onThemeSelected
-            )
-            Spacer(Modifier.height(20f.sy(s)))
+        if (showThemeSelector) {
+            item {
+                ThemeSelector(
+                    selected = uiState.selectedTheme,
+                    locked = uiState.isThemesLocked,
+                    onSelect = onThemeSelected
+                )
+                Spacer(Modifier.height(20f.sy(s)))
+            }
         }
 
         item {
@@ -265,9 +272,9 @@ fun AddTripContent(
                 contentAlignment = Alignment.Center
             ) {
                 PrimaryButton(
-                    text = if (uiState.isGeneratingMap) "Generating" else "Create",
-                    enabled = !uiState.isGeneratingMap,
-                    onClick = onCreateClick,
+                    text = if (uiState.isGeneratingMap) "Generating" else submitButtonText,
+                    enabled = isSubmitEnabled,
+                    onClick = onSubmitClick,
                     modifier = Modifier.width(200f.sx(s))
                 )
             }
@@ -295,7 +302,7 @@ fun AddTripContent(
     }
 
 
-    if (showPhotoActionSheet) {
+    if (showCoverPhotoPicker && showPhotoActionSheet) {
         PhotoPickerOverlay(
             canDelete = uiState.coverPhotoUri != null,
             onTakePhoto = {
@@ -353,6 +360,10 @@ fun AddTripContentPreview() {
                     generatedMapImageUrl = null,
                     isGeneratingMap = false
                 ),
+                submitButtonText = "Create",
+                isSubmitEnabled = true,
+                showCoverPhotoPicker = true,
+                showThemeSelector = true,
                 onTripNameChange = {},
                 onCoverPhotoSelected = {},
                 onDestinationSelected = {},
@@ -368,7 +379,7 @@ fun AddTripContentPreview() {
                 onStopSuggestionSelected = { _, _ -> },
                 onTransportSelectionChange = {},
                 onGenerateMapClick = {},
-                onCreateClick = {},
+                onSubmitClick = {},
                 onFromClick = {},
                 onToClick = {},
                 onStopClick = {}

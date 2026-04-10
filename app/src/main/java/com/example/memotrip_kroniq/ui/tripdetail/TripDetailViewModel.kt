@@ -22,6 +22,9 @@ import android.net.Uri
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 
 class TripDetailViewModel(
@@ -33,6 +36,10 @@ class TripDetailViewModel(
     val uiState: StateFlow<TripDetailUiState> = _uiState.asStateFlow()
 
     init {
+        loadTrip()
+    }
+
+    fun refreshTrip() {
         loadTrip()
     }
 
@@ -83,6 +90,7 @@ class TripDetailViewModel(
 
                 _uiState.update { state ->
                     state.copy(
+                        tripName = trip.name.orEmpty(),
                         coverImageUrl = trip.coverImageUrl,
                         mapImageUrl = trip.mapImageUrl,
                         mapFullImageUrl = trip.mapImageFullUrl ?: trip.mapImageUrl,
@@ -163,8 +171,9 @@ class TripDetailViewModel(
     }
 
     private fun formatTripDate(start: String?, end: String?): String {
-        val s = start.orEmpty().take(10)
-        val e = end.orEmpty().take(10)
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+        val s = start.orEmpty().take(10).toFormattedTripDate(formatter)
+        val e = end.orEmpty().take(10).toFormattedTripDate(formatter)
 
         return when {
             s.isNotBlank() && e.isNotBlank() -> "$s - $e"
@@ -173,6 +182,11 @@ class TripDetailViewModel(
             else -> ""
         }
     }
+
+    private fun String.toFormattedTripDate(formatter: DateTimeFormatter): String =
+        runCatching {
+            LocalDate.parse(this).format(formatter)
+        }.getOrElse { this }
 
     private fun markClean() {
         _uiState.update { it.copy(hasUnsavedChanges = false) }
@@ -196,6 +210,17 @@ class TripDetailViewModel(
 
     fun onThemeSelected(theme: ThemeType?) {
         _uiState.update { it.copy(selectedTheme = theme, hasUnsavedChanges = true) }
+    }
+
+    fun toggleShareInKroniq() {
+        _uiState.update { state ->
+            if (state.isKroniqLocked) return@update state
+
+            state.copy(
+                isSharedInKroniq = !state.isSharedInKroniq,
+                hasUnsavedChanges = true
+            )
+        }
     }
 
     fun toggleTransport(transport: TransportType) {

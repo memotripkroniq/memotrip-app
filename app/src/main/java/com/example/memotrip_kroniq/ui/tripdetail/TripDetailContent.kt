@@ -42,6 +42,8 @@ fun TripDetailContent(
     modifier: Modifier = Modifier,
     uiState: TripDetailUiState,
     onTabSelected: (TripDetailTab) -> Unit,
+    onToggleShareInKroniq: () -> Unit,
+    onEditTripInfoClick: () -> Unit,
     onAddMemberClick: () -> Unit,
     onDeleteTripClick: () -> Unit,
     onAddChecklistItem: () -> Unit,
@@ -181,7 +183,7 @@ fun TripDetailContent(
             ShareInKroniqSection(
                 checked = uiState.isSharedInKroniq,
                 locked = uiState.isKroniqLocked, // nebo !uiState.hasKroniqPackage
-                onToggle = { /* zatím empty */ }
+                onToggle = onToggleShareInKroniq
             )
             Spacer(Modifier.height(20f.sy(s)))
         }
@@ -203,7 +205,7 @@ fun TripDetailContent(
                 fromText = uiState.fromText,
                 toText = uiState.toText,
                 transport = uiState.transport,
-                onEditClick = { /* zatím nic */ },
+                onEditClick = onEditTripInfoClick,
                 theme = uiState.selectedTheme
             )
             Spacer(Modifier.height(20f.sy(s)))
@@ -412,6 +414,8 @@ private fun TripDetailContentPreview() {
                     isSharedInKroniq = false
                 ),
                 onTabSelected = {},
+                onToggleShareInKroniq = {},
+                onEditTripInfoClick = {},
                 onAddMemberClick = {},
                 onAddChecklistItem = {},
                 onToggleChecklistItem = {},

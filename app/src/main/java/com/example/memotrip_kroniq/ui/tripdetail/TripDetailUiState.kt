@@ -24,6 +24,7 @@ data class TripDetailUiState(
     val localCoverPhotoUri: Uri? = null,
     val mapImageUrl: String? = null,
     val mapFullImageUrl: String? = null,
+    val tripName: String = "",
 
     // Tabs
     val selectedTab: TripDetailTab = TripDetailTab.DETAILS,

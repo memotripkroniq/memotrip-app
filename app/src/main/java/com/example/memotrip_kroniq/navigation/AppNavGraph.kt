@@ -46,6 +46,7 @@ import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.auth.ForgotPasswordScreen
 import com.example.memotrip_kroniq.ui.auth.LoginScreen
 import com.example.memotrip_kroniq.ui.auth.SignUpScreen
+import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
@@ -72,6 +73,9 @@ sealed class Screen(val route: String) {
 
     object ForgotPassword : Screen("forgot_password")
     object AddTrip : Screen("add_trip")
+    object EditTrip : Screen("edit_trip/{tripId}") {
+        fun createRoute(tripId: String) = "edit_trip/$tripId"
+    }
     object LocationSearch : Screen("location_search")
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
@@ -215,6 +219,19 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.AddTrip.route) {
             AddTripScreen(
                 navController = navController
+            )
+        }
+
+        composable(
+            route = Screen.EditTrip.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId").orEmpty()
+
+            EditTripScreen(
+                navController = navController,
+                tripId = tripId
             )
         }
 

@@ -18,9 +18,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.trips.TripsRepository
+import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
@@ -59,6 +61,19 @@ fun TripDetailScreen(
 
     val vm: TripDetailViewModel = viewModel(factory = factory)
     val uiState by vm.uiState.collectAsState()
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val savedStateHandle = currentBackStackEntry?.savedStateHandle
+    val tripUpdated by remember(savedStateHandle) {
+        savedStateHandle?.getStateFlow("trip_updated", false) ?: kotlinx.coroutines.flow.MutableStateFlow(false)
+    }.collectAsState()
+
+    LaunchedEffect(tripUpdated) {
+        if (tripUpdated) {
+            savedStateHandle?.set("trip_updated", false)
+            vm.refreshTrip()
+        }
+    }
+
     val onBack = remember(vm, navController) {
         {
             if (vm.uiState.value.isSaving) return@remember
@@ -90,7 +105,7 @@ fun TripDetailScreen(
             topBar = {
                 AppTopBar(
                     modifier = Modifier, // případně .statusBarsPadding()
-                    title = "Trip detail",
+                    title = uiState.tripName.ifBlank { "Trip detail" },
                     showBack = true,
                     onBackClick = { onBack() }
                 )
@@ -102,6 +117,10 @@ fun TripDetailScreen(
                     .padding(horizontal = 16.dp),
                 uiState = uiState,
                 onTabSelected = vm::onTabSelected,
+                onToggleShareInKroniq = vm::toggleShareInKroniq,
+                onEditTripInfoClick = {
+                    navController.navigate(Screen.EditTrip.createRoute(tripId))
+                },
                 onAddMemberClick = vm::onAddMemberClick,
                 onAddChecklistItem = vm::addChecklistItem,
                 onToggleChecklistItem = vm::toggleChecklistItem,
