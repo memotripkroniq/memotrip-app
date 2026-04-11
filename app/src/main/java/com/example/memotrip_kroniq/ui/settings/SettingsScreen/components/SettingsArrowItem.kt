@@ -26,7 +26,9 @@ private val ArrowGreen = Color(0xFF759F67)
 fun SettingsArrowItem(
     title: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    trailingIconRes: Int? = null
 ) {
     val s = LocalUiScaler.current
 
@@ -37,6 +39,7 @@ fun SettingsArrowItem(
             .clip(RoundedCornerShape(10.dp))
             .background(SettingsCardColor)
             .clickable(
+                enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClick() }
@@ -45,16 +48,17 @@ fun SettingsArrowItem(
     ) {
         Text(
             text = title,
-            color = Color.White,
+            color = if (enabled) Color.White else Color.White.copy(alpha = 0.7f),
             fontSize = 16f.fs(s),
             modifier = Modifier.weight(1f),
             maxLines = 1
         )
 
+        val trailingRes = trailingIconRes ?: R.drawable.ic_arrow_right
         Icon(
-            painter = painterResource(id = R.drawable.ic_arrow_right),
-            contentDescription = "Open settings option",
-            tint = ArrowGreen,
+            painter = painterResource(id = trailingRes),
+            contentDescription = null,
+            tint = if (enabled) ArrowGreen else Color.White.copy(alpha = 0.75f),
             modifier = Modifier.size(20.dp)
         )
     }

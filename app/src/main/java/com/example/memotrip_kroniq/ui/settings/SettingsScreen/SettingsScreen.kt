@@ -13,18 +13,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.memotrip_kroniq.R
+import com.example.memotrip_kroniq.data.AuthRepository
+import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
@@ -42,9 +47,23 @@ fun SettingsScreen(
     onLogoutClick: () -> Unit
 ) {
     val s = LocalUiScaler.current
+    val context = LocalContext.current
 
     var pushNotifications by remember { mutableStateOf(true) }
     var emailNotifications by remember { mutableStateOf(true) }
+    var isKroniq by remember { mutableStateOf(false) }
+    val tokenStore = remember { TokenDataStore(context) }
+    val authRepository = remember {
+        AuthRepository(
+            api = RetrofitClient.authApi,
+            tokenStore = tokenStore
+        )
+    }
+
+    LaunchedEffect(authRepository) {
+        isKroniq = runCatching { authRepository.getMe().isKroniq }
+            .getOrDefault(false)
+    }
 
     Column(
         modifier = Modifier
@@ -74,8 +93,10 @@ fun SettingsScreen(
             )
 
             SettingsArrowItem(
-                title = stringResource(R.string.settings_kroniq_locked),
-                onClick = { /* TODO */ }
+                title = stringResource(R.string.profile_account_type_kroniq),
+                enabled = isKroniq,
+                trailingIconRes = if (isKroniq) null else R.drawable.homescreen_ic_lock_theme,
+                onClick = { /* TODO: KroniQ screen route */ }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
