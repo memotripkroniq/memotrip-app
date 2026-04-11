@@ -52,6 +52,7 @@ import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
 import com.example.memotrip_kroniq.ui.settings.SettingsScreen
+import com.example.memotrip_kroniq.ui.settings.LanguageScreen
 import com.example.memotrip_kroniq.ui.profile.ProfileScreen
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
 import com.example.memotrip_kroniq.ui.tripdetail.TripDetailScreen
@@ -80,6 +81,7 @@ sealed class Screen(val route: String) {
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
     object Settings : Screen("settings")
+    object Language : Screen("language")
     object Profile : Screen("profile")
     object TripDetail : Screen("trip_detail/{tripId}") {
         fun createRoute(tripId: String) = "trip_detail/$tripId"
@@ -311,6 +313,16 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = Screen.Language.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            LanguageScreen(
+                navController = navController
             )
         }
 

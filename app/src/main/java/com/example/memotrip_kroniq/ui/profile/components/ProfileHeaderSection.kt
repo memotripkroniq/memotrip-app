@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -132,7 +133,7 @@ fun ProfileHeaderSection(
 
                         textFieldValue.text.isEmpty() -> {
                             Text(
-                                text = "Name",
+                                text = stringResource(R.string.profile_name_placeholder),
                                 color = Color(0xFF8B8B8B),
                                 fontSize = 24f.fs(s),
                                 fontWeight = FontWeight.SemiBold,

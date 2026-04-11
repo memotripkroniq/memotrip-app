@@ -16,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.ui.core.model.Destination
 import androidx.compose.ui.unit.sp
+import com.example.memotrip_kroniq.R
 
 
 @Composable
@@ -36,7 +38,7 @@ fun DestinationSelector(
         val errorGreen = Color(0xFF759F67)
 
         Text(
-            text = "Destination",
+            text = stringResource(R.string.add_trip_destination),
             color =
                 if (error) errorGreen
                 else Color.White,

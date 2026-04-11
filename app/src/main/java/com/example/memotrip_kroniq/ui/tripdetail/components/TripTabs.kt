@@ -15,9 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sx
@@ -67,7 +69,7 @@ fun TripTabs(
     ) {
 
         TripTabButton(
-            title = "Details",
+            title = stringResource(R.string.trip_detail_tab_details),
             selected = selectedTab == TripDetailTab.DETAILS,
             modifier = Modifier
                 .weight(1f)
@@ -83,7 +85,7 @@ fun TripTabs(
         Spacer(modifier = Modifier.width(8.dp))
 
         TripTabButton(
-            title = "Photos",
+            title = stringResource(R.string.trip_detail_tab_photos),
             selected = selectedTab == TripDetailTab.PHOTOS,
             modifier = Modifier
                 .weight(1f)
@@ -99,7 +101,7 @@ fun TripTabs(
         Spacer(modifier = Modifier.width(8.dp))
 
         TripTabButton(
-            title = "Exports",
+            title = stringResource(R.string.trip_detail_tab_exports),
             selected = selectedTab == TripDetailTab.EXPORTS,
             modifier = Modifier
                 .weight(1f)

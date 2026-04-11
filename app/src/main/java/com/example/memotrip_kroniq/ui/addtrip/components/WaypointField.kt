@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +39,7 @@ fun WaypointField(
     Column {
 
         Text(
-            text = "Stop ${index + 1}",
+            text = stringResource(R.string.add_trip_stop_number, index + 1),
             color = Color.White,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
@@ -61,7 +62,7 @@ fun WaypointField(
         ) {
 
             Text(
-                text = if (isEmpty) "Add stop destination" else value,
+                text = if (isEmpty) stringResource(R.string.add_trip_stop_placeholder) else value,
                 color = if (isEmpty) {
                     if (error) errorGreen else Color.Gray
                 } else {
@@ -78,7 +79,7 @@ fun WaypointField(
 
             Icon(
                 painter = painterResource(id = R.drawable.ic_wp_close),
-                contentDescription = "Remove stop",
+                contentDescription = stringResource(R.string.add_trip_remove_stop),
                 tint = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)

@@ -10,8 +10,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.components.RotatingSvgLoader
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
@@ -31,7 +33,7 @@ fun SavingTripScreen() {
             RotatingSvgLoader()
             Spacer(modifier = Modifier.height(56.dp))
             Text(
-                text = "Saving your experience",
+                text = stringResource(R.string.add_trip_saving_experience),
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold

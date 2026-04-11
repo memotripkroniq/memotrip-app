@@ -35,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.ui.addtrip.components.AddStopButton
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripHeroBanner
@@ -68,7 +70,7 @@ import com.example.memotrip_kroniq.ui.utils.createImageFile
 fun AddTripContent(
     modifier: Modifier = Modifier,
     uiState: AddTripUiState,
-    submitButtonText: String = "Create",
+    submitButtonText: String = "",
     isSubmitEnabled: Boolean = !uiState.isGeneratingMap,
     showCoverPhotoPicker: Boolean = true,
     showThemeSelector: Boolean = true,
@@ -205,7 +207,7 @@ fun AddTripContent(
 
                 // FROM – klikneš jen na input
                 LocationField(
-                    label = "From",
+                    label = stringResource(R.string.add_trip_from),
                     value = uiState.fromLocation.text,
                     error = uiState.showFromLocationError,
                     onClick = onFromClick,
@@ -244,7 +246,7 @@ fun AddTripContent(
                 }
 
                 LocationField(
-                    label = "To",
+                    label = stringResource(R.string.add_trip_to),
                     value = uiState.toLocation.text,
                     error = uiState.showToLocationError,
                     onClick = onToClick,
@@ -272,7 +274,11 @@ fun AddTripContent(
                 contentAlignment = Alignment.Center
             ) {
                 PrimaryButton(
-                    text = if (uiState.isGeneratingMap) "Generating" else submitButtonText,
+                    text = if (uiState.isGeneratingMap) {
+                        stringResource(R.string.add_trip_generating)
+                    } else {
+                        submitButtonText.ifBlank { stringResource(R.string.add_trip_create) }
+                    },
                     enabled = isSubmitEnabled,
                     onClick = onSubmitClick,
                     modifier = Modifier.width(200f.sx(s))
@@ -360,7 +366,7 @@ fun AddTripContentPreview() {
                     generatedMapImageUrl = null,
                     isGeneratingMap = false
                 ),
-                submitButtonText = "Create",
+                submitButtonText = "",
                 isSubmitEnabled = true,
                 showCoverPhotoPicker = true,
                 showThemeSelector = true,

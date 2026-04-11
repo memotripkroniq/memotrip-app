@@ -13,7 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.components.CustomInputBox
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
@@ -55,7 +57,7 @@ fun LoginFieldsBox(
             // EMAIL
             // ==========================
             CustomInputBox(
-                label = "Email",
+                label = stringResource(R.string.auth_email),
                 value = email,
                 error = emailError,
                 showError = submitted,
@@ -69,7 +71,7 @@ fun LoginFieldsBox(
             // PASSWORD
             // ==========================
             CustomInputBox(
-                label = "Password",
+                label = stringResource(R.string.auth_password),
                 value = password,
                 isPassword = true,
                 error = passwordError,
@@ -81,7 +83,7 @@ fun LoginFieldsBox(
             Spacer(Modifier.height(28f.sy(s)))
 
             Text(
-                text = "Forgot password",
+                text = stringResource(R.string.auth_forgot_password),
                 color = Color.White,
                 fontSize = 14f.fs(s),
                 modifier = Modifier.clickable(
@@ -96,10 +98,9 @@ fun LoginFieldsBox(
             // SIGN IN BUTTON (PrimaryButton)
             // ==========================
             PrimaryButton(
-                text = "Sign in",
+                text = stringResource(R.string.auth_sign_in),
                 modifier = Modifier.width(200f.sx(s)),
                 onClick = {
-                    println("🔥 SIGN IN CLICKED")
                     onSignIn()
                 }
             )

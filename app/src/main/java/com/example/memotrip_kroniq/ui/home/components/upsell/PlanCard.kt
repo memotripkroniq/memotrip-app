@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,9 +63,9 @@ fun PlanCard(
         // TITLE (SVG)
         if (useTitleImage) {
             when (title) {
-                "Free" -> TitleImage(R.drawable.package_upsell_free, "Free")
-                "Premium" -> TitleImage(R.drawable.package_upsell_premium, "Premium")
-                "KroniQ" -> TitleImage(R.drawable.package_upsell_kroniq, "KroniQ")
+                "Free" -> TitleImage(R.drawable.package_upsell_free, stringResource(R.string.upsell_plan_free))
+                "Premium" -> TitleImage(R.drawable.package_upsell_premium, stringResource(R.string.upsell_plan_premium))
+                "KroniQ" -> TitleImage(R.drawable.package_upsell_kroniq, stringResource(R.string.upsell_plan_kroniq))
                 else -> OutlinedTitleText(
                     text = title,
                     fontSize = 16.sp,

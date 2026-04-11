@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerTopShadow
 
 @Composable
@@ -47,7 +49,7 @@ fun KroniqCtaButton(
         // ❌ žádné spacedBy
     ) {
         Text(
-            text = "GET",
+            text = stringResource(R.string.upsell_button_get),
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
@@ -69,7 +71,7 @@ fun KroniqCtaButton(
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "50% OFF",
+                text = stringResource(R.string.upsell_badge_50_off),
                 color = Color(0xFF2E3037),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,

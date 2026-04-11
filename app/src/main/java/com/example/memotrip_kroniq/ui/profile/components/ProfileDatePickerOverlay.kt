@@ -40,10 +40,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import innerShadow
 import java.time.DayOfWeek
@@ -125,6 +128,8 @@ private fun ProfileDatePickerContent(
     val textPrimary = Color.White
     val dayTextDefault = Color(0xFF1B1E22)
     val monthTextInactive = Color(0xFF383A41)
+    val locale = Locale.getDefault()
+    val weekdayLabels = stringArrayResource(R.array.profile_date_picker_weekdays)
 
     Column {
         Box(
@@ -177,8 +182,8 @@ private fun ProfileDatePickerContent(
                             val selected = currentYm.monthValue == m
                             val label = YearMonth.of(2000, m)
                                 .month
-                                .getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                                .uppercase(Locale.ENGLISH)
+                                .getDisplayName(TextStyle.FULL, locale)
+                                .uppercase(locale)
 
                             Box(
                                 modifier = Modifier
@@ -232,7 +237,8 @@ private fun ProfileDatePickerContent(
                     onDayClick = { selectedDate = it },
                     selectedBg = selectedBg,
                     dayTextDefault = dayTextDefault,
-                    textPrimary = textPrimary
+                    textPrimary = textPrimary,
+                    weekdayLabels = weekdayLabels
                 )
             }
         }
@@ -243,7 +249,7 @@ private fun ProfileDatePickerContent(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             PrimaryButton(
-                text = "Next",
+                text = stringResource(R.string.common_next),
                 enabled = selectedDate != null,
                 modifier = Modifier.width(200.dp),
                 onClick = {
@@ -262,7 +268,8 @@ private fun SingleDateCalendarGrid(
     onDayClick: (LocalDate) -> Unit,
     selectedBg: Color,
     dayTextDefault: Color,
-    textPrimary: Color
+    textPrimary: Color,
+    weekdayLabels: Array<String>
 ) {
     val firstDay = yearMonth.atDay(1)
     val daysInMonth = yearMonth.lengthOfMonth()
@@ -280,7 +287,7 @@ private fun SingleDateCalendarGrid(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN").forEach {
+                weekdayLabels.forEach {
                     Box(
                         modifier = Modifier.width(cellWidth),
                         contentAlignment = Alignment.Center

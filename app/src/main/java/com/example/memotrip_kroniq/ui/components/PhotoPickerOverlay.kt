@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -92,7 +93,7 @@ private fun AddTripPhotoContent(
     ) {
 
         Text(
-            text = "Add your picture",
+            text = stringResource(R.string.photo_picker_title),
             color = Color.Companion.White,
             fontWeight = FontWeight.Companion.SemiBold,
             fontSize = 20.sp,
@@ -101,7 +102,7 @@ private fun AddTripPhotoContent(
 
         PhotoActionButton(
             icon = R.drawable.ic_camera,
-            text = "Take a photo",
+            text = stringResource(R.string.photo_picker_take_photo),
             onClick = onTakePhoto
         )
 
@@ -109,7 +110,7 @@ private fun AddTripPhotoContent(
 
         PhotoActionButton(
             icon = R.drawable.ic_gallery,
-            text = "Choose from your files",
+            text = stringResource(R.string.photo_picker_choose_from_files),
             onClick = onPickFromGallery
         )
 
@@ -117,7 +118,7 @@ private fun AddTripPhotoContent(
 
         PhotoActionButton(
             icon = R.drawable.ic_delete,
-            text = "Delete photo",
+            text = stringResource(R.string.photo_picker_delete_photo),
             enabled = canDelete,
             isDestructive = true,
             onClick = onDeletePhoto

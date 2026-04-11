@@ -28,12 +28,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.addtrip.DateRange
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
@@ -127,6 +130,7 @@ fun AddTripDatePickerContent(
     val dayTextDefault = Color(0xFF1B1E22)
     val dayTextMuted = dayTextDefault.copy(alpha = 0.75f)
     val monthTextInactive = Color(0xFF383A41)
+    val locale = Locale.getDefault()
 
 
     Column {
@@ -186,8 +190,8 @@ fun AddTripDatePickerContent(
                             val selected = currentYm.monthValue == m
                             val label = YearMonth.of(2000, m)
                                 .month
-                                .getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                                .uppercase(Locale.ENGLISH)
+                                .getDisplayName(TextStyle.FULL, locale)
+                                .uppercase(locale)
                             Box(
                                 modifier = Modifier
                                     .clickable(
@@ -276,7 +280,7 @@ fun AddTripDatePickerContent(
                 .align(Alignment.CenterHorizontally) // ⬅️ ZMĚNA #4: NE fillMaxWidth
         ) {
             PrimaryButton(
-                text = "Next",
+                text = stringResource(R.string.common_next),
                 enabled = startDate != null && endDate != null,
                 modifier = Modifier.width(200.dp),
                 onClick = {
@@ -315,6 +319,7 @@ private fun CalendarGrid(
 
     val cellHeight = 34.dp
     val pillRadius = cellHeight / 2
+    val weekdayLabels = stringArrayResource(R.array.profile_date_picker_weekdays)
 
     BoxWithConstraints {
         val cellWidth = maxWidth / 7
@@ -327,7 +332,7 @@ private fun CalendarGrid(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                listOf("MON","TUE","WED","THU","FRI","SAT","SUN").forEach {
+                weekdayLabels.forEach {
                     Box(
                         modifier = Modifier.width(cellWidth),
                         contentAlignment = Alignment.Center

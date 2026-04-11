@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -58,7 +59,7 @@ fun NotesCard(
 
     Column {
         Text(
-            text = "Notes",
+            text = stringResource(R.string.trip_detail_notes),
             color = Color.White,
             fontSize = 16f.fs(ui),
             fontWeight = FontWeight.Bold
@@ -98,7 +99,7 @@ fun NotesCard(
                     Spacer(Modifier.width(10.dp))
 
                     Text(
-                        text = "Add notes",
+                        text = stringResource(R.string.trip_detail_add_notes),
                         color = Color.White.copy(alpha = 0.75f),
                         fontSize = 16f.fs(ui),
                         fontWeight = FontWeight.Normal
@@ -221,7 +222,7 @@ private fun NoteItemRow(
                 decorationBox = { inner ->
                     if (editingText.text.isBlank()) {
                         Text(
-                            text = "Note",
+                            text = stringResource(R.string.trip_detail_note_placeholder),
                             color = Color.White.copy(alpha = 0.35f),
                             fontSize = 16f.fs(ui),
                             fontWeight = FontWeight.Normal,

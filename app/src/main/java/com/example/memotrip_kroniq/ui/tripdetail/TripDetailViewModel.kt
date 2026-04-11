@@ -171,7 +171,7 @@ class TripDetailViewModel(
     }
 
     private fun formatTripDate(start: String?, end: String?): String {
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
         val s = start.orEmpty().take(10).toFormattedTripDate(formatter)
         val e = end.orEmpty().take(10).toFormattedTripDate(formatter)
 

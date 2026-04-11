@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,7 +41,7 @@ fun CreateFirstTripCard(
         // 🔹 LEVÁ IKONA
         Icon(
             painter = painterResource(id = R.drawable.ic_add_first_trip), // 👈 tvoje ikona s pluskem
-            contentDescription = "Add trip",
+            contentDescription = stringResource(R.string.home_add_trip_content_description),
             tint = Color.Unspecified,
             modifier = Modifier
                 .size(44.dp)
@@ -50,7 +51,7 @@ fun CreateFirstTripCard(
 
         // 🔹 CENTROVANÝ TEXT
         Text(
-            text = "Create your first Trip !",
+            text = stringResource(R.string.home_create_first_trip),
             color = Color(0xFF759F67),
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,

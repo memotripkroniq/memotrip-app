@@ -14,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerTopRightShadow
 
 @Composable
@@ -45,9 +47,12 @@ fun PlansTable(
             title = "Free",
             useTitleImage = true,
             titleStrokeColor = figmaTitleStrokeColor,
-            lines = listOf("1 Trip / 3 Month", "30 Photos / Trip"),
+            lines = listOf(
+                stringResource(R.string.upsell_free_feature_1),
+                stringResource(R.string.upsell_free_feature_2)
+            ),
             price = null,
-            buttonText = "ACTIVE",
+            buttonText = stringResource(R.string.upsell_button_active),
             backgroundColor = Color(0xFF383A41),
             strokeColor = Color(0xFF747781),
             innerShadowEnabled = true,
@@ -60,9 +65,14 @@ fun PlansTable(
             title = "Premium",
             useTitleImage = true,
             titleStrokeColor = figmaTitleStrokeColor,
-            lines = listOf("3 Trips / Month", "100 Photos / Trip", "Short Trip video", "Ad-free"),
+            lines = listOf(
+                stringResource(R.string.upsell_premium_feature_1),
+                stringResource(R.string.upsell_premium_feature_2),
+                stringResource(R.string.upsell_premium_feature_3),
+                stringResource(R.string.upsell_premium_feature_4)
+            ),
             price = "5.99 €",
-            buttonText = "GET",
+            buttonText = stringResource(R.string.upsell_button_get),
             backgroundColor = Color(0xFF7BA065),
             strokeColor = Color(0xFF747781),
             innerShadowEnabled = true,
@@ -77,12 +87,12 @@ fun PlansTable(
             useTitleImage = true,
             titleStrokeColor = figmaTitleStrokeColor,
             lines = listOf(
-                "30 Trips / Year",
-                "Free Photo limit",
-                "Short Trip video",
-                "KroniQ \n Family members",
-                "Trip themes",
-                "Ad-free"
+                stringResource(R.string.upsell_kroniq_feature_1),
+                stringResource(R.string.upsell_kroniq_feature_2),
+                stringResource(R.string.upsell_kroniq_feature_3),
+                stringResource(R.string.upsell_kroniq_feature_4),
+                stringResource(R.string.upsell_kroniq_feature_5),
+                stringResource(R.string.upsell_kroniq_feature_6)
             ),
             price = "36 €",
             buttonText = "", // ✅ povinný parametr – nebude se používat

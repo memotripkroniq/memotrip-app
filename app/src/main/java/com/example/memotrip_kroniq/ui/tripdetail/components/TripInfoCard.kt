@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,7 +46,7 @@ fun TripInfoCard(
 
     Column {
         Text(
-            text = "Trip info",
+            text = stringResource(R.string.trip_detail_trip_info),
             color = Color.White,
             fontSize = 16f.fs(ui),
             fontWeight = FontWeight.Bold
@@ -69,16 +70,26 @@ fun TripInfoCard(
                         .fillMaxWidth()
                         .padding(end = 58.dp)
                 ) {
-                    Text("Date", color = Color.White, fontSize = 16f.fs(ui), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.trip_detail_date),
+                        color = Color.White,
+                        fontSize = 16f.fs(ui),
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(6f.sy(ui)))
                     Text(dateText, color = Color.White, fontSize = 16f.fs(ui))
 
                     Spacer(Modifier.height(14f.sy(ui)))
 
-                    Text("Location", color = Color.White, fontSize = 16f.fs(ui), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.trip_detail_location),
+                        color = Color.White,
+                        fontSize = 16f.fs(ui),
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(6f.sy(ui)))
                     Text(
-                        text = "From: $fromText",
+                        text = stringResource(R.string.trip_detail_from, fromText),
                         color = Color.White,
                         fontSize = 16f.fs(ui),
                         maxLines = 1,
@@ -86,7 +97,7 @@ fun TripInfoCard(
                     )
                     Spacer(Modifier.height(4f.sy(ui)))
                     Text(
-                        text = "To: $toText",
+                        text = stringResource(R.string.trip_detail_to, toText),
                         color = Color.White,
                         fontSize = 16f.fs(ui),
                         maxLines = 1,
@@ -95,7 +106,12 @@ fun TripInfoCard(
 
                     Spacer(Modifier.height(14f.sy(ui)))
 
-                    Text("Transport", color = Color.White, fontSize = 16f.fs(ui), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.trip_detail_transport),
+                        color = Color.White,
+                        fontSize = 16f.fs(ui),
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(6f.sy(ui)))
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -144,7 +160,7 @@ private fun ThemePreviewImage(resId: Int) {
     ) {
         Image(
             painter = painterResource(resId),
-            contentDescription = "Theme preview",
+            contentDescription = stringResource(R.string.trip_detail_theme_preview),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -166,7 +182,7 @@ private fun ThemePreviewPlaceholder() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Theme",
+                text = stringResource(R.string.trip_detail_theme),
                 color = Color.White.copy(alpha = 0.75f),
                 fontSize = 16f.fs(ui),
                 fontWeight = FontWeight.Bold

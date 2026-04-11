@@ -17,6 +17,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
@@ -78,6 +79,10 @@ fun SignUpScreen(
 
     var legalChecked by remember { mutableStateOf(false) }
     var legalError by remember { mutableStateOf<String?>(null) }
+    val localizedEmailError = authMessage(emailError)
+    val localizedPasswordError = authMessage(passwordError)
+    val localizedConfirmError = authMessage(confirmError)
+    val localizedLegalError = authMessage(legalError)
 
     // =====================================
     //  ERROR HANDLING
@@ -175,16 +180,16 @@ fun SignUpScreen(
                     email = email,
                     password = password,
                     confirmPassword = confirmPassword,
-                    emailError = emailError,
-                    passwordError = passwordError,
-                    confirmError = confirmError,
+                    emailError = localizedEmailError,
+                    passwordError = localizedPasswordError,
+                    confirmError = localizedConfirmError,
                     submitted = submitted,
                     legalChecked = legalChecked,
                     onLegalCheckedChange = {
                         legalChecked = it
                         if (submitted) legalError = null
                     },
-                    legalError = legalError,
+                    legalError = localizedLegalError,
                     onEmailChange = {
                         email = it
                         if (submitted) emailError = null
@@ -278,7 +283,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16f.sy(s)))
 
             Text(
-                text = "or sign up with",
+                text = stringResource(R.string.auth_signup_or_sign_up_with),
                 color = Color.White,
                 fontSize = 14f.fs(s)
             )

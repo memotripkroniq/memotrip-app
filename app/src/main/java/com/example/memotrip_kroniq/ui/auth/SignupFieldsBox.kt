@@ -11,8 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.components.MiniRadioButton
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
@@ -71,7 +73,7 @@ fun SignUpFieldsBox(
 
             // Email
             CustomInputBox(
-                label = "Email",
+                label = stringResource(R.string.auth_email),
                 value = email,
                 error = emailError,
                 showError = submitted,
@@ -80,7 +82,7 @@ fun SignUpFieldsBox(
 
             // Password
             CustomInputBox(
-                label = "Password",
+                label = stringResource(R.string.auth_password),
                 value = password,
                 isPassword = true,
                 error = passwordError,
@@ -90,7 +92,7 @@ fun SignUpFieldsBox(
 
             // Confirm Password
             CustomInputBox(
-                label = "Confirm Password",
+                label = stringResource(R.string.auth_confirm_password),
                 value = confirmPassword,
                 isPassword = true,
                 error = confirmError,
@@ -115,7 +117,7 @@ fun SignUpFieldsBox(
 
 
                 Text(
-                    text = "By signing up, you agree our\nLegal & Policies.",
+                    text = stringResource(R.string.auth_signup_legal_text),
                     color = Color(0xFFFFFFFF),
                     fontSize = 14f.fs(s),
                     textAlign = TextAlign.Center,
@@ -159,7 +161,7 @@ fun SignUpFieldsBox(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Sign up", fontSize = 16f.fs(s))
+                    Text(stringResource(R.string.auth_sign_up), fontSize = 16f.fs(s))
                 }
             }
         }

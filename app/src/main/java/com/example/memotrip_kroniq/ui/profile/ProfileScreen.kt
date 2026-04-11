@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -48,6 +49,7 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.utils.createImageFile
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.profile.components.ProfileDatePickerOverlay
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -163,7 +165,7 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             AppTopBar(
-                title = "Profile",
+                title = stringResource(R.string.profile_title),
                 showBack = true,
                 onBackClick = { navController?.popBackStack() },
                 onMenuClick = null
@@ -193,7 +195,7 @@ fun ProfileScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 ProfileSectionLabel(
-                    text = "Account type"
+                    text = stringResource(R.string.profile_account_type)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -202,6 +204,11 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     options = listOf("Free", "Premium", "KroniQ"),
                     selectedOption = accountType.value,
+                    optionLabels = mapOf(
+                        "Free" to stringResource(R.string.profile_account_type_free),
+                        "Premium" to stringResource(R.string.profile_account_type_premium),
+                        "KroniQ" to stringResource(R.string.profile_account_type_kroniq)
+                    ),
                     onOptionSelected = {},
                     selectedColor = Color(0xFF86A96F),
                     enabled = false
@@ -210,7 +217,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ProfileSectionLabel(
-                    text = "KroniQ role",
+                    text = stringResource(R.string.profile_kroniq_role),
                     showLock = true
                 )
 
@@ -220,6 +227,11 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     options = listOf("Admin", "Member", "Host"),
                     selectedOption = kroniqRole.value,
+                    optionLabels = mapOf(
+                        "Admin" to stringResource(R.string.profile_role_admin),
+                        "Member" to stringResource(R.string.profile_role_member),
+                        "Host" to stringResource(R.string.profile_role_host)
+                    ),
                     onOptionSelected = { kroniqRole.value = it },
                     selectedColor = Color(0xFF1686D9)
                 )
@@ -227,7 +239,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 ProfileSectionLabel(
-                    text = "Gender"
+                    text = stringResource(R.string.profile_gender)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -236,6 +248,10 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     options = listOf("Female", "Male"),
                     selectedOption = gender.value,
+                    optionLabels = mapOf(
+                        "Female" to stringResource(R.string.profile_gender_female),
+                        "Male" to stringResource(R.string.profile_gender_male)
+                    ),
                     onOptionSelected = {
                         gender.value = it
                         showGenderError.value = false
@@ -247,14 +263,14 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ProfileSectionLabel(
-                    text = "First name"
+                    text = stringResource(R.string.profile_first_name)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 ProfileInputField(
                     value = firstName.value,
-                    placeholder = "Add your name",
+                    placeholder = stringResource(R.string.profile_first_name_placeholder),
                     onValueChange = {
                         firstName.value = it
                         if (it.isNotBlank()) showFirstNameError.value = false
@@ -265,14 +281,14 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ProfileSectionLabel(
-                    text = "Last name"
+                    text = stringResource(R.string.profile_last_name)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 ProfileInputField(
                     value = lastName.value,
-                    placeholder = "Add your last name",
+                    placeholder = stringResource(R.string.profile_last_name_placeholder),
                     onValueChange = {
                         lastName.value = it
                         if (it.isNotBlank()) showLastNameError.value = false
@@ -283,14 +299,14 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ProfileSectionLabel(
-                    text = "E-mail"
+                    text = stringResource(R.string.profile_email)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 ProfileInputField(
                     value = email.value,
-                    placeholder = "Type your e-mail",
+                    placeholder = stringResource(R.string.profile_email_placeholder),
                     onValueChange = { email.value = it },
                     enabled = false
                 )
@@ -298,7 +314,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ProfileSectionLabel(
-                    text = "Date of birth"
+                    text = stringResource(R.string.profile_date_of_birth)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -320,7 +336,7 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     PrimaryButton(
-                        text = "Save",
+                        text = stringResource(R.string.profile_save),
                         modifier = Modifier.padding(horizontal = 52.dp),
                         onClick = {
                             val genderEmpty = gender.value.isBlank()

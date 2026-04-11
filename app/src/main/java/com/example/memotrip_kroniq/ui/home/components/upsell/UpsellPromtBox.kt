@@ -11,9 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memotrip_kroniq.R
 
 @Composable
 fun UpsellPromptBox() {
@@ -26,7 +28,7 @@ fun UpsellPromptBox() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "For more trips update Premium version !",
+            text = stringResource(R.string.upsell_prompt_more_trips),
             color = Color(0xFF79C46B),
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,

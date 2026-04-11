@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.R
@@ -67,7 +68,7 @@ fun HomeTabs(
     ) {
 
         HomeTabButton(
-            title = "Themes",
+            title = stringResource(R.string.home_tab_themes),
             selected = selected == HomeTab.THEMES,
             showLock = isThemesLocked,
             modifier = Modifier
@@ -88,7 +89,7 @@ fun HomeTabs(
         Spacer(modifier = Modifier.width(8.dp))
 
         HomeTabButton(
-            title = "Trip history",
+            title = stringResource(R.string.home_tab_trip_history),
             selected = selected == HomeTab.TRIP_HISTORY,
             showLock = false,
             modifier = Modifier

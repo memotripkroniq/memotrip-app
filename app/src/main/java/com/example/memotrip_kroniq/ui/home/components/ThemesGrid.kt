@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.*
 
@@ -27,7 +28,7 @@ fun ThemesGrid(
         ) {
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Summer",
+                title = stringResource(R.string.home_theme_summer),
                 imageRes = R.drawable.homescreen_theme_summer,
                 locked = locked,
                 onClick = {
@@ -38,7 +39,7 @@ fun ThemesGrid(
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Winter",
+                title = stringResource(R.string.home_theme_winter),
                 imageRes = R.drawable.homescreen_theme_winter,
                 locked = locked,
                 onClick = {
@@ -55,7 +56,7 @@ fun ThemesGrid(
         ) {
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Camping",
+                title = stringResource(R.string.home_theme_camping),
                 imageRes = R.drawable.homescreen_theme_camping,
                 locked = locked,
                 onClick = {
@@ -66,7 +67,7 @@ fun ThemesGrid(
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Cities",
+                title = stringResource(R.string.home_theme_cities),
                 imageRes = R.drawable.homescreen_theme_cities,
                 locked = locked,
                 onClick = {
@@ -83,7 +84,7 @@ fun ThemesGrid(
         ) {
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Nature",
+                title = stringResource(R.string.home_theme_nature),
                 imageRes = R.drawable.homescreen_theme_nature,
                 locked = locked,
                 onClick = {
@@ -94,7 +95,7 @@ fun ThemesGrid(
             )
             ThemeCard(
                 modifier = Modifier.weight(1f),
-                title = "Exotic",
+                title = stringResource(R.string.home_theme_exotic),
                 imageRes = R.drawable.homescreen_theme_exotic,
                 locked = locked,
                 onClick = {

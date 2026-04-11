@@ -19,10 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.navigation.Screen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
@@ -50,7 +52,7 @@ fun SettingsScreen(
             .background(ScreenBg)
     ) {
         AppTopBar(
-            title = "Settings",
+            title = stringResource(R.string.settings_title),
             showBack = true,
             onBackClick = { navController.popBackStack() },
             onMenuClick = null
@@ -65,73 +67,73 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SettingsArrowItem(
-                title = "Profile",
+                title = stringResource(R.string.settings_profile),
                 onClick = {
                     navController.navigate(Screen.Profile.route)
                 }
             )
 
             SettingsArrowItem(
-                title = "KroniQ 🔒",
+                title = stringResource(R.string.settings_kroniq_locked),
                 onClick = { /* TODO */ }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             SettingsArrowItem(
-                title = "Location",
+                title = stringResource(R.string.settings_location),
                 onClick = { /* TODO */ }
             )
 
             SettingsArrowItem(
-                title = "Language",
-                onClick = { /* TODO */ }
+                title = stringResource(R.string.settings_language),
+                onClick = { navController.navigate(Screen.Language.route) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            SectionTitle("Notifications")
+            SectionTitle(stringResource(R.string.settings_notifications))
 
             SettingsSwitchItem(
-                title = "Push notifications",
+                title = stringResource(R.string.settings_push_notifications),
                 checked = pushNotifications,
                 onCheckedChange = { pushNotifications = it }
             )
 
             SettingsSwitchItem(
-                title = "Email notifications",
+                title = stringResource(R.string.settings_email_notifications),
                 checked = emailNotifications,
                 onCheckedChange = { emailNotifications = it }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            SectionTitle("Supports")
+            SectionTitle(stringResource(R.string.settings_supports))
 
             SettingsArrowItem(
-                title = "Change password",
+                title = stringResource(R.string.settings_change_password),
                 onClick = { /* TODO */ }
             )
 
             SettingsArrowItem(
-                title = "Legal & Policies",
+                title = stringResource(R.string.settings_legal),
                 onClick = { /* TODO */ }
             )
 
             SettingsArrowItem(
-                title = "Help & Support",
+                title = stringResource(R.string.settings_help),
                 onClick = { /* TODO */ }
             )
 
             SettingsArrowItem(
-                title = "Rate us",
+                title = stringResource(R.string.settings_rate_us),
                 onClick = { /* TODO */ }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             LogoutButton(
-                text = "Log out",
+                text = stringResource(R.string.settings_log_out),
                 onClick = onLogoutClick
             )
 

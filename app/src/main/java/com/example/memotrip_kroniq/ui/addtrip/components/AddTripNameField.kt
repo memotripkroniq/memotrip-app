@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -133,7 +134,7 @@ fun AddTripNameField(
                     textFieldValue.text.isEmpty() -> {
                         // PLACEHOLDER (bez focusu)
                         Text(
-                            text = "Add Trip name",
+                            text = stringResource(R.string.add_trip_name_placeholder),
                             color = if (error)
                                 errorGreen
                             else

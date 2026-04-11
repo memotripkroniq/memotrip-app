@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +24,7 @@ import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.navigation.Screen
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
@@ -105,7 +107,7 @@ fun TripDetailScreen(
             topBar = {
                 AppTopBar(
                     modifier = Modifier, // případně .statusBarsPadding()
-                    title = uiState.tripName.ifBlank { "Trip detail" },
+                    title = uiState.tripName.ifBlank { stringResource(R.string.trip_detail_title_fallback) },
                     showBack = true,
                     centerTitle = false,
                     onBackClick = { onBack() },

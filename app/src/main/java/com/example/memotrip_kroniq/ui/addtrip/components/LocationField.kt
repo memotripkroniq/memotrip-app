@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,7 +66,13 @@ fun LocationField(
         ) {
 
             Text(
-                text = if (isEmpty) "Add ${label.lowercase()} destination" else value,
+                text = if (isEmpty) {
+                    when (label) {
+                        stringResource(R.string.add_trip_from) -> stringResource(R.string.add_trip_from_placeholder)
+                        stringResource(R.string.add_trip_to) -> stringResource(R.string.add_trip_to_placeholder)
+                        else -> value
+                    }
+                } else value,
                 color = when {
                     isEmpty && error -> errorGreen
                     isEmpty -> Color.Gray

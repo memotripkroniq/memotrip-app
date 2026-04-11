@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -58,7 +59,7 @@ fun BudgetCard(
 
     Column {
         Text(
-            text = "Budget",
+            text = stringResource(R.string.trip_detail_budget),
             color = Color.White,
             fontSize = 16f.fs(ui),
             fontWeight = FontWeight.Bold
@@ -78,7 +79,7 @@ fun BudgetCard(
             // Planned = levý sloupec (zabere půlku řádku)
             Box(modifier = Modifier.weight(1f)) {
                 BudgetInlineRow(
-                    label = "Planned:",
+                    label = stringResource(R.string.trip_detail_budget_planned),
                     value = plannedAmount,
                     isVisible = isVisible,
                     isEditing = (editingField == BudgetEditField.PLANNED),
@@ -98,7 +99,7 @@ fun BudgetCard(
             // Spent = pravý sloupec (zabere půlku řádku)
             Box(modifier = Modifier.weight(1f)) {
                 BudgetInlineRow(
-                    label = "Spent:",
+                    label = stringResource(R.string.trip_detail_budget_spent),
                     value = spentAmount,
                     isVisible = isVisible,
                     isEditing = (editingField == BudgetEditField.SPENT),
@@ -226,7 +227,7 @@ private fun BudgetInlineRow(
                 decorationBox = { inner ->
                     if (editingText.text.isBlank()) {
                         Text(
-                            text = "Amount",
+                            text = stringResource(R.string.trip_detail_budget_amount_placeholder),
                             color = Color.White.copy(alpha = 0.35f),
                             fontSize = 16f.fs(ui),
                             fontWeight = FontWeight.SemiBold
@@ -239,7 +240,7 @@ private fun BudgetInlineRow(
             val isEmpty = value.isBlank()
 
             Text(
-                text = if (isEmpty) "Amount" else value,
+                text = if (isEmpty) stringResource(R.string.trip_detail_budget_amount_placeholder) else value,
                 color = if (isEmpty) Color.White.copy(alpha = 0.35f) else Color.White,
                 fontSize = 16f.fs(ui),
                 fontWeight = FontWeight.SemiBold

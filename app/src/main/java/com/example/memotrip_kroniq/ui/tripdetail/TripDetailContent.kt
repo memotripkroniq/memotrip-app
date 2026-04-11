@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.res.stringResource
 import com.example.memotrip_kroniq.ui.addtrip.components.ThemeSelector
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.sx
@@ -315,7 +316,7 @@ fun TripDetailContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 PrimaryButton(
-                    text = "Delete trip",
+                    text = stringResource(R.string.trip_detail_delete_trip),
                     onClick = onDeleteTripClick,
                     modifier = Modifier
                         .width(200f.sx(s))

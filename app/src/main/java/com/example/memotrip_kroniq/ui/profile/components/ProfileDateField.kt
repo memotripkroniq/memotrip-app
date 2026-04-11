@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
@@ -54,7 +55,7 @@ fun ProfileDateField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = if (isEmpty) "DD/MM/YYYY" else value,
+            text = if (isEmpty) stringResource(R.string.profile_date_of_birth_placeholder) else value,
             color = when {
                 error -> errorGreen
                 isEmpty -> Color.Gray
@@ -66,7 +67,7 @@ fun ProfileDateField(
 
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_right),
-            contentDescription = "Select date of birth",
+            contentDescription = stringResource(R.string.profile_select_date_of_birth),
             tint = Color(0xFF759F67)
         )
     }

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -38,6 +39,7 @@ import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
 import com.example.memotrip_kroniq.data.trips.TripsRepository
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.navigation.LOCATION_LAT_KEY
 import com.example.memotrip_kroniq.navigation.LOCATION_LON_KEY
 import com.example.memotrip_kroniq.navigation.LOCATION_NAME_KEY
@@ -174,7 +176,7 @@ fun EditTripScreen(
             topBar = {
                 AppTopBar(
                     modifier = Modifier.statusBarsPadding(),
-                    title = "Edit Trip",
+                    title = stringResource(R.string.edit_trip_title),
                     showBack = true,
                     onBackClick = { navController.popBackStack() }
                 )
@@ -196,7 +198,11 @@ fun EditTripScreen(
                         .padding(innerPadding)
                         .padding(horizontal = 16f.sx(s)),
                     uiState = uiState.formState,
-                    submitButtonText = if (uiState.isSaving) "Saving" else "Save",
+                    submitButtonText = if (uiState.isSaving) {
+                        stringResource(R.string.edit_trip_saving)
+                    } else {
+                        stringResource(R.string.edit_trip_save)
+                    },
                     isSubmitEnabled = !uiState.isSaving && !uiState.formState.isGeneratingMap,
                     showCoverPhotoPicker = false,
                     showThemeSelector = false,

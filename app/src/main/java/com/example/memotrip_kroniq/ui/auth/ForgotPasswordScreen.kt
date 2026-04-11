@@ -13,9 +13,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
@@ -120,7 +122,7 @@ fun ForgotPasswordScreen(
                     ) {
 
                         Text(
-                            text = "Forgot password",
+                            text = stringResource(R.string.auth_forgot_password),
                             fontSize = 32f.fs(s),
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -129,7 +131,7 @@ fun ForgotPasswordScreen(
                         Spacer(Modifier.height(35f.sy(s)))
 
                         Text(
-                            text = "Recovery your e-mail password",
+                            text = stringResource(R.string.auth_forgot_password_subtitle),
                             fontSize = 16f.fs(s),
                             color = Color.White,
                             textAlign = TextAlign.Center
@@ -138,7 +140,7 @@ fun ForgotPasswordScreen(
                         Spacer(Modifier.height(82f.sy(s)))
 
                         Text(
-                            text = "Add e-mail",
+                            text = stringResource(R.string.auth_add_email),
                             fontSize = 16f.fs(s),
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White,
@@ -148,7 +150,7 @@ fun ForgotPasswordScreen(
                         )
 
                         CustomInputBox(
-                            label = "Enter your e-mail",
+                            label = stringResource(R.string.auth_enter_your_email),
                             value = email,
                             onValueChange = { email = it },
                             isPassword = false,
@@ -160,7 +162,7 @@ fun ForgotPasswordScreen(
 
                         // ✅ BUTTON JE TEĎ VE STEJNÉM CONTENTU
                         PrimaryButton(
-                            text = "Continue",
+                            text = stringResource(R.string.auth_continue),
                             modifier = Modifier
                                 .width(200f.sx(s))   // 🎯 Figma: 200 Fill
                                 .height(40f.sy(s)),  // 🎯 Figma: 40 Hug
@@ -176,7 +178,7 @@ fun ForgotPasswordScreen(
 
                         if (state is ForgotPasswordState.Success && submitted) {
                             Text(
-                                text = "If the email address is correct,\nwe’ve sent you a password reset link",
+                                text = stringResource(R.string.auth_forgot_password_success),
                                 fontSize = 16f.fs(s),
                                 color = Color(0xFF759F67),
                                 textAlign = TextAlign.Center

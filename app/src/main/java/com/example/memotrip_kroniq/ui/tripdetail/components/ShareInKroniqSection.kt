@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,7 +43,7 @@ fun ShareInKroniqSection(
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Text(
-                text = "KroniQ",
+                text = stringResource(R.string.trip_detail_kroniq_title),
                 color = Color.White,
                 fontSize = 16f.fs(s),
                 fontWeight = FontWeight.SemiBold
@@ -94,7 +95,7 @@ fun ShareInKroniqSection(
                         Spacer(Modifier.width(10.dp))
 
                         Text(
-                            text = "Share in KroniQ",
+                            text = stringResource(R.string.trip_detail_share_in_kroniq),
                             color = Color.White,
                             fontSize = 16f.fs(s),
                             fontWeight = FontWeight.Normal,
@@ -126,7 +127,7 @@ fun ShareInKroniqSection(
                 Spacer(Modifier.height(4f.sy(s)))
 
                 Text(
-                    text = "Choose a theme to make this trip visible in KroniQ",
+                    text = stringResource(R.string.trip_detail_share_hint),
                     color = Color(0xFF759F67),
                     fontSize = 14f.fs(s),
                     fontWeight = FontWeight.Normal

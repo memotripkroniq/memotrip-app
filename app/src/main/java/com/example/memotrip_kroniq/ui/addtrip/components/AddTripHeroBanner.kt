@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -69,7 +70,7 @@ fun AddTripHeroBanner(
 
             Image(
                 painter = painter,
-                contentDescription = "Trip map",
+                contentDescription = stringResource(R.string.add_trip_trip_map),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -88,7 +89,11 @@ fun AddTripHeroBanner(
                             .border(1.5.dp, borderColor, RoundedCornerShape(10.dp))
                     ) {
                         PrimaryAiButton(
-                            text = if (isGenerating) "Generating" else "Generate",
+                            text = if (isGenerating) {
+                                stringResource(R.string.add_trip_generating)
+                            } else {
+                                stringResource(R.string.add_trip_generate)
+                            },
                             isLoading = isGenerating,
                             onClick = {
                                 if (!isGenerating) {
@@ -130,7 +135,7 @@ fun AddTripHeroBanner(
                 } else {
                     Image(
                         painter = painterResource(R.drawable.ic_ai_refresh),
-                        contentDescription = "Regenerate map",
+                        contentDescription = stringResource(R.string.add_trip_regenerate_map),
                         modifier = Modifier.size(35.dp)
                     )
                 }

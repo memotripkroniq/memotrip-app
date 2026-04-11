@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,7 +25,7 @@ import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import com.example.memotrip_kroniq.ui.addtrip.components.DateField
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -37,11 +38,12 @@ fun DateField(
 ) {
     val text = when {
         startDate != null && endDate != null -> {
-            val start = startDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
-            val end = endDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
+            val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.getDefault())
+            val start = startDate.format(formatter)
+            val end = endDate.format(formatter)
             "$start – $end"
         }
-        else -> "Add trip dates"
+        else -> stringResource(R.string.add_trip_dates_placeholder)
     }
 
     val errorGreen = Color(0xFF759F67)
@@ -54,7 +56,7 @@ fun DateField(
 
         // 🔹 HEADER
         Text(
-            text = "Date of trip",
+            text = stringResource(R.string.add_trip_date_of_trip),
             color = Color.White,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -95,7 +97,7 @@ fun DateField(
 
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = "Select date",
+                contentDescription = stringResource(R.string.add_trip_select_date),
                 tint = Color(0xFF759F67)
             )
         }

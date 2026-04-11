@@ -34,6 +34,7 @@ fun ProfileSegmentSelector(
     onOptionSelected: (String) -> Unit,
     selectedColor: Color,
     modifier: Modifier = Modifier,
+    optionLabels: Map<String, String> = emptyMap(),
     enabled: Boolean = true,
     error: Boolean = false
 ) {
@@ -60,7 +61,7 @@ fun ProfileSegmentSelector(
         ) {
             options.forEachIndexed { index, option ->
                 ProfileSegmentButton(
-                    title = option,
+                    title = optionLabels[option] ?: option,
                     selected = selectedOption == option,
                     selectedColor = selectedColor,
                     enabled = enabled,

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,7 +61,7 @@ fun AppTopBar(
             if (showBack && onBackClick != null) {
                 Image(
                     painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.common_back),
                     modifier = Modifier
                         .size(22f.sx(s))
                         .clickable(
@@ -94,7 +95,7 @@ fun AppTopBar(
             if (onMenuClick != null) {
                 Image(
                     painter = painterResource(R.drawable.homescreen_ic_navigation_menu),
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.common_menu),
                     modifier = Modifier
                         .size(28f.sx(s))
                         .clickable(

@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -87,6 +88,8 @@ fun LoginScreen(
     var passwordError by remember { mutableStateOf<String?>(null) }
 
     var submitted by remember { mutableStateOf(false) }
+    val localizedEmailError = authMessage(emailError)
+    val localizedPasswordError = authMessage(passwordError)
 
     // =========================
     // BE ERROR HANDLING  ✅ OPRAVA
@@ -208,8 +211,8 @@ fun LoginScreen(
                     LoginFieldsBox(
                         email = email,
                         password = password,
-                        emailError = if (submitted) emailError else null,
-                        passwordError = if (submitted) passwordError else null,
+                        emailError = if (submitted) localizedEmailError else null,
+                        passwordError = if (submitted) localizedPasswordError else null,
                         submitted = submitted,
                         onEmailChange = {
                             email = it
@@ -269,7 +272,11 @@ fun LoginScreen(
             ) {
 
                 Spacer(modifier = Modifier.height(30f.sy(s)))
-                Text("or sign in with", color = Color.White, fontSize = 14f.fs(s))
+                Text(
+                    stringResource(R.string.auth_login_or_sign_in_with),
+                    color = Color.White,
+                    fontSize = 14f.fs(s)
+                )
                 Spacer(modifier = Modifier.height(15f.sy(s)))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(20f.sx(s))) {
@@ -292,7 +299,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(35f.sy(s)))
 
                 PrimaryButton(
-                    text = "Create Account",
+                    text = stringResource(R.string.auth_create_account),
                     modifier = Modifier
                         .width(200f.sx(s)),
                     onClick = onCreateAccount

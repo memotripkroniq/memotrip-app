@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,7 +45,7 @@ fun TripMembersSection(
         modifier = Modifier
     ) {
         Text(
-            text = "Trip members",
+            text = stringResource(R.string.trip_detail_trip_members),
             color = Color.White,
             fontSize = 16f.fs(s),
             fontWeight = FontWeight.Bold

@@ -12,10 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
@@ -173,7 +175,7 @@ fun AddTripScreen(
             topBar = {
                 AppTopBar(
                     modifier = Modifier.statusBarsPadding(),
-                    title = "Add Trip",
+                    title = stringResource(R.string.add_trip_title),
                     showBack = uiState.flowState == AddTripFlowState.IDLE,
                     onBackClick = { navController.popBackStack() }
                 )
@@ -189,7 +191,7 @@ fun AddTripScreen(
                             .padding(innerPadding)
                             .padding(horizontal = 16f.sx(s)),
                         uiState = uiState,
-                        submitButtonText = "Create",
+                        submitButtonText = stringResource(R.string.add_trip_create),
                         isSubmitEnabled = !uiState.isGeneratingMap,
                         showCoverPhotoPicker = true,
                         showThemeSelector = true,

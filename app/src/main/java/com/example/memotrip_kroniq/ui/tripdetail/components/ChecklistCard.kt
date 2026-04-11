@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -63,7 +64,7 @@ fun ChecklistCard(
 
     Column {
         Text(
-            text = "Checklist",
+            text = stringResource(R.string.trip_detail_checklist),
             color = Color.White,
             fontSize = 16f.fs(ui),
             fontWeight = FontWeight.Bold
@@ -95,7 +96,7 @@ fun ChecklistCard(
                     Spacer(Modifier.width(10.dp))
 
                     Text(
-                        text = "Add notes",
+                        text = stringResource(R.string.trip_detail_add_checklist_item),
                         color = Color.White.copy(alpha = 0.75f),
                         fontSize = 16f.fs(ui),
                         fontWeight = FontWeight.Normal
@@ -245,7 +246,7 @@ private fun ChecklistItemRow(
                 decorationBox = { innerTextField ->
                     if (editingText.text.isBlank()) {
                         Text(
-                            text = "List item",
+                            text = stringResource(R.string.trip_detail_list_item_placeholder),
                             color = Color.White.copy(alpha = 0.35f),
                             fontSize = 16f.fs(ui),
                             fontWeight = FontWeight.Normal,
