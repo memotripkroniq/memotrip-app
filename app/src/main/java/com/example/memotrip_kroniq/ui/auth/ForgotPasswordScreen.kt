@@ -85,10 +85,6 @@ fun ForgotPasswordScreen(
     ) {
 
         Column(modifier = Modifier.fillMaxSize()) {
-
-            // ⬆️ stejné odsazení jako HomeScreen
-            Spacer(modifier = Modifier.height(60f.sy(s)))
-
             AppTopBar(
                 title = "",
                 showBack = true,
