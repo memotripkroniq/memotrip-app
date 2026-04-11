@@ -52,6 +52,7 @@ import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSuccessScreen
 import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
+import com.example.memotrip_kroniq.ui.kroniq.KroniqScreen
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
 import com.example.memotrip_kroniq.ui.settings.SettingsScreen
@@ -87,6 +88,7 @@ sealed class Screen(val route: String) {
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
     object Settings : Screen("settings")
+    object KroniQ : Screen("kroniq")
     object Language : Screen("language")
     object Profile : Screen("profile")
     object TripDetail : Screen("trip_detail/{tripId}") {
@@ -441,6 +443,16 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = Screen.KroniQ.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            KroniqScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 

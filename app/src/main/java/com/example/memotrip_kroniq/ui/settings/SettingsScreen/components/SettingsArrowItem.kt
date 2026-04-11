@@ -12,9 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
@@ -28,7 +30,8 @@ fun SettingsArrowItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    trailingIconRes: Int? = null
+    trailingIconRes: Int? = null,
+    leadingImageModel: Any? = null
 ) {
     val s = LocalUiScaler.current
 
@@ -43,9 +46,22 @@ fun SettingsArrowItem(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClick() }
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (leadingImageModel != null) {
+            AsyncImage(
+                model = leadingImageModel,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(39.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+        }
+
         Text(
             text = title,
             color = if (enabled) Color.White else Color.White.copy(alpha = 0.7f),

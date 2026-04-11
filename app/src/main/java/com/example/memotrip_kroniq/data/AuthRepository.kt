@@ -165,5 +165,33 @@ class AuthRepository(
     suspend fun deleteProfilePhoto(): Boolean =
         api.deleteProfilePhoto().success
 
+    suspend fun uploadKroniqPhoto(
+        contentResolver: ContentResolver,
+        uri: Uri
+    ): String {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+
+        val mime = contentResolver.getType(uri) ?: "image/jpeg"
+        val ext = when (mime.lowercase()) {
+            "image/png" -> "png"
+            "image/webp" -> "webp"
+            else -> "jpg"
+        }
+
+        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val part = MultipartBody.Part.createFormData(
+            name = "file",
+            filename = "kroniq.$ext",
+            body = requestBody
+        )
+
+        return api.uploadKroniqPhoto(part).kroniqImageUrl
+            ?: throw IllegalStateException("KroniQ photo upload returned null kroniqImageUrl")
+    }
+
+    suspend fun deleteKroniqPhoto(): Boolean =
+        api.deleteKroniqPhoto().success
+
 
 }

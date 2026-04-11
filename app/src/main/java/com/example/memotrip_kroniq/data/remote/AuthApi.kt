@@ -11,7 +11,9 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.DeleteProfileImageResponse
+import com.example.memotrip_kroniq.data.remote.dto.DeleteKroniqImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.ProfileImageResponse
+import com.example.memotrip_kroniq.data.remote.dto.KroniqImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
 import okhttp3.MultipartBody
 import retrofit2.http.PATCH
@@ -57,6 +59,15 @@ interface AuthApi {
 
     @DELETE("auth/me/photo")
     suspend fun deleteProfilePhoto(): DeleteProfileImageResponse
+
+    @Multipart
+    @POST("kroniq/me/photo")
+    suspend fun uploadKroniqPhoto(
+        @Part file: MultipartBody.Part
+    ): KroniqImageResponse
+
+    @DELETE("kroniq/me/photo")
+    suspend fun deleteKroniqPhoto(): DeleteKroniqImageResponse
 
     @POST("/auth/forgot-password")
     suspend fun forgotPassword(@Body body: Map<String, String>)

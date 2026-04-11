@@ -1,0 +1,11 @@
+<resources>
+    <string name="kroniq_title">KroniQ</string>
+    <string name="kroniq_add_member">Add member</string>
+    <string name="kroniq_tab_timeline">Timeline</string>
+    <string name="kroniq_tab_themes">Themes</string>
+    <string name="kroniq_tab_kroniq">KroniQ</string>
+    <string name="kroniq_brand_label">MemoTrip\nKroniQ</string>
+    <string name="kroniq_member">Member</string>
+    <string name="kroniq_guest">Guest</string>
+    <string name="kroniq_admin">Admin</string>
+</resources>

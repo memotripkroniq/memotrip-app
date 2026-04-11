@@ -9,6 +9,7 @@ data class UserMe(
     val gender: String? = null,
     val dateOfBirth: String? = null,
     val profileImageUrl: String? = null,
+    val kroniqImageUrl: String? = null,
     val hasPassword: Boolean = true,
     val isPremium: Boolean,
     val isKroniq: Boolean
