@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ fun AppTopBar(
     modifier: Modifier = Modifier,
     title: String,
     showBack: Boolean,
+    centerTitle: Boolean = true,
     onBackClick: (() -> Unit)? = null,
     onMenuClick: (() -> Unit)? = null
 ) {
@@ -69,14 +71,21 @@ fun AppTopBar(
             }
         }
 
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 24f.fs(s),
-            fontWeight = FontWeight.SemiBold,
+        Box(
             modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
+            contentAlignment = if (centerTitle) Alignment.Center else Alignment.CenterStart
+        ) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 24f.fs(s),
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = if (centerTitle) TextAlign.Center else TextAlign.Start
+            )
+        }
 
         Box(
             modifier = Modifier.width(sideSlotWidth),

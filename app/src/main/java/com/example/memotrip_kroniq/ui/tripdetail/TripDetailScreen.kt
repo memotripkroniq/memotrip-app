@@ -107,7 +107,13 @@ fun TripDetailScreen(
                     modifier = Modifier, // případně .statusBarsPadding()
                     title = uiState.tripName.ifBlank { "Trip detail" },
                     showBack = true,
-                    onBackClick = { onBack() }
+                    centerTitle = false,
+                    onBackClick = { onBack() },
+                    onMenuClick = {
+                        navController.navigate(Screen.Settings.route) {
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
         ) { innerPadding ->

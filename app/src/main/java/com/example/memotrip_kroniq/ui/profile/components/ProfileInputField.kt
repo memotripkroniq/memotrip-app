@@ -25,7 +25,8 @@ fun ProfileInputField(
     placeholder: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    error: Boolean = false
+    error: Boolean = false,
+    enabled: Boolean = true
 ) {
     var hasFocus by remember { mutableStateOf(false) }
 
@@ -69,6 +70,7 @@ fun ProfileInputField(
         BasicTextField(
             value = textFieldValue,
             onValueChange = {
+                if (!enabled) return@BasicTextField
                 textFieldValue = it
                 onValueChange(it.text)
             },
@@ -80,10 +82,10 @@ fun ProfileInputField(
             cursorBrush = SolidColor(Color.White),
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged { hasFocus = it.isFocused },
+                .onFocusChanged { hasFocus = enabled && it.isFocused },
             decorationBox = { innerTextField ->
                 when {
-                    hasFocus -> {
+                    hasFocus && enabled -> {
                         innerTextField()
                     }
 

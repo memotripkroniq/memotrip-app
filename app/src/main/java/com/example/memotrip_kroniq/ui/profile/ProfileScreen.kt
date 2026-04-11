@@ -7,6 +7,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -76,6 +79,7 @@ fun ProfileScreen(
     ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> }
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     val photoUri = remember { mutableStateOf<Uri?>(null) }
     val profileImageUrl = remember(initialProfileImageUrl) { mutableStateOf(initialProfileImageUrl) }
@@ -144,202 +148,214 @@ fun ProfileScreen(
             }
         }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                focusManager.clearFocus()
+            }
     ) {
-        AppTopBar(
-            title = "Profile",
-            showBack = true,
-            onBackClick = { navController?.popBackStack() },
-            onMenuClick = null
-        )
-
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileHeaderSection(
-                photoModel = photoUri.value ?: profileImageUrl.value.takeIf { it.isNotBlank() },
-                name = name.value,
-                onPhotoClick = { showPhotoActionSheet = true },
-                onNameChange = { name.value = it }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            ProfileSectionLabel(
-                text = "Account type"
+            AppTopBar(
+                title = "Profile",
+                showBack = true,
+                onBackClick = { navController?.popBackStack() },
+                onMenuClick = null
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileSegmentSelector(
-                modifier = Modifier.fillMaxWidth(),
-                options = listOf("Free", "Premium", "KroniQ"),
-                selectedOption = accountType.value,
-                onOptionSelected = { accountType.value = it },
-                selectedColor = Color(0xFF86A96F)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileSectionLabel(
-                text = "KroniQ role",
-                showLock = true
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileSegmentSelector(
-                modifier = Modifier.fillMaxWidth(),
-                options = listOf("Admin", "Member", "Host"),
-                selectedOption = kroniqRole.value,
-                onOptionSelected = { kroniqRole.value = it },
-                selectedColor = Color(0xFF1686D9)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            ProfileSectionLabel(
-                text = "Gender"
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileSegmentSelector(
-                modifier = Modifier.fillMaxWidth(),
-                options = listOf("Female", "Male"),
-                selectedOption = gender.value,
-                onOptionSelected = {
-                    gender.value = it
-                    showGenderError.value = false
-                },
-                selectedColor = Color(0xFF1686D9),
-                error = showGenderError.value
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileSectionLabel(
-                text = "First name"
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileInputField(
-                value = firstName.value,
-                placeholder = "Add your name",
-                onValueChange = {
-                    firstName.value = it
-                    if (it.isNotBlank()) showFirstNameError.value = false
-                },
-                error = showFirstNameError.value
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileSectionLabel(
-                text = "Last name"
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileInputField(
-                value = lastName.value,
-                placeholder = "Add your last name",
-                onValueChange = {
-                    lastName.value = it
-                    if (it.isNotBlank()) showLastNameError.value = false
-                },
-                error = showLastNameError.value
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileSectionLabel(
-                text = "E-mail"
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileInputField(
-                value = email.value,
-                placeholder = "Type your e-mail",
-                onValueChange = { email.value = it }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ProfileSectionLabel(
-                text = "Date of birth"
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ProfileDateField(
-                value = dateOfBirth.value,
-                onClick = {
-                    showDatePicker = true
-                },
-                error = showDateOfBirthError.value
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                contentAlignment = Alignment.Center
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
             ) {
-                PrimaryButton(
-                    text = "Save",
-                    modifier = Modifier.padding(horizontal = 52.dp),
-                    onClick = {
-                        val genderEmpty = gender.value.isBlank()
-                        val firstNameEmpty = firstName.value.isBlank()
-                        val lastNameEmpty = lastName.value.isBlank()
-                        val dateOfBirthEmpty = dateOfBirth.value.isBlank()
+                Spacer(modifier = Modifier.height(12.dp))
 
-                        showGenderError.value = genderEmpty
-                        showFirstNameError.value = firstNameEmpty
-                        showLastNameError.value = lastNameEmpty
-                        showDateOfBirthError.value = dateOfBirthEmpty
-
-                        val hasError =
-                            genderEmpty ||
-                                    firstNameEmpty ||
-                                    lastNameEmpty ||
-                                    dateOfBirthEmpty
-
-                        if (!hasError) {
-                            onSaveClick(
-                                photoUri.value,
-                                isPhotoRemoved,
-                                name.value,
-                                accountType.value,
-                                kroniqRole.value,
-                                gender.value,
-                                firstName.value,
-                                lastName.value,
-                                email.value,
-                                dateOfBirth.value
-                            )
-                        }
-                    }
+                ProfileHeaderSection(
+                    photoModel = photoUri.value ?: profileImageUrl.value.takeIf { it.isNotBlank() },
+                    name = name.value,
+                    onPhotoClick = { showPhotoActionSheet = true },
+                    onNameChange = { name.value = it }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                ProfileSectionLabel(
+                    text = "Account type"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileSegmentSelector(
+                    modifier = Modifier.fillMaxWidth(),
+                    options = listOf("Free", "Premium", "KroniQ"),
+                    selectedOption = accountType.value,
+                    onOptionSelected = {},
+                    selectedColor = Color(0xFF86A96F),
+                    enabled = false
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ProfileSectionLabel(
+                    text = "KroniQ role",
+                    showLock = true
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileSegmentSelector(
+                    modifier = Modifier.fillMaxWidth(),
+                    options = listOf("Admin", "Member", "Host"),
+                    selectedOption = kroniqRole.value,
+                    onOptionSelected = { kroniqRole.value = it },
+                    selectedColor = Color(0xFF1686D9)
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                ProfileSectionLabel(
+                    text = "Gender"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileSegmentSelector(
+                    modifier = Modifier.fillMaxWidth(),
+                    options = listOf("Female", "Male"),
+                    selectedOption = gender.value,
+                    onOptionSelected = {
+                        gender.value = it
+                        showGenderError.value = false
+                    },
+                    selectedColor = Color(0xFF1686D9),
+                    error = showGenderError.value
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ProfileSectionLabel(
+                    text = "First name"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileInputField(
+                    value = firstName.value,
+                    placeholder = "Add your name",
+                    onValueChange = {
+                        firstName.value = it
+                        if (it.isNotBlank()) showFirstNameError.value = false
+                    },
+                    error = showFirstNameError.value
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ProfileSectionLabel(
+                    text = "Last name"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileInputField(
+                    value = lastName.value,
+                    placeholder = "Add your last name",
+                    onValueChange = {
+                        lastName.value = it
+                        if (it.isNotBlank()) showLastNameError.value = false
+                    },
+                    error = showLastNameError.value
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ProfileSectionLabel(
+                    text = "E-mail"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileInputField(
+                    value = email.value,
+                    placeholder = "Type your e-mail",
+                    onValueChange = { email.value = it },
+                    enabled = false
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ProfileSectionLabel(
+                    text = "Date of birth"
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                ProfileDateField(
+                    value = dateOfBirth.value,
+                    onClick = {
+                        showDatePicker = true
+                    },
+                    error = showDateOfBirthError.value
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PrimaryButton(
+                        text = "Save",
+                        modifier = Modifier.padding(horizontal = 52.dp),
+                        onClick = {
+                            val genderEmpty = gender.value.isBlank()
+                            val firstNameEmpty = firstName.value.isBlank()
+                            val lastNameEmpty = lastName.value.isBlank()
+                            val dateOfBirthEmpty = dateOfBirth.value.isBlank()
+
+                            showGenderError.value = genderEmpty
+                            showFirstNameError.value = firstNameEmpty
+                            showLastNameError.value = lastNameEmpty
+                            showDateOfBirthError.value = dateOfBirthEmpty
+
+                            val hasError =
+                                genderEmpty ||
+                                        firstNameEmpty ||
+                                        lastNameEmpty ||
+                                        dateOfBirthEmpty
+
+                            if (!hasError) {
+                                onSaveClick(
+                                    photoUri.value,
+                                    isPhotoRemoved,
+                                    name.value,
+                                    accountType.value,
+                                    kroniqRole.value,
+                                    gender.value,
+                                    firstName.value,
+                                    lastName.value,
+                                    email.value,
+                                    dateOfBirth.value
+                                )
+                            }
+                        }
+                    )
+                }
             }
         }
     }

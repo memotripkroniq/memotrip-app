@@ -121,6 +121,7 @@ fun AddTripNameField(
             cursorBrush = SolidColor(Color.White),
             modifier = Modifier
                 .weight(1f)
+                .padding(start = 4.dp)
                 .onFocusChanged { hasFocus = it.isFocused }, // 🔴 CHANGE 5
             decorationBox = { innerTextField ->
                 when {

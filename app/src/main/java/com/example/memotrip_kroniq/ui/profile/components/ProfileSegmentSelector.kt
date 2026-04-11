@@ -45,40 +45,33 @@ fun ProfileSegmentSelector(
         modifier = modifier
             .fillMaxWidth()
             .height(45f.sy(s))
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFF383A41))
+            .border(
+                width = 1.5.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .padding(4.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(
-                    width = 1.5.dp,
-                    color = borderColor,
-                    shape = RoundedCornerShape(10.dp)
-                )
-                .padding(4.dp)
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF383A41), RoundedCornerShape(10.dp))
-                    .clip(RoundedCornerShape(10.dp))
-                    .padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                options.forEachIndexed { index, option ->
-                    ProfileSegmentButton(
-                        title = option,
-                        selected = selectedOption == option,
-                        selectedColor = selectedColor,
-                        enabled = enabled,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp)),
-                        onClick = { onOptionSelected(option) }
-                    )
+            options.forEachIndexed { index, option ->
+                ProfileSegmentButton(
+                    title = option,
+                    selected = selectedOption == option,
+                    selectedColor = selectedColor,
+                    enabled = enabled,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp)),
+                    onClick = { onOptionSelected(option) }
+                )
 
-                    if (index != options.lastIndex) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
+                if (index != options.lastIndex) {
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
             }
         }
