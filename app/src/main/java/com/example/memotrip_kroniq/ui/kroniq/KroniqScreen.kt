@@ -4,6 +4,7 @@ import PreviewUiScaler
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,6 +51,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,6 +61,7 @@ import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
+import com.example.memotrip_kroniq.data.remote.dto.KroniqMemberDto
 import com.example.memotrip_kroniq.ui.components.PhotoPickerOverlay
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
@@ -84,7 +89,11 @@ private data class KroniqNode(
 
 @Composable
 fun KroniqScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    reloadToken: Int = 0,
+    onAddMemberClick: () -> Unit = {},
+    onAddGuestClick: () -> Unit = {},
+    onEditMemberClick: (KroniqMemberDto) -> Unit = {}
 ) {
     val context = LocalContext.current
     val contentResolver = context.contentResolver
@@ -99,13 +108,16 @@ fun KroniqScreen(
     var selectedTab by remember { mutableStateOf(KroniqTab.KRONIQ) }
     var topImageUri by remember { mutableStateOf<Uri?>(null) }
     var topImageUrl by remember { mutableStateOf<String?>(null) }
+    var members by remember { mutableStateOf<List<KroniqMemberDto>>(emptyList()) }
+    var removingMemberId by remember { mutableStateOf<String?>(null) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var showPhotoActionSheet by remember { mutableStateOf(false) }
 
-    LaunchedEffect(authRepository) {
-        runCatching { authRepository.getMe() }
+    LaunchedEffect(authRepository, reloadToken) {
+        runCatching { authRepository.getKroniqMe() }
             .onSuccess { me ->
                 topImageUrl = me.kroniqImageUrl
+                members = me.members
             }
     }
 
@@ -185,7 +197,7 @@ fun KroniqScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             KroniqTabs(
                 selectedTab = selectedTab,
@@ -198,7 +210,29 @@ fun KroniqScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(bottom = 28.dp)
+                    .padding(bottom = 28.dp),
+                members = members,
+                onAddMemberClick = onAddMemberClick,
+                onAddGuestClick = onAddGuestClick,
+                onEditMemberClick = { member ->
+                    if (removingMemberId != null) return@KroniqTreeCard
+
+                    removingMemberId = member.id
+                    scope.launch {
+                        runCatching {
+                            authRepository.deleteKroniqMember(member.id)
+                            authRepository.getKroniqMe()
+                        }.onSuccess { me ->
+                            topImageUrl = me.kroniqImageUrl
+                            members = me.members
+                            onEditMemberClick(member)
+                        }.onFailure { error ->
+                            Log.e("KRONIQ_REMOVE_MEMBER", "Remove member failed for memberId=${member.id}", error)
+                        }
+
+                        removingMemberId = null
+                    }
+                }
             )
         }
     }
@@ -307,19 +341,42 @@ private fun TopImageSlot(
     modifier: Modifier = Modifier
 ) {
     if (imageModel != null) {
-        AsyncImage(
-            model = imageModel,
-            contentDescription = stringResource(R.string.kroniq_add_member),
-            contentScale = ContentScale.Crop,
+        Box(
             modifier = modifier
                 .size(100.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick
+        ) {
+            AsyncImage(
+                model = imageModel,
+                contentDescription = stringResource(R.string.kroniq_add_member),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClick
+                    )
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 12.dp, y = 12.dp)
+                    .size(32.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClick
+                    )
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.tripdetail_ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
                 )
-        )
+            }
+        }
     } else {
         Image(
             painter = painterResource(R.drawable.tripdetail_addnewmember),
@@ -368,7 +425,11 @@ private fun KroniqTabButton(
 
 @Composable
 private fun KroniqTreeCard(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    members: List<KroniqMemberDto>,
+    onAddMemberClick: () -> Unit,
+    onAddGuestClick: () -> Unit,
+    onEditMemberClick: (KroniqMemberDto) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -376,6 +437,13 @@ private fun KroniqTreeCard(
     ) {
         val slotSize = 72.dp
         val mainMemberSize = slotSize
+        val adminMember = members.firstOrNull { it.role.equals("ADMIN", ignoreCase = true) }
+        val resolvedMembers = members
+            .filterNot { it.id == adminMember?.id || it.role.equals("GUEST", ignoreCase = true) }
+            .take(4)
+        val resolvedGuests = members
+            .filter { it.role.equals("GUEST", ignoreCase = true) }
+            .take(2)
         val topNodes = listOf(
             KroniqNode(stringResource(R.string.kroniq_member), 0.16f, 0.18f),
             KroniqNode(stringResource(R.string.kroniq_member), 0.84f, 0.18f)
@@ -472,10 +540,17 @@ private fun KroniqTreeCard(
         }
 
         topNodes.forEach { node ->
+            val member = resolvedMembers.getOrNull(topNodes.indexOf(node))
             MemberColumn(
-                label = node.label,
+                label = member?.name?.takeIf { it.isNotBlank() } ?: node.label,
+                isResolvedMember = member?.name?.isNotBlank() == true,
                 dimmed = node.dimmed,
                 slotSize = slotSize,
+                resolvedRoleLabel = stringResource(R.string.kroniq_member),
+                member = member,
+                imageModel = member?.profileImageUrl,
+                onClick = onAddMemberClick,
+                onEditClick = onEditMemberClick,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
@@ -486,10 +561,17 @@ private fun KroniqTreeCard(
         }
 
         middleNodes.forEach { node ->
+            val member = resolvedMembers.getOrNull(topNodes.size + middleNodes.indexOf(node))
             MemberColumn(
-                label = node.label,
+                label = member?.name?.takeIf { it.isNotBlank() } ?: node.label,
+                isResolvedMember = member?.name?.isNotBlank() == true,
                 dimmed = node.dimmed,
                 slotSize = slotSize,
+                resolvedRoleLabel = stringResource(R.string.kroniq_member),
+                member = member,
+                imageModel = member?.profileImageUrl,
+                onClick = onAddMemberClick,
+                onEditClick = onEditMemberClick,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
@@ -500,10 +582,17 @@ private fun KroniqTreeCard(
         }
 
         bottomNodes.forEach { node ->
+            val member = resolvedGuests.getOrNull(bottomNodes.indexOf(node))
             MemberColumn(
-                label = node.label,
+                label = member?.name?.takeIf { it.isNotBlank() } ?: node.label,
+                isResolvedMember = member?.name?.isNotBlank() == true,
                 dimmed = node.dimmed,
                 slotSize = slotSize,
+                resolvedRoleLabel = stringResource(R.string.kroniq_guest),
+                member = member,
+                imageModel = member?.profileImageUrl,
+                onClick = onAddGuestClick,
+                onEditClick = onEditMemberClick,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
@@ -529,7 +618,9 @@ private fun KroniqTreeCard(
                     start = centerToStart(maxWidth, mainMemberCenterX, mainMemberSize),
                     top = centerToStart(maxHeight, mainMemberCenterY, mainMemberSize + 44.dp)
                 ),
-            imageSize = mainMemberSize
+            imageSize = mainMemberSize,
+            memberName = adminMember?.name?.takeIf { it.isNotBlank() } ?: "Kristin",
+            imageModel = adminMember?.profileImageUrl
         )
     }
 }
@@ -537,27 +628,109 @@ private fun KroniqTreeCard(
 @Composable
 private fun MemberColumn(
     label: String,
+    isResolvedMember: Boolean,
     dimmed: Boolean = false,
     slotSize: Dp,
+    resolvedRoleLabel: String = stringResource(R.string.kroniq_member),
+    member: KroniqMemberDto? = null,
+    imageModel: Any? = null,
+    onClick: () -> Unit,
+    onEditClick: (KroniqMemberDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = label,
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14f.fs(LocalUiScaler.current)
-        )
+        if (isResolvedMember) {
+            Text(
+                text = label,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16f.fs(LocalUiScaler.current),
+                modifier = Modifier.width(slotSize + 12.dp),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = resolvedRoleLabel,
+                color = Color.White.copy(alpha = 0.78f),
+                fontWeight = FontWeight.Normal,
+                fontSize = 14f.fs(LocalUiScaler.current),
+                modifier = Modifier.width(slotSize + 12.dp),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        } else {
+            Text(
+                text = label,
+                color = Color.White.copy(alpha = 0.78f),
+                fontWeight = FontWeight.Normal,
+                fontSize = 14f.fs(LocalUiScaler.current),
+                modifier = Modifier.width(slotSize + 12.dp),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
-        Image(
-            painter = painterResource(R.drawable.tripdetail_addnewmember),
-            contentDescription = null,
-            modifier = Modifier.size(slotSize),
-            alpha = if (dimmed) 0.55f else 1f
-        )
+        if (member != null) {
+            Box(
+                modifier = Modifier.size(slotSize)
+            ) {
+                if (imageModel != null) {
+                    AsyncImage(
+                        model = imageModel,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(10.dp))
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.tripdetail_addnewmember),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(10.dp))
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 12.dp, y = 12.dp)
+                        .size(32.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onEditClick(member) }
+                        ),
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.tripdetail_ic_edit),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        } else {
+            Image(
+                painter = painterResource(R.drawable.tripdetail_addnewmember),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(slotSize)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClick
+                    ),
+                alpha = if (dimmed) 0.55f else 1f
+            )
+        }
     }
 }
 
@@ -580,7 +753,9 @@ private fun CenterBrand(
 @Composable
 private fun MainMemberCard(
     modifier: Modifier = Modifier,
-    imageSize: Dp
+    imageSize: Dp,
+    memberName: String,
+    imageModel: Any? = null
 ) {
     Column(
         modifier = modifier,
@@ -594,7 +769,7 @@ private fun MainMemberCard(
                 .padding(horizontal = 10.dp, vertical = 2.dp)
         ) {
             Text(
-                text = "Kristin",
+                text = memberName,
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14f.fs(LocalUiScaler.current)
@@ -606,14 +781,25 @@ private fun MainMemberCard(
             fontSize = 12f.fs(LocalUiScaler.current),
             modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)
         )
-        Image(
-            painter = painterResource(R.drawable.some_avatar_kristin),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(imageSize)
-                .clip(RoundedCornerShape(10.dp))
-        )
+        if (imageModel != null) {
+            AsyncImage(
+                model = imageModel,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(imageSize)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.some_avatar_kristin),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(imageSize)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+        }
     }
 }
 

@@ -14,10 +14,15 @@ import com.example.memotrip_kroniq.data.remote.dto.DeleteProfileImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.DeleteKroniqImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.ProfileImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.KroniqImageResponse
+import com.example.memotrip_kroniq.data.remote.dto.KroniqMeResponse
+import com.example.memotrip_kroniq.data.remote.dto.AddKroniqMemberResponse
+import com.example.memotrip_kroniq.data.remote.dto.AddKroniqGuestResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
+import com.example.memotrip_kroniq.data.remote.dto.DeleteKroniqMemberResponse
 import okhttp3.MultipartBody
 import retrofit2.http.PATCH
 import retrofit2.http.Part
+import retrofit2.http.Path
 
 
 interface AuthApi {
@@ -68,6 +73,24 @@ interface AuthApi {
 
     @DELETE("kroniq/me/photo")
     suspend fun deleteKroniqPhoto(): DeleteKroniqImageResponse
+
+    @GET("kroniq/me")
+    suspend fun getKroniqMe(): KroniqMeResponse
+
+    @POST("kroniq/me/members")
+    suspend fun addKroniqMember(
+        @Body body: Map<String, String>
+    ): AddKroniqMemberResponse
+
+    @POST("kroniq/me/guests")
+    suspend fun addKroniqGuest(
+        @Body body: Map<String, String>
+    ): AddKroniqGuestResponse
+
+    @DELETE("kroniq/me/members/{memberId}")
+    suspend fun deleteKroniqMember(
+        @Path("memberId") memberId: String
+    ): DeleteKroniqMemberResponse
 
     @POST("/auth/forgot-password")
     suspend fun forgotPassword(@Body body: Map<String, String>)

@@ -199,4 +199,24 @@
     <string name="add_trip_success_title">Gratulujeme !</string>
     <string name="add_trip_success_subtitle">Právě jste vytvořili svůj první Trip</string>
     <string name="add_trip_success_footer">Dobrodružství začíná!</string>
+    <string name="kroniq_add_member_title">Přidat člena</string>
+    <string name="kroniq_add_email_label">Přidat e-mail</string>
+    <string name="kroniq_add_email_placeholder">Přidat e-mail registrovaného člena</string>
+    <string name="kroniq_add_member_button">Přidat člena</string>
+    <string name="kroniq_add_member_error_required">E-mail je povinný</string>
+    <string name="kroniq_add_member_error_invalid">Nesprávný e-mail</string>
+    <string name="kroniq_add_member_error_not_registered">E-mail musí být registrovaný</string>
+    <string name="kroniq_add_member_error_already_member">Uživatel už je členem</string>
+    <string name="kroniq_add_member_error_plan_required">Je vyžadován balíček KroniQ</string>
+    <string name="kroniq_add_member_saving">Ukládání vašich dat</string>
+    <string name="kroniq_add_member_success_title">Gratulujeme !</string>
+    <string name="kroniq_add_member_success_subtitle">Přidali jste člena</string>
+    <string name="kroniq_add_member_success_footer">Dobrodružství začíná !</string>
+    <string name="kroniq_add_guest_title">Přidat hosta</string>
+    <string name="kroniq_add_guest_button">Přidat hosta</string>
+    <string name="kroniq_add_guest_error_already_guest">Uživatel už je hostem</string>
+    <string name="kroniq_add_guest_saving">Ukládání vašich dat</string>
+    <string name="kroniq_add_guest_success_title">Gratulujeme !</string>
+    <string name="kroniq_add_guest_success_subtitle">Přidali jste hosta</string>
+    <string name="kroniq_add_guest_success_footer">Dobrodružství začíná !</string>
 </resources>

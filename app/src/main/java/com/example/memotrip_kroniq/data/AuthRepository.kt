@@ -6,6 +6,9 @@ import LoginRequest
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
+import com.example.memotrip_kroniq.data.remote.dto.KroniqMeResponse
+import com.example.memotrip_kroniq.data.remote.dto.AddKroniqMemberResponse
+import com.example.memotrip_kroniq.data.remote.dto.AddKroniqGuestResponse
 import com.example.memotrip_kroniq.data.model.UserMe
 import com.example.memotrip_kroniq.data.remote.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -72,6 +75,14 @@ class AuthRepository(
     suspend fun loginWithGoogle(idToken: String): AuthResponse {
         try {
             return api.loginWithGoogle(mapOf("idToken" to idToken))
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
+
+    suspend fun checkEmail(email: String): Boolean {
+        try {
+            return api.checkEmail(email.trim().lowercase()).exists
         } catch (e: HttpException) {
             throw extractApiError(e)
         }
@@ -192,6 +203,37 @@ class AuthRepository(
 
     suspend fun deleteKroniqPhoto(): Boolean =
         api.deleteKroniqPhoto().success
+
+    suspend fun getKroniqMe(): KroniqMeResponse =
+        api.getKroniqMe()
+
+    suspend fun addKroniqMember(email: String): AddKroniqMemberResponse {
+        try {
+            return api.addKroniqMember(
+                mapOf("email" to email.trim().lowercase())
+            )
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
+
+    suspend fun addKroniqGuest(email: String): AddKroniqGuestResponse {
+        try {
+            return api.addKroniqGuest(
+                mapOf("email" to email.trim().lowercase())
+            )
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
+
+    suspend fun deleteKroniqMember(memberId: String): Boolean {
+        try {
+            return api.deleteKroniqMember(memberId).success
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
 
 
 }

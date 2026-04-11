@@ -35,6 +35,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
@@ -42,6 +43,7 @@ import com.example.memotrip_kroniq.data.network.HttpClientProvider
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.ui.addtrip.AddTripScreen
 import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
+import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessContent
 import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.auth.ForgotPasswordScreen
 import com.example.memotrip_kroniq.ui.auth.LoginScreen
@@ -52,6 +54,7 @@ import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSuccessScreen
 import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
+import com.example.memotrip_kroniq.ui.kroniq.AddKroniqMemberScreen
 import com.example.memotrip_kroniq.ui.kroniq.KroniqScreen
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
@@ -89,6 +92,12 @@ sealed class Screen(val route: String) {
     object TripSuccess : Screen("trip_success")
     object Settings : Screen("settings")
     object KroniQ : Screen("kroniq")
+    object KroniQAddMember : Screen("kroniq_add_member")
+    object KroniQAddMemberSaving : Screen("kroniq_add_member_saving")
+    object KroniQAddMemberSuccess : Screen("kroniq_add_member_success")
+    object KroniQAddGuest : Screen("kroniq_add_guest")
+    object KroniQAddGuestSaving : Screen("kroniq_add_guest_saving")
+    object KroniQAddGuestSuccess : Screen("kroniq_add_guest_success")
     object Language : Screen("language")
     object Profile : Screen("profile")
     object TripDetail : Screen("trip_detail/{tripId}") {
@@ -110,6 +119,13 @@ const val LOCATION_LON_KEY = "location_lon"
 private const val CHANGE_PASSWORD_CURRENT_KEY = "change_password_current"
 private const val CHANGE_PASSWORD_NEW_KEY = "change_password_new"
 private const val CHANGE_PASSWORD_ERROR_KEY = "change_password_error"
+private const val KRONIQ_ADD_MEMBER_EMAIL_KEY = "kroniq_add_member_email"
+private const val KRONIQ_ADD_MEMBER_ERROR_KEY = "kroniq_add_member_error"
+private const val KRONIQ_RELOAD_TOKEN_KEY = "kroniq_reload_token"
+private const val KRONIQ_ADD_MEMBER_IN_FLIGHT_KEY = "kroniq_add_member_in_flight"
+private const val KRONIQ_ADD_GUEST_EMAIL_KEY = "kroniq_add_guest_email"
+private const val KRONIQ_ADD_GUEST_ERROR_KEY = "kroniq_add_guest_error"
+private const val KRONIQ_ADD_GUEST_IN_FLIGHT_KEY = "kroniq_add_guest_in_flight"
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -451,8 +467,252 @@ fun AppNavGraph(navController: NavHostController) {
             enterTransition = { defaultEnter(initialState, targetState) },
             exitTransition = { defaultExit(initialState, targetState) }
         ) {
+            val reloadToken by navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow(KRONIQ_RELOAD_TOKEN_KEY, 0)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(0) }
             KroniqScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                reloadToken = reloadToken,
+                onAddMemberClick = {
+                    navController.navigate(Screen.KroniQAddMember.route)
+                },
+                onAddGuestClick = {
+                    navController.navigate(Screen.KroniQAddGuest.route)
+                }
+            )
+        }
+
+        composable(Screen.KroniQAddMember.route) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            val errorMessage by navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<String?>(KRONIQ_ADD_MEMBER_ERROR_KEY, null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            AddKroniqMemberScreen(
+                backendErrorMessage = errorMessage,
+                onBackendErrorConsumed = {
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String?>(KRONIQ_ADD_MEMBER_ERROR_KEY)
+                },
+                onBack = { navController.popBackStack() },
+                onAddMember = { email ->
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(KRONIQ_ADD_MEMBER_EMAIL_KEY, email)
+                    navController.navigate(Screen.KroniQAddMemberSaving.route)
+                }
+            )
+        }
+
+        composable(Screen.KroniQAddMemberSaving.route) { savingEntry ->
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            val requestEntry = remember(navController) {
+                navController.getBackStackEntry(Screen.KroniQAddMember.route)
+            }
+            val email = requestEntry.savedStateHandle.get<String>(KRONIQ_ADD_MEMBER_EMAIL_KEY).orEmpty()
+            val inFlight = savingEntry.savedStateHandle.get<Boolean>(KRONIQ_ADD_MEMBER_IN_FLIGHT_KEY) == true
+
+            LaunchedEffect(email) {
+                if (email.isBlank() || inFlight) return@LaunchedEffect
+
+                savingEntry.savedStateHandle[KRONIQ_ADD_MEMBER_IN_FLIGHT_KEY] = true
+
+                runCatching {
+                    authRepository.addKroniqMember(email)
+                }.onSuccess {
+                    savingEntry.savedStateHandle.remove<Boolean>(KRONIQ_ADD_MEMBER_IN_FLIGHT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(KRONIQ_ADD_MEMBER_EMAIL_KEY)
+                    requestEntry.savedStateHandle.remove<String?>(KRONIQ_ADD_MEMBER_ERROR_KEY)
+                    navController.getBackStackEntry(Screen.KroniQ.route)
+                        .savedStateHandle[KRONIQ_RELOAD_TOKEN_KEY] =
+                        (navController.getBackStackEntry(Screen.KroniQ.route)
+                            .savedStateHandle[KRONIQ_RELOAD_TOKEN_KEY] ?: 0) + 1
+                    navController.navigate(Screen.KroniQAddMemberSuccess.route) {
+                        popUpTo(Screen.KroniQAddMemberSaving.route) { inclusive = true }
+                    }
+                }.onFailure { error ->
+                    savingEntry.savedStateHandle.remove<Boolean>(KRONIQ_ADD_MEMBER_IN_FLIGHT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(KRONIQ_ADD_MEMBER_EMAIL_KEY)
+                    requestEntry.savedStateHandle[KRONIQ_ADD_MEMBER_ERROR_KEY] =
+                        mapKroniqAddMemberError(context, error.message)
+                    navController.popBackStack()
+                }
+            }
+
+            SavingTripScreen(
+                message = androidx.compose.ui.res.stringResource(R.string.kroniq_add_member_saving)
+            )
+        }
+
+        composable(Screen.KroniQAddMemberSuccess.route) {
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(1500)
+                navController.navigate(Screen.KroniQ.route) {
+                    popUpTo(Screen.KroniQAddMember.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+
+            TripSuccessContent(
+                title = androidx.compose.ui.res.stringResource(R.string.kroniq_add_member_success_title),
+                subtitle = androidx.compose.ui.res.stringResource(R.string.kroniq_add_member_success_subtitle),
+                footer = androidx.compose.ui.res.stringResource(R.string.kroniq_add_member_success_footer)
+            )
+        }
+
+        composable(Screen.KroniQAddGuest.route) {
+            val errorMessage by navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<String?>(KRONIQ_ADD_GUEST_ERROR_KEY, null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            AddKroniqMemberScreen(
+                backendErrorMessage = errorMessage,
+                onBackendErrorConsumed = {
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String?>(KRONIQ_ADD_GUEST_ERROR_KEY)
+                },
+                title = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_title),
+                buttonText = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_button),
+                onBack = { navController.popBackStack() },
+                onAddMember = { email ->
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(KRONIQ_ADD_GUEST_EMAIL_KEY, email)
+                    navController.navigate(Screen.KroniQAddGuestSaving.route)
+                }
+            )
+        }
+
+        composable(Screen.KroniQAddGuestSaving.route) { savingEntry ->
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            val requestEntry = remember(navController) {
+                navController.getBackStackEntry(Screen.KroniQAddGuest.route)
+            }
+            val email = requestEntry.savedStateHandle.get<String>(KRONIQ_ADD_GUEST_EMAIL_KEY).orEmpty()
+            val inFlight = savingEntry.savedStateHandle.get<Boolean>(KRONIQ_ADD_GUEST_IN_FLIGHT_KEY) == true
+
+            LaunchedEffect(email) {
+                if (email.isBlank() || inFlight) return@LaunchedEffect
+
+                savingEntry.savedStateHandle[KRONIQ_ADD_GUEST_IN_FLIGHT_KEY] = true
+
+                runCatching {
+                    val kroniqMe = authRepository.getKroniqMe()
+                    val alreadyMember = kroniqMe.members.any {
+                        !it.role.equals("GUEST", ignoreCase = true) &&
+                            it.email.equals(email, ignoreCase = true)
+                    }
+                    val alreadyGuest = kroniqMe.members.any {
+                        it.role.equals("GUEST", ignoreCase = true) &&
+                            it.email.equals(email, ignoreCase = true)
+                    }
+
+                    when {
+                        alreadyMember -> "ALREADY_MEMBER"
+                        alreadyGuest -> "ALREADY_GUEST"
+                        else -> authRepository.addKroniqGuest(email)
+                    }
+                }.onSuccess { result ->
+                    savingEntry.savedStateHandle.remove<Boolean>(KRONIQ_ADD_GUEST_IN_FLIGHT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(KRONIQ_ADD_GUEST_EMAIL_KEY)
+                    requestEntry.savedStateHandle.remove<String?>(KRONIQ_ADD_GUEST_ERROR_KEY)
+
+                    when (result) {
+                        is com.example.memotrip_kroniq.data.remote.dto.AddKroniqGuestResponse -> {
+                            navController.getBackStackEntry(Screen.KroniQ.route)
+                                .savedStateHandle[KRONIQ_RELOAD_TOKEN_KEY] =
+                                (navController.getBackStackEntry(Screen.KroniQ.route)
+                                    .savedStateHandle[KRONIQ_RELOAD_TOKEN_KEY] ?: 0) + 1
+                            navController.navigate(Screen.KroniQAddGuestSuccess.route) {
+                                popUpTo(Screen.KroniQAddGuestSaving.route) { inclusive = true }
+                            }
+                        }
+
+                        "ALREADY_MEMBER" -> {
+                            requestEntry.savedStateHandle[KRONIQ_ADD_GUEST_ERROR_KEY] =
+                                context.getString(R.string.kroniq_add_member_error_already_member)
+                            navController.popBackStack()
+                        }
+
+                        "ALREADY_GUEST" -> {
+                            requestEntry.savedStateHandle[KRONIQ_ADD_GUEST_ERROR_KEY] =
+                                context.getString(R.string.kroniq_add_guest_error_already_guest)
+                            navController.popBackStack()
+                        }
+
+                        else -> {
+                            requestEntry.savedStateHandle[KRONIQ_ADD_GUEST_ERROR_KEY] = when {
+                                result.toString().contains("USER_NOT_FOUND", ignoreCase = true) ||
+                                    result.toString().contains("User not found", ignoreCase = true) ->
+                                    context.getString(R.string.kroniq_add_member_error_not_registered)
+                                result.toString().contains("ALREADY_MEMBER", ignoreCase = true) ->
+                                    context.getString(R.string.kroniq_add_member_error_already_member)
+                                result.toString().contains("ALREADY_GUEST", ignoreCase = true) ->
+                                    context.getString(R.string.kroniq_add_guest_error_already_guest)
+                                result.toString().contains("KRONIQ_PLAN_REQUIRED", ignoreCase = true) ->
+                                    context.getString(R.string.kroniq_add_member_error_plan_required)
+                                else ->
+                                    result.toString()
+                            }
+                            navController.popBackStack()
+                        }
+                    }
+                }.onFailure {
+                    savingEntry.savedStateHandle.remove<Boolean>(KRONIQ_ADD_GUEST_IN_FLIGHT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(KRONIQ_ADD_GUEST_EMAIL_KEY)
+                    requestEntry.savedStateHandle[KRONIQ_ADD_GUEST_ERROR_KEY] =
+                        context.getString(R.string.auth_error_network_or_server)
+                    navController.popBackStack()
+                }
+            }
+
+            SavingTripScreen(
+                message = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_saving)
+            )
+        }
+
+        composable(Screen.KroniQAddGuestSuccess.route) {
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(1500)
+                navController.navigate(Screen.KroniQ.route) {
+                    popUpTo(Screen.KroniQAddGuest.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+
+            TripSuccessContent(
+                title = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_success_title),
+                subtitle = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_success_subtitle),
+                footer = androidx.compose.ui.res.stringResource(R.string.kroniq_add_guest_success_footer)
             )
         }
 
@@ -610,6 +870,22 @@ private fun formatProfileDateForApi(dateOfBirth: String): String? {
             .format(DateTimeFormatter.ISO_LOCAL_DATE)
     }.getOrElse {
         dateOfBirth
+    }
+}
+
+private fun mapKroniqAddMemberError(context: android.content.Context, message: String?): String {
+    val normalized = message.orEmpty()
+    return when {
+        normalized.contains("USER_NOT_FOUND", ignoreCase = true) ||
+            normalized.contains("User not found", ignoreCase = true) ->
+            context.getString(R.string.kroniq_add_member_error_not_registered)
+        normalized.contains("ALREADY_MEMBER", ignoreCase = true) ->
+            context.getString(R.string.kroniq_add_member_error_already_member)
+        normalized.contains("KRONIQ_PLAN_REQUIRED", ignoreCase = true) ->
+            context.getString(R.string.kroniq_add_member_error_plan_required)
+        normalized.isBlank() ->
+            context.getString(R.string.auth_error_network_or_server)
+        else -> normalized
     }
 }
 
