@@ -10,6 +10,7 @@ fun authMessage(message: String?): String? {
         null -> null
         "You must be registered" -> stringResource(R.string.auth_error_must_be_registered)
         "Incorrect password" -> stringResource(R.string.auth_error_incorrect_password)
+        "Incorrect current password" -> stringResource(R.string.change_password_error_incorrect_current_password)
         "This account uses Google login" -> stringResource(R.string.auth_error_google_login_only)
         "Login failed" -> stringResource(R.string.auth_error_login_failed)
         "Network or server error" -> stringResource(R.string.auth_error_network_or_server)

@@ -46,6 +46,9 @@ import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.auth.ForgotPasswordScreen
 import com.example.memotrip_kroniq.ui.auth.LoginScreen
 import com.example.memotrip_kroniq.ui.auth.SignUpScreen
+import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordScreen
+import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSavingScreen
+import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSuccessScreen
 import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
@@ -73,6 +76,9 @@ sealed class Screen(val route: String) {
     }
 
     object ForgotPassword : Screen("forgot_password")
+    object ChangePassword : Screen("change_password")
+    object ChangePasswordSaving : Screen("change_password_saving")
+    object ChangePasswordSuccess : Screen("change_password_success")
     object AddTrip : Screen("add_trip")
     object EditTrip : Screen("edit_trip/{tripId}") {
         fun createRoute(tripId: String) = "edit_trip/$tripId"
@@ -99,6 +105,9 @@ const val LOCATION_TARGET_KEY = "location_target"
 const val LOCATION_NAME_KEY = "location_name"
 const val LOCATION_LAT_KEY = "location_lat"
 const val LOCATION_LON_KEY = "location_lon"
+private const val CHANGE_PASSWORD_CURRENT_KEY = "change_password_current"
+private const val CHANGE_PASSWORD_NEW_KEY = "change_password_new"
+private const val CHANGE_PASSWORD_ERROR_KEY = "change_password_error"
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -190,6 +199,125 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             ForgotPasswordScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ChangePassword.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            var hasPassword by remember { mutableStateOf<Boolean?>(null) }
+            val errorMessage = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<String?>(CHANGE_PASSWORD_ERROR_KEY)
+
+            LaunchedEffect(authRepository) {
+                hasPassword = runCatching { authRepository.getMe().hasPassword }
+                    .getOrDefault(true)
+            }
+
+            Crossfade(
+                targetState = hasPassword,
+                animationSpec = tween(durationMillis = 220),
+                label = "change_password_loading_transition"
+            ) { hasPasswordValue ->
+                if (hasPasswordValue == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                } else {
+                    ChangePasswordScreen(
+                        hasPassword = hasPasswordValue,
+                        backendErrorMessage = errorMessage,
+                        onBackendErrorConsumed = {
+                            navController.currentBackStackEntry
+                                ?.savedStateHandle
+                                ?.remove<String?>(CHANGE_PASSWORD_ERROR_KEY)
+                        },
+                        onBack = { navController.popBackStack() },
+                        onContinue = { currentPassword, newPassword ->
+                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                CHANGE_PASSWORD_CURRENT_KEY,
+                                currentPassword
+                            )
+                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                CHANGE_PASSWORD_NEW_KEY,
+                                newPassword
+                            )
+                            navController.navigate(Screen.ChangePasswordSaving.route)
+                        }
+                    )
+                }
+            }
+        }
+
+        composable(Screen.ChangePasswordSaving.route) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            val requestEntry = remember(navController) {
+                navController.getBackStackEntry(Screen.ChangePassword.route)
+            }
+            val currentPassword = requestEntry.savedStateHandle.get<String?>(CHANGE_PASSWORD_CURRENT_KEY)
+            val newPassword = requestEntry.savedStateHandle.get<String>(CHANGE_PASSWORD_NEW_KEY).orEmpty()
+
+            ChangePasswordSavingScreen(
+                currentPassword = currentPassword,
+                newPassword = newPassword,
+                changePassword = { current, fresh ->
+                    authRepository.changePassword(current, fresh)
+                },
+                onFinished = {
+                    requestEntry.savedStateHandle.remove<String?>(CHANGE_PASSWORD_CURRENT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(CHANGE_PASSWORD_NEW_KEY)
+                    requestEntry.savedStateHandle.remove<String?>(CHANGE_PASSWORD_ERROR_KEY)
+                    navController.navigate(Screen.ChangePasswordSuccess.route) {
+                        popUpTo(Screen.ChangePasswordSaving.route) { inclusive = true }
+                    }
+                },
+                onFailed = { message ->
+                    requestEntry.savedStateHandle.remove<String?>(CHANGE_PASSWORD_CURRENT_KEY)
+                    requestEntry.savedStateHandle.remove<String>(CHANGE_PASSWORD_NEW_KEY)
+                    requestEntry.savedStateHandle.set(CHANGE_PASSWORD_ERROR_KEY, message)
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.ChangePasswordSuccess.route) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val coroutineScope = rememberCoroutineScope()
+
+            ChangePasswordSuccessScreen(
+                onFinished = {
+                    coroutineScope.launch {
+                        tokenStore.clearTokens()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0)
+                            launchSingleTop = true
+                        }
+                    }
+                }
             )
         }
 

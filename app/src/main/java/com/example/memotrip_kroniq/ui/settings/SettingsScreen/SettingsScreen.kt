@@ -112,7 +112,7 @@ fun SettingsScreen(
 
             SettingsArrowItem(
                 title = stringResource(R.string.settings_change_password),
-                onClick = { /* TODO */ }
+                onClick = { navController.navigate(Screen.ChangePassword.route) }
             )
 
             SettingsArrowItem(

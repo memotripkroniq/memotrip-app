@@ -12,6 +12,7 @@ import retrofit2.http.Query
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.DeleteProfileImageResponse
 import com.example.memotrip_kroniq.data.remote.dto.ProfileImageResponse
+import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
 import okhttp3.MultipartBody
 import retrofit2.http.PATCH
 import retrofit2.http.Part
@@ -59,6 +60,11 @@ interface AuthApi {
 
     @POST("/auth/forgot-password")
     suspend fun forgotPassword(@Body body: Map<String, String>)
+
+    @POST("auth/me/password")
+    suspend fun changePassword(
+        @Body body: Map<String, String>
+    ): ChangePasswordResponse
 
     @GET("auth/limits/trips")
     suspend fun getTripLimits(): TripLimitsResponse

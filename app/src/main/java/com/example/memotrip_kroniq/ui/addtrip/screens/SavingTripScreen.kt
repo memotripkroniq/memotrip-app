@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.sp
 
 
 @Composable
-fun SavingTripScreen() {
+fun SavingTripScreen(
+    message: String = stringResource(R.string.add_trip_saving_experience)
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -33,7 +35,7 @@ fun SavingTripScreen() {
             RotatingSvgLoader()
             Spacer(modifier = Modifier.height(56.dp))
             Text(
-                text = stringResource(R.string.add_trip_saving_experience),
+                text = message,
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold

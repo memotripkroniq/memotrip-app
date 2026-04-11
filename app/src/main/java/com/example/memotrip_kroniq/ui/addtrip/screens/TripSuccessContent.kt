@@ -16,7 +16,11 @@ import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.R
 
 @Composable
-fun TripSuccessContent() {
+fun TripSuccessContent(
+    title: String = stringResource(R.string.add_trip_success_title),
+    subtitle: String = stringResource(R.string.add_trip_success_subtitle),
+    footer: String = stringResource(R.string.add_trip_success_footer)
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -26,7 +30,7 @@ fun TripSuccessContent() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
             Text(
-                text = stringResource(R.string.add_trip_success_title),
+                text = title,
                 color = Color(0xFF7FAF7A),
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold
@@ -35,7 +39,7 @@ fun TripSuccessContent() {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = stringResource(R.string.add_trip_success_subtitle),
+                text = subtitle,
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
@@ -52,7 +56,7 @@ fun TripSuccessContent() {
             Spacer(modifier = Modifier.height(70.dp))
 
             Text(
-                text = stringResource(R.string.add_trip_success_footer),
+                text = footer,
                 color = Color(0xFF7FAF7A),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold

@@ -5,6 +5,7 @@ import android.net.Uri
 import LoginRequest
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
+import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
 import com.example.memotrip_kroniq.data.model.UserMe
 import com.example.memotrip_kroniq.data.remote.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -110,6 +111,23 @@ class AuthRepository(
         api.forgotPassword(
             mapOf("email" to email)
         )
+    }
+
+    suspend fun changePassword(
+        currentPassword: String?,
+        newPassword: String
+    ): ChangePasswordResponse {
+        try {
+            val body = linkedMapOf<String, String>().apply {
+                currentPassword
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { put("currentPassword", it) }
+                put("newPassword", newPassword)
+            }
+            return api.changePassword(body)
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
     }
 
     // ============================================================
