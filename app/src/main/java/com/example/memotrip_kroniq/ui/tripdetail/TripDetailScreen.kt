@@ -102,6 +102,18 @@ fun TripDetailScreen(
                 indication = null
             ) { focusManager.clearFocus() }
     ) {
+        if (uiState.isInitialLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator(color = Color.White)
+            }
+            return@Box
+        }
+
         Scaffold(
             containerColor = Color.Black,
             topBar = {
