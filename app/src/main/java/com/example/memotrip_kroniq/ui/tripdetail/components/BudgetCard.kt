@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.R
@@ -78,16 +79,17 @@ fun BudgetCard(
 
             // Planned = levý sloupec (zabere půlku řádku)
             Box(modifier = Modifier.weight(1f)) {
-                BudgetInlineRow(
+                BudgetValueBlock(
                     label = stringResource(R.string.trip_detail_budget_planned),
                     value = plannedAmount,
                     isVisible = isVisible,
                     isEditing = (editingField == BudgetEditField.PLANNED),
                     editingText = editingText,
                     onClick = {
-                        if (!isVisible) return@BudgetInlineRow
-                        focusManager.clearFocus(force = true)
-                        onStartEdit(BudgetEditField.PLANNED)
+                        if (isVisible) {
+                            focusManager.clearFocus(force = true)
+                            onStartEdit(BudgetEditField.PLANNED)
+                        }
                     },
                     onEditingTextChange = onEditingTextChange,
                     onCommitEdit = onCommitEdit
@@ -98,16 +100,17 @@ fun BudgetCard(
 
             // Spent = pravý sloupec (zabere půlku řádku)
             Box(modifier = Modifier.weight(1f)) {
-                BudgetInlineRow(
+                BudgetValueBlock(
                     label = stringResource(R.string.trip_detail_budget_spent),
                     value = spentAmount,
                     isVisible = isVisible,
                     isEditing = (editingField == BudgetEditField.SPENT),
                     editingText = editingText,
                     onClick = {
-                        if (!isVisible) return@BudgetInlineRow
-                        focusManager.clearFocus(force = true)
-                        onStartEdit(BudgetEditField.SPENT)
+                        if (isVisible) {
+                            focusManager.clearFocus(force = true)
+                            onStartEdit(BudgetEditField.SPENT)
+                        }
                     },
                     onEditingTextChange = onEditingTextChange,
                     onCommitEdit = onCommitEdit
@@ -137,7 +140,7 @@ fun BudgetCard(
 }
 
 @Composable
-private fun BudgetInlineRow(
+private fun BudgetValueBlock(
     label: String,
     value: String,
     isVisible: Boolean,
@@ -164,8 +167,8 @@ private fun BudgetInlineRow(
         }
     }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.clickable(
             indication = null,
             interactionSource = remember { MutableInteractionSource() }
@@ -174,32 +177,28 @@ private fun BudgetInlineRow(
         Text(
             text = label,
             color = Color.White.copy(alpha = 0.75f),
-            fontSize = 16f.fs(ui)
+            fontSize = 13f.fs(ui),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
 
-        Spacer(Modifier.width(12.dp))
-
         if (!isVisible) {
-            if (value.isNotBlank()) {
-                Text(
-                    text = "******",
-                    color = Color.White,
-                    fontSize = 16f.fs(ui),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            return
-        }
-
-        if (isEditing) {
+            Text(
+                text = if (value.isNotBlank()) "******" else stringResource(R.string.trip_detail_budget_amount_placeholder),
+                color = if (value.isNotBlank()) Color.White else Color.White.copy(alpha = 0.35f),
+                fontSize = 16f.fs(ui),
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        } else if (isEditing) {
             BasicTextField(
                 value = editingText,
                 onValueChange = onEditingTextChange,
                 singleLine = true,
                 cursorBrush = SolidColor(Color.White),
                 modifier = Modifier
-                    .widthIn(min = 40.dp, max = 120.dp)
-                    .padding(end = 8.dp)
+                    .fillMaxWidth()
                     .focusRequester(focusRequester)
                     .onFocusChanged { st ->
                         if (st.isFocused) {
@@ -225,15 +224,19 @@ private fun BudgetInlineRow(
                     }
                 ),
                 decorationBox = { inner ->
-                    if (editingText.text.isBlank()) {
-                        Text(
-                            text = stringResource(R.string.trip_detail_budget_amount_placeholder),
-                            color = Color.White.copy(alpha = 0.35f),
-                            fontSize = 16f.fs(ui),
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (editingText.text.isBlank()) {
+                            Text(
+                                text = stringResource(R.string.trip_detail_budget_amount_placeholder),
+                                color = Color.White.copy(alpha = 0.35f),
+                                fontSize = 16f.fs(ui),
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        inner()
                     }
-                    inner()
                 }
             )
         } else {
@@ -243,7 +246,9 @@ private fun BudgetInlineRow(
                 text = if (isEmpty) stringResource(R.string.trip_detail_budget_amount_placeholder) else value,
                 color = if (isEmpty) Color.White.copy(alpha = 0.35f) else Color.White,
                 fontSize = 16f.fs(ui),
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

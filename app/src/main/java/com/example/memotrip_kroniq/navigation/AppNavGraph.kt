@@ -898,6 +898,13 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultEnter(
     val from = initial.destination.route
     val to = target.destination.route
 
+    if (
+        (from == Screen.Login.route && to == Screen.Home.route) ||
+        (from == Screen.SignUp.route && to == Screen.Home.route)
+    ) {
+        return fadeIn(animationSpec = tween(180))
+    }
+
     // Návrat zpět → slide zleva doprava
     return if (
         (from == Screen.SignUp.route && to == Screen.Login.route) ||
@@ -923,6 +930,13 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultExit(
 
     val from = initial.destination.route
     val to = target.destination.route
+
+    if (
+        (from == Screen.Login.route && to == Screen.Home.route) ||
+        (from == Screen.SignUp.route && to == Screen.Home.route)
+    ) {
+        return fadeOut(animationSpec = tween(140))
+    }
 
     return if (from == Screen.SignUp.route && to == Screen.Login.route) {
         slideOutHorizontally(

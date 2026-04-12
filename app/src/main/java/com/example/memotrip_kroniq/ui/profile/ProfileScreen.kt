@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -174,7 +175,9 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .verticalScroll(rememberScrollState())
+                    .imePadding()
                     .padding(horizontal = 16.dp)
             ) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -185,15 +188,9 @@ fun ProfileScreen(
                     onPhotoClick = { showPhotoActionSheet = true },
                     onNameChange = { name.value = it }
                 )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
                 ProfileSectionLabel(
                     text = stringResource(R.string.profile_account_type)
                 )

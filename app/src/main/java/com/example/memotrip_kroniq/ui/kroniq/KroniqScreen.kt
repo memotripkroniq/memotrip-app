@@ -554,8 +554,8 @@ private fun KroniqTreeCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
-                        start = centerToStart(maxWidth, node.centerX, slotSize),
-                        top = centerToStart(maxHeight, node.centerY, slotSize) - 22.dp
+                        start = centerToStart(maxWidth, node.centerX, slotSize).coerceAtLeast(0.dp),
+                        top = (centerToStart(maxHeight, node.centerY, slotSize) - 22.dp).coerceAtLeast(0.dp)
                     )
             )
         }
@@ -575,8 +575,8 @@ private fun KroniqTreeCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
-                        start = centerToStart(maxWidth, node.centerX, slotSize),
-                        top = centerToStart(maxHeight, node.centerY, slotSize) - 22.dp
+                        start = centerToStart(maxWidth, node.centerX, slotSize).coerceAtLeast(0.dp),
+                        top = (centerToStart(maxHeight, node.centerY, slotSize) - 22.dp).coerceAtLeast(0.dp)
                     )
             )
         }
@@ -596,8 +596,8 @@ private fun KroniqTreeCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
-                        start = centerToStart(maxWidth, node.centerX, slotSize),
-                        top = centerToStart(maxHeight, node.centerY, slotSize) - 22.dp
+                        start = centerToStart(maxWidth, node.centerX, slotSize).coerceAtLeast(0.dp),
+                        top = (centerToStart(maxHeight, node.centerY, slotSize) - 22.dp).coerceAtLeast(0.dp)
                     )
             )
         }
@@ -606,17 +606,16 @@ private fun KroniqTreeCard(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(
-                    start = centerToStart(maxWidth, brandCenterX, 120.dp),
-                    top = centerToStart(maxHeight, brandCenterY, 120.dp)
+                    start = centerToStart(maxWidth, brandCenterX, 120.dp).coerceAtLeast(0.dp),
+                    top = centerToStart(maxHeight, brandCenterY, 120.dp).coerceAtLeast(0.dp)
                 )
         )
 
         MainMemberCard(
             modifier = Modifier
-                .align(Alignment.TopStart)
+                .align(Alignment.TopCenter)
                 .padding(
-                    start = centerToStart(maxWidth, mainMemberCenterX, mainMemberSize),
-                    top = centerToStart(maxHeight, mainMemberCenterY, mainMemberSize + 44.dp)
+                    top = centerToStart(maxHeight, mainMemberCenterY, mainMemberSize + 44.dp).coerceAtLeast(0.dp)
                 ),
             imageSize = mainMemberSize,
             memberName = adminMember?.name?.takeIf { it.isNotBlank() } ?: "Kristin",

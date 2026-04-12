@@ -57,7 +57,6 @@ fun HomeScreen(
     val savedStateHandle = currentBackStackEntry?.savedStateHandle
 
     val tokenStore = remember { TokenDataStore(context) }
-    RetrofitClient.build(tokenStore)
 
     //// 🔐 JEDEN TokenDataStore
     //val tokenStore = remember { TokenDataStore(context) }

@@ -109,7 +109,7 @@ fun TripDetailScreen(
                     modifier = Modifier, // případně .statusBarsPadding()
                     title = uiState.tripName.ifBlank { stringResource(R.string.trip_detail_title_fallback) },
                     showBack = true,
-                    centerTitle = false,
+                    centerTitle = true,
                     onBackClick = { onBack() },
                     onMenuClick = {
                         navController.navigate(Screen.Settings.route) {
