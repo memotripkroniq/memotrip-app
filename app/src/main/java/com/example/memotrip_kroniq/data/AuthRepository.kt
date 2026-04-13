@@ -141,6 +141,25 @@ class AuthRepository(
         }
     }
 
+    suspend fun deleteAccount(
+        currentPassword: String? = null,
+        googleIdToken: String? = null
+    ): Boolean {
+        try {
+            val body = linkedMapOf<String, String>().apply {
+                currentPassword
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { put("currentPassword", it) }
+                googleIdToken
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { put("googleIdToken", it) }
+            }
+            return api.deleteAccount(body).success
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
+
     // ============================================================
     // ⭐ UPDATE PROFILE
     // ============================================================

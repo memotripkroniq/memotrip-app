@@ -171,7 +171,7 @@ fun SettingsScreen(
 
                     SettingsArrowItem(
                         title = stringResource(R.string.settings_legal),
-                        onClick = { /* TODO */ }
+                        onClick = { navController.navigate(Screen.LegalPolicies.route) }
                     )
 
                     SettingsArrowItem(

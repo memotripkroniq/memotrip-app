@@ -55,10 +55,17 @@ import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.kroniq.AddKroniqMemberScreen
+import com.example.memotrip_kroniq.ui.settings.DeleteAccountScreen
+import com.example.memotrip_kroniq.ui.settings.AiFeaturesNoticeScreen
 import com.example.memotrip_kroniq.ui.kroniq.KroniqScreen
 import com.example.memotrip_kroniq.ui.locationsearch.FullScreenLocationSearchScreen
 import com.example.memotrip_kroniq.ui.locationsearch.LocationSearchViewModel
+import com.example.memotrip_kroniq.ui.settings.LegalPoliciesScreen
+import com.example.memotrip_kroniq.ui.settings.OpenSourceLicensesScreen
+import com.example.memotrip_kroniq.ui.settings.PaymentsSubscriptionsScreen
+import com.example.memotrip_kroniq.ui.settings.PrivacyPolicyScreen
 import com.example.memotrip_kroniq.ui.settings.SettingsScreen
+import com.example.memotrip_kroniq.ui.settings.TermsOfServiceScreen
 import com.example.memotrip_kroniq.ui.settings.LanguageScreen
 import com.example.memotrip_kroniq.ui.profile.ProfileScreen
 import com.example.memotrip_kroniq.ui.splash.SplashScreen
@@ -91,6 +98,13 @@ sealed class Screen(val route: String) {
     object SavingTrip : Screen("saving_trip")
     object TripSuccess : Screen("trip_success")
     object Settings : Screen("settings")
+    object LegalPolicies : Screen("legal_policies")
+    object PrivacyPolicy : Screen("privacy_policy")
+    object TermsOfService : Screen("terms_of_service")
+    object PaymentsSubscriptions : Screen("payments_subscriptions")
+    object AiFeaturesNotice : Screen("ai_features_notice")
+    object OpenSourceLicenses : Screen("open_source_licenses")
+    object DeleteAccount : Screen("delete_account")
     object KroniQ : Screen("kroniq")
     object KroniQAddMember : Screen("kroniq_add_member")
     object KroniQAddMemberSaving : Screen("kroniq_add_member_saving")
@@ -460,6 +474,62 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 }
             )
+        }
+
+        composable(
+            route = Screen.LegalPolicies.route,
+            enterTransition = { fadeIn(animationSpec = tween(220)) },
+            exitTransition = { fadeOut(animationSpec = tween(180)) }
+        ) {
+            LegalPoliciesScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.PrivacyPolicy.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            PrivacyPolicyScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.TermsOfService.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            TermsOfServiceScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.PaymentsSubscriptions.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            PaymentsSubscriptionsScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.AiFeaturesNotice.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            AiFeaturesNoticeScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.OpenSourceLicenses.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            OpenSourceLicensesScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.DeleteAccount.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            DeleteAccountScreen(navController = navController)
         }
 
         composable(

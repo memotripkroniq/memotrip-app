@@ -18,11 +18,13 @@ import com.example.memotrip_kroniq.data.remote.dto.KroniqMeResponse
 import com.example.memotrip_kroniq.data.remote.dto.AddKroniqMemberResponse
 import com.example.memotrip_kroniq.data.remote.dto.AddKroniqGuestResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
+import com.example.memotrip_kroniq.data.remote.dto.DeleteAccountResponse
 import com.example.memotrip_kroniq.data.remote.dto.DeleteKroniqMemberResponse
 import okhttp3.MultipartBody
 import retrofit2.http.PATCH
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.HTTP
 
 
 interface AuthApi {
@@ -99,6 +101,11 @@ interface AuthApi {
     suspend fun changePassword(
         @Body body: Map<String, String>
     ): ChangePasswordResponse
+
+    @HTTP(method = "DELETE", path = "auth/me", hasBody = true)
+    suspend fun deleteAccount(
+        @Body body: Map<String, String>
+    ): DeleteAccountResponse
 
     @GET("auth/limits/trips")
     suspend fun getTripLimits(): TripLimitsResponse

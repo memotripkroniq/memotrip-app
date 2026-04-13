@@ -14,6 +14,12 @@
     <string name="settings_legal">Právne informácie a zásady</string>
     <string name="settings_help">Pomoc a podpora</string>
     <string name="settings_rate_us">Ohodnoťte nás</string>
+    <string name="legal_privacy_policy">Zásady ochrany osobných údajov</string>
+    <string name="legal_terms_of_service">Podmienky používania</string>
+    <string name="legal_payments_and_subscriptions">Platby a predplatné</string>
+    <string name="legal_ai_features_notice">Informácie o AI funkciách</string>
+    <string name="legal_open_source_licenses">Open source licencie</string>
+    <string name="legal_delete_account">Vymazať účet</string>
     <string name="settings_log_out">Odhlásiť sa</string>
     <string name="language_title">Jazyk</string>
     <string name="language_option_english">English</string>
