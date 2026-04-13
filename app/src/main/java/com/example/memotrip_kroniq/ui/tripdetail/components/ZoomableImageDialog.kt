@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +18,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.memotrip_kroniq.R
 import coil.compose.AsyncImage
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.platform.LocalContext
@@ -27,7 +32,8 @@ import coil.size.Size
 @Composable
 fun ZoomableImageDialog(
     imageUrl: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
 ) {
     Dialog(onDismissRequest = onDismiss) {
 
@@ -35,6 +41,7 @@ fun ZoomableImageDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.82f))
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -54,11 +61,30 @@ fun ZoomableImageDialog(
                         interactionSource = remember { MutableInteractionSource() }
                     ) { }
             ) {
-
                 ZoomableAsyncImage(
                     imageUrl = imageUrl,
                     modifier = Modifier.fillMaxSize()
                 )
+
+                if (onDeleteClick != null) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(12.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.Black.copy(alpha = 0.72f))
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { onDeleteClick() }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.trip_detail_photos_dialog_delete),
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }

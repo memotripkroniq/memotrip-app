@@ -172,6 +172,17 @@
     <string name="trip_detail_tips_and_trips">Tips &amp; Trips</string>
     <string name="trip_detail_add_tips_and_trips">Add tips &amp; Trips</string>
     <string name="trip_detail_tip_placeholder">Tip</string>
+    <string name="trip_detail_photos_empty">No photos yet</string>
+    <string name="trip_detail_photos_categories_title">Categories</string>
+    <string name="trip_detail_photos_add_category">Add category</string>
+    <string name="trip_detail_photos_add_photo">Add photo</string>
+    <string name="trip_detail_photos_create_category_title">Create category</string>
+    <string name="trip_detail_photos_edit_category_title">Edit category</string>
+    <string name="trip_detail_photos_category_name_label">Category name</string>
+    <string name="trip_detail_photos_dialog_save">Save</string>
+    <string name="trip_detail_photos_dialog_delete">Delete</string>
+    <string name="trip_detail_photos_dialog_cancel">Cancel</string>
+    <string name="trip_detail_exports_placeholder">Exports will be available soon</string>
     <string name="edit_trip_title">Edit Trip</string>
     <string name="edit_trip_save">Save</string>
     <string name="edit_trip_saving">Saving</string>

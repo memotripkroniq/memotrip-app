@@ -8,6 +8,8 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
 import com.example.memotrip_kroniq.ui.tripdetail.components.ChecklistItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.NoteItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripMemberUi
+import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoCategoryUi
+import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.ThemeUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 
@@ -28,6 +30,9 @@ data class TripDetailUiState(
 
     // Tabs
     val selectedTab: TripDetailTab = TripDetailTab.DETAILS,
+    val isPhotosLoading: Boolean = false,
+    val photoCategories: List<TripPhotoCategoryUi> = emptyList(),
+    val tripPhotos: List<TripPhotoUi> = emptyList(),
 
     // Members
     val members: List<TripMemberUi> = emptyList(),

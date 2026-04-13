@@ -22,6 +22,8 @@ import android.net.Uri
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
+import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoCategoryUi
+import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoUi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -139,6 +141,8 @@ class TripDetailViewModel(
                     )
                 }
 
+                loadPhotos()
+
                 markClean()
             } catch (e: Exception) {
                 Log.e("TripDetailVM", "loadTrip failed", e)
@@ -180,6 +184,107 @@ class TripDetailViewModel(
             s.isNotBlank() -> s
             e.isNotBlank() -> e
             else -> ""
+        }
+    }
+
+    private suspend fun fetchPhotosIntoState() {
+        val response = tripsRepository.getTripPhotos(tripId)
+        _uiState.update { state ->
+            state.copy(
+                photoCategories = response.categories.map {
+                    TripPhotoCategoryUi(
+                        id = it.id,
+                        name = it.name
+                    )
+                },
+                tripPhotos = response.photos
+                    .sortedWith(compareBy({ it.order ?: Int.MAX_VALUE }, { it.createdAt.orEmpty() }))
+                    .map {
+                        TripPhotoUi(
+                            id = it.id,
+                            imageUrl = it.imageUrl,
+                            thumbnailUrl = it.thumbnailUrl ?: it.imageUrl,
+                            categoryId = it.categoryId
+                        )
+                    },
+                isPhotosLoading = false
+            )
+        }
+    }
+
+    fun loadPhotos() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching { fetchPhotosIntoState() }
+                .onFailure { error ->
+                    Log.e("TripDetailVM", "loadPhotos failed", error)
+                    _uiState.update { it.copy(isPhotosLoading = false) }
+                }
+        }
+    }
+
+    fun uploadTripPhoto(uri: Uri, categoryId: String?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching {
+                tripsRepository.uploadTripPhoto(tripId, uri, categoryId)
+                fetchPhotosIntoState()
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "uploadTripPhoto failed", error)
+                _uiState.update { it.copy(isPhotosLoading = false) }
+            }
+        }
+    }
+
+    fun createPhotoCategory(name: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching {
+                tripsRepository.createTripPhotoCategory(tripId, name)
+                fetchPhotosIntoState()
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "createPhotoCategory failed", error)
+                _uiState.update { it.copy(isPhotosLoading = false) }
+            }
+        }
+    }
+
+    fun renamePhotoCategory(categoryId: String, name: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching {
+                tripsRepository.renameTripPhotoCategory(tripId, categoryId, name)
+                fetchPhotosIntoState()
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "renamePhotoCategory failed", error)
+                _uiState.update { it.copy(isPhotosLoading = false) }
+            }
+        }
+    }
+
+    fun deletePhotoCategory(categoryId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching {
+                tripsRepository.deleteTripPhotoCategory(tripId, categoryId)
+                fetchPhotosIntoState()
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "deletePhotoCategory failed", error)
+                _uiState.update { it.copy(isPhotosLoading = false) }
+            }
+        }
+    }
+
+    fun deleteTripPhoto(photoId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPhotosLoading = true) }
+            runCatching {
+                tripsRepository.deleteTripPhoto(tripId, photoId)
+                fetchPhotosIntoState()
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "deleteTripPhoto failed", error)
+                _uiState.update { it.copy(isPhotosLoading = false) }
+            }
         }
     }
 

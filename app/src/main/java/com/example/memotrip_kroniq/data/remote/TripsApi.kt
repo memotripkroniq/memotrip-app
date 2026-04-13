@@ -2,10 +2,15 @@ package com.example.memotrip_kroniq.data.remote
 
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
+import com.example.memotrip_kroniq.data.remote.dto.SimpleSuccessResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
+import com.example.memotrip_kroniq.data.remote.dto.TripPhotoCategoryResponse
+import com.example.memotrip_kroniq.data.remote.dto.TripPhotosResponse
 import com.example.memotrip_kroniq.data.remote.dto.UploadCoverResponse
+import com.example.memotrip_kroniq.data.remote.dto.UploadTripPhotoResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -36,6 +41,44 @@ interface TripsApi {
     suspend fun getTripDetail(
         @Path("tripId") tripId: String
     ): TripDetailDto
+
+    @GET("trips/{tripId}/photos")
+    suspend fun getTripPhotos(
+        @Path("tripId") tripId: String
+    ): TripPhotosResponse
+
+    @Multipart
+    @POST("trips/{tripId}/photos")
+    suspend fun uploadTripPhoto(
+        @Path("tripId") tripId: String,
+        @Part file: MultipartBody.Part,
+        @Part("categoryId") categoryId: RequestBody? = null
+    ): UploadTripPhotoResponse
+
+    @POST("trips/{tripId}/photo-categories")
+    suspend fun createTripPhotoCategory(
+        @Path("tripId") tripId: String,
+        @Body body: Map<String, String>
+    ): TripPhotoCategoryResponse
+
+    @PATCH("trips/{tripId}/photo-categories/{categoryId}")
+    suspend fun renameTripPhotoCategory(
+        @Path("tripId") tripId: String,
+        @Path("categoryId") categoryId: String,
+        @Body body: Map<String, String>
+    ): TripPhotoCategoryResponse
+
+    @DELETE("trips/{tripId}/photo-categories/{categoryId}")
+    suspend fun deleteTripPhotoCategory(
+        @Path("tripId") tripId: String,
+        @Path("categoryId") categoryId: String
+    ): SimpleSuccessResponse
+
+    @DELETE("trips/{tripId}/photos/{photoId}")
+    suspend fun deleteTripPhoto(
+        @Path("tripId") tripId: String,
+        @Path("photoId") photoId: String
+    ): SimpleSuccessResponse
 
     @PATCH("trips/{tripId}")
     suspend fun updateTripDetail(

@@ -172,6 +172,17 @@
     <string name="trip_detail_tips_and_trips">Tips &amp; Trips</string>
     <string name="trip_detail_add_tips_and_trips">Přidat tips &amp; trips</string>
     <string name="trip_detail_tip_placeholder">Tip</string>
+    <string name="trip_detail_photos_empty">Zatím tu nejsou žádné fotky</string>
+    <string name="trip_detail_photos_categories_title">Kategorie</string>
+    <string name="trip_detail_photos_add_category">Přidat kategorii</string>
+    <string name="trip_detail_photos_add_photo">Přidat fotku</string>
+    <string name="trip_detail_photos_create_category_title">Vytvořit kategorii</string>
+    <string name="trip_detail_photos_edit_category_title">Upravit kategorii</string>
+    <string name="trip_detail_photos_category_name_label">Název kategorie</string>
+    <string name="trip_detail_photos_dialog_save">Uložit</string>
+    <string name="trip_detail_photos_dialog_delete">Smazat</string>
+    <string name="trip_detail_photos_dialog_cancel">Zrušit</string>
+    <string name="trip_detail_exports_placeholder">Exporty budou dostupné brzy</string>
     <string name="edit_trip_title">Upravit Trip</string>
     <string name="edit_trip_save">Uložit</string>
     <string name="edit_trip_saving">Ukládání</string>

@@ -35,6 +35,7 @@ import innerShadow
 @Composable
 fun PhotoPickerOverlay(
     canDelete: Boolean,
+    showDeleteAction: Boolean = true,
     onTakePhoto: () -> Unit,
     onPickFromGallery: () -> Unit,
     onDeletePhoto: () -> Unit,
@@ -66,6 +67,7 @@ fun PhotoPickerOverlay(
         ) {
             AddTripPhotoContent(
                 canDelete = canDelete,
+                showDeleteAction = showDeleteAction,
                 onTakePhoto = onTakePhoto,
                 onPickFromGallery = onPickFromGallery,
                 onDeletePhoto = onDeletePhoto
@@ -78,6 +80,7 @@ fun PhotoPickerOverlay(
 @Composable
 private fun AddTripPhotoContent(
     canDelete: Boolean,
+    showDeleteAction: Boolean,
     onTakePhoto: () -> Unit,
     onPickFromGallery: () -> Unit,
     onDeletePhoto: () -> Unit
@@ -114,15 +117,17 @@ private fun AddTripPhotoContent(
             onClick = onPickFromGallery
         )
 
-        Spacer(Modifier.Companion.height(10.dp))
+        if (showDeleteAction) {
+            Spacer(Modifier.Companion.height(10.dp))
 
-        PhotoActionButton(
-            icon = R.drawable.ic_delete,
-            text = stringResource(R.string.photo_picker_delete_photo),
-            enabled = canDelete,
-            isDestructive = true,
-            onClick = onDeletePhoto
-        )
+            PhotoActionButton(
+                icon = R.drawable.ic_delete,
+                text = stringResource(R.string.photo_picker_delete_photo),
+                enabled = canDelete,
+                isDestructive = true,
+                onClick = onDeletePhoto
+            )
+        }
     }
 }
 
@@ -200,6 +205,7 @@ private fun PhotoPickerOverlayPreview() {
     ) {
         PhotoPickerOverlay(
             canDelete = false,
+            showDeleteAction = false,
             onTakePhoto = {},
             onPickFromGallery = {},
             onDeletePhoto = {},

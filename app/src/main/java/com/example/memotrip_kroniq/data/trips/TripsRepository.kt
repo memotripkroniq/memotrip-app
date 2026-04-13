@@ -6,7 +6,9 @@ import android.util.Log
 import com.example.memotrip_kroniq.data.remote.TripsApi
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
+import com.example.memotrip_kroniq.data.remote.dto.SimpleSuccessResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
+import com.example.memotrip_kroniq.data.remote.dto.TripPhotosResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -29,6 +31,9 @@ class TripsRepository(
 
     suspend fun getTripDetail(tripId: String): TripDetailDto =
         api.getTripDetail(tripId)
+
+    suspend fun getTripPhotos(tripId: String): TripPhotosResponse =
+        api.getTripPhotos(tripId)
 
 
     suspend fun uploadCoverImage(uri: Uri): String {
@@ -57,6 +62,44 @@ class TripsRepository(
 
         return response.coverImageUrl
     }
+
+    suspend fun uploadTripPhoto(tripId: String, uri: Uri, categoryId: String?) {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+
+        val mime = contentResolver.getType(uri) ?: "image/jpeg"
+        val ext = when (mime.lowercase()) {
+            "image/png" -> "png"
+            "image/webp" -> "webp"
+            else -> "jpg"
+        }
+
+        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val filePart = MultipartBody.Part.createFormData(
+            name = "file",
+            filename = "trip_photo.$ext",
+            body = requestBody
+        )
+        val categoryPart = categoryId
+            ?.takeIf { it.isNotBlank() }
+            ?.toRequestBody("text/plain".toMediaType())
+
+        api.uploadTripPhoto(tripId, filePart, categoryPart)
+    }
+
+    suspend fun createTripPhotoCategory(tripId: String, name: String) {
+        api.createTripPhotoCategory(tripId, mapOf("name" to name))
+    }
+
+    suspend fun renameTripPhotoCategory(tripId: String, categoryId: String, name: String) {
+        api.renameTripPhotoCategory(tripId, categoryId, mapOf("name" to name))
+    }
+
+    suspend fun deleteTripPhotoCategory(tripId: String, categoryId: String): SimpleSuccessResponse =
+        api.deleteTripPhotoCategory(tripId, categoryId)
+
+    suspend fun deleteTripPhoto(tripId: String, photoId: String): SimpleSuccessResponse =
+        api.deleteTripPhoto(tripId, photoId)
 
     suspend fun updateTripDetail(tripId: String, body: TripDetailUpdateDto): TripDetailDto =
         api.updateTripDetail(tripId, body)
