@@ -16,3 +16,9 @@ data class TripPhotoCategoryResponse(
 data class SimpleSuccessResponse(
     val success: Boolean = false
 )
+
+@Serializable
+data class TripKroniqShareResponse(
+    val success: Boolean = false,
+    val isSharedInKroniQ: Boolean = false
+)

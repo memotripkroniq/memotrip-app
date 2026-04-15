@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -29,6 +30,8 @@ import com.example.memotrip_kroniq.ui.theme.AppTheme
 fun ShareInKroniqSection(
     checked: Boolean,
     locked: Boolean,
+    isUpdating: Boolean = false,
+    errorMessage: String? = null,
     onToggle: () -> Unit
 ) {
     val s = LocalUiScaler.current
@@ -106,8 +109,8 @@ fun ShareInKroniqSection(
                     // RIGHT: smaller switch
                     Switch(
                         checked = checked,
-                        onCheckedChange = { if (!locked) onToggle() },
-                        enabled = !locked,
+                        onCheckedChange = { if (!locked && !isUpdating) onToggle() },
+                        enabled = !locked && !isUpdating,
                         modifier = Modifier
                             .padding(start = 6.dp)
                             .scale(0.75f),
@@ -127,11 +130,20 @@ fun ShareInKroniqSection(
                 Spacer(Modifier.height(4f.sy(s)))
 
                 Text(
-                    text = stringResource(R.string.trip_detail_share_hint),
-                    color = Color(0xFF759F67),
+                    text = errorMessage ?: stringResource(R.string.trip_detail_share_hint),
+                    color = if (errorMessage != null) Color(0xFFE27D7D) else Color(0xFF759F67),
                     fontSize = 14f.fs(s),
                     fontWeight = FontWeight.Normal
                 )
+
+                if (isUpdating) {
+                    Spacer(Modifier.height(8.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                }
             }
         }
     }
@@ -149,6 +161,8 @@ private fun ShareInKroniqLockedPreview() {
         ShareInKroniqSection(
             checked = false,
             locked = true,
+            isUpdating = false,
+            errorMessage = null,
             onToggle = {}
         )
     }
@@ -166,6 +180,8 @@ private fun ShareInKroniqUnlockedPreview() {
         ShareInKroniqSection(
             checked = true,
             locked = false,
+            isUpdating = false,
+            errorMessage = null,
             onToggle = {}
         )
     }

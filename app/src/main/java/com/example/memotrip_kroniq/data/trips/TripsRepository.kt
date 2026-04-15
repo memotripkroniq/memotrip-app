@@ -8,6 +8,7 @@ import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
 import com.example.memotrip_kroniq.data.remote.dto.SimpleSuccessResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
+import com.example.memotrip_kroniq.data.remote.dto.TripKroniqShareResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripPhotosResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import okhttp3.MediaType.Companion.toMediaType
@@ -100,6 +101,12 @@ class TripsRepository(
 
     suspend fun deleteTripPhoto(tripId: String, photoId: String): SimpleSuccessResponse =
         api.deleteTripPhoto(tripId, photoId)
+
+    suspend fun shareTripInKroniq(tripId: String): TripKroniqShareResponse =
+        api.shareTripInKroniq(tripId)
+
+    suspend fun unshareTripInKroniq(tripId: String): TripKroniqShareResponse =
+        api.unshareTripInKroniq(tripId)
 
     suspend fun updateTripDetail(tripId: String, body: TripDetailUpdateDto): TripDetailDto =
         api.updateTripDetail(tripId, body)

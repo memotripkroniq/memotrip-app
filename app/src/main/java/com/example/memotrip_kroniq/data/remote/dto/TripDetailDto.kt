@@ -25,6 +25,7 @@ data class TripDetailDto(
 
     val plannedBudget: String? = null,
     val spentBudget: String? = null,
+    val isSharedInKroniQ: Boolean = false,
 
     @SerializedName("TripChecklistItems")
     val tripChecklistItems: List<TripChecklistItemDto> = emptyList(),

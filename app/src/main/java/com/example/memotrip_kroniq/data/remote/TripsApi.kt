@@ -6,6 +6,7 @@ import com.example.memotrip_kroniq.data.remote.dto.SimpleSuccessResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import com.example.memotrip_kroniq.data.remote.dto.TripPhotoCategoryResponse
+import com.example.memotrip_kroniq.data.remote.dto.TripKroniqShareResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripPhotosResponse
 import com.example.memotrip_kroniq.data.remote.dto.UploadCoverResponse
 import com.example.memotrip_kroniq.data.remote.dto.UploadTripPhotoResponse
@@ -79,6 +80,16 @@ interface TripsApi {
         @Path("tripId") tripId: String,
         @Path("photoId") photoId: String
     ): SimpleSuccessResponse
+
+    @POST("trips/{tripId}/kroniq-share")
+    suspend fun shareTripInKroniq(
+        @Path("tripId") tripId: String
+    ): TripKroniqShareResponse
+
+    @DELETE("trips/{tripId}/kroniq-share")
+    suspend fun unshareTripInKroniq(
+        @Path("tripId") tripId: String
+    ): TripKroniqShareResponse
 
     @PATCH("trips/{tripId}")
     suspend fun updateTripDetail(

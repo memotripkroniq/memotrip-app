@@ -258,6 +258,8 @@ fun TripDetailContent(
                     ShareInKroniqSection(
                         checked = uiState.isSharedInKroniq,
                         locked = uiState.isKroniqLocked,
+                        isUpdating = uiState.isShareInKroniqUpdating,
+                        errorMessage = uiState.shareInKroniqErrorMessage,
                         onToggle = onToggleShareInKroniq
                     )
                     Spacer(Modifier.height(20f.sy(s)))

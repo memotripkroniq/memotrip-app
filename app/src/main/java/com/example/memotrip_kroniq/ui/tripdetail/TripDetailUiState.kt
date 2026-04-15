@@ -40,6 +40,8 @@ data class TripDetailUiState(
     // KroniQ
     val hasKroniqPackage: Boolean = false,
     val isSharedInKroniq: Boolean = false,
+    val isShareInKroniqUpdating: Boolean = false,
+    val shareInKroniqErrorMessage: String? = null,
 
     // Themes
     val themes: List<ThemeUi> = emptyList(),

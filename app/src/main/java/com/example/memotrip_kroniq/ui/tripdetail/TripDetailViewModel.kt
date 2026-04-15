@@ -118,6 +118,7 @@ class TripDetailViewModel(
 
                         plannedBudget = trip.plannedBudget.orEmpty(),
                         spentBudget = trip.spentBudget.orEmpty(),
+                        isSharedInKroniq = trip.isSharedInKroniQ,
 
                         checklistItems = checklistUi,
                         editingChecklistIndex = null,
@@ -134,6 +135,8 @@ class TripDetailViewModel(
                         pickingTipsPhotoIndex = null,
 
                         hasKroniqPackage = true,
+                        isShareInKroniqUpdating = false,
+                        shareInKroniqErrorMessage = null,
                         hasUnsavedChanges = false,
                         isInitialLoading = false,
                         isHeroLoading = false,
@@ -318,13 +321,41 @@ class TripDetailViewModel(
     }
 
     fun toggleShareInKroniq() {
-        _uiState.update { state ->
-            if (state.isKroniqLocked) return@update state
+        val before = _uiState.value
+        if (before.isKroniqLocked || before.isShareInKroniqUpdating) return
 
-            state.copy(
-                isSharedInKroniq = !state.isSharedInKroniq,
-                hasUnsavedChanges = true
+        val target = !before.isSharedInKroniq
+
+        _uiState.update {
+            it.copy(
+                isSharedInKroniq = target,
+                isShareInKroniqUpdating = true,
+                shareInKroniqErrorMessage = null
             )
+        }
+
+        viewModelScope.launch {
+            runCatching {
+                if (target) tripsRepository.shareTripInKroniq(tripId)
+                else tripsRepository.unshareTripInKroniq(tripId)
+            }.onSuccess { response ->
+                _uiState.update {
+                    it.copy(
+                        isSharedInKroniq = response.isSharedInKroniQ,
+                        isShareInKroniqUpdating = false,
+                        shareInKroniqErrorMessage = null
+                    )
+                }
+            }.onFailure { error ->
+                Log.e("TripDetailVM", "toggleShareInKroniq failed", error)
+                _uiState.update {
+                    it.copy(
+                        isSharedInKroniq = before.isSharedInKroniq,
+                        isShareInKroniqUpdating = false,
+                        shareInKroniqErrorMessage = error.message
+                    )
+                }
+            }
         }
     }
 
