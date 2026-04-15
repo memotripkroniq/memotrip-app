@@ -64,6 +64,7 @@ import com.example.memotrip_kroniq.ui.settings.LegalPoliciesScreen
 import com.example.memotrip_kroniq.ui.settings.OpenSourceLicensesScreen
 import com.example.memotrip_kroniq.ui.settings.PaymentsSubscriptionsScreen
 import com.example.memotrip_kroniq.ui.settings.PrivacyPolicyScreen
+import com.example.memotrip_kroniq.ui.settings.RateUsScreen
 import com.example.memotrip_kroniq.ui.settings.SettingsScreen
 import com.example.memotrip_kroniq.ui.settings.TermsOfServiceScreen
 import com.example.memotrip_kroniq.ui.settings.LanguageScreen
@@ -105,6 +106,7 @@ sealed class Screen(val route: String) {
     object AiFeaturesNotice : Screen("ai_features_notice")
     object OpenSourceLicenses : Screen("open_source_licenses")
     object DeleteAccount : Screen("delete_account")
+    object RateUs : Screen("rate_us")
     object KroniQ : Screen("kroniq")
     object KroniQAddMember : Screen("kroniq_add_member")
     object KroniQAddMemberSaving : Screen("kroniq_add_member_saving")
@@ -530,6 +532,14 @@ fun AppNavGraph(navController: NavHostController) {
             exitTransition = { defaultExit(initialState, targetState) }
         ) {
             DeleteAccountScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.RateUs.route,
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) {
+            RateUsScreen(navController = navController)
         }
 
         composable(

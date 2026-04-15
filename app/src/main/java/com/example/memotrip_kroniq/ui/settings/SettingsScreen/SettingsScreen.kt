@@ -181,7 +181,7 @@ fun SettingsScreen(
 
                     SettingsArrowItem(
                         title = stringResource(R.string.settings_rate_us),
-                        onClick = { /* TODO */ }
+                        onClick = { navController.navigate(Screen.RateUs.route) }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))

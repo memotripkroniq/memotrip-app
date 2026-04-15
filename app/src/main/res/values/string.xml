@@ -126,6 +126,10 @@
     <string name="delete_account_error_reauth_required">Recent re-authentication is required</string>
     <string name="delete_account_error_not_allowed">Account deletion is not allowed right now</string>
     <string name="delete_account_footer_note">This action deletes access to the current account and cleans up related app data according to the backend delete-account policy.</string>
+    <string name="rate_us_thanks_title">Thanks !</string>
+    <string name="rate_us_thanks_body">we will work harder to make\nyou more satisfied.</string>
+    <string name="rate_us_google_play">Rate on Google Play</string>
+    <string name="rate_us_no_thanks">No, Thanks !</string>
     <string name="settings_log_out">Log out</string>
     <string name="language_title">Language</string>
     <string name="language_option_english">English</string>

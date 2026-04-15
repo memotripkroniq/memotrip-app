@@ -20,6 +20,10 @@
     <string name="legal_ai_features_notice">Informace o AI funkcích</string>
     <string name="legal_open_source_licenses">Open source licence</string>
     <string name="legal_delete_account">Smazat účet</string>
+    <string name="rate_us_thanks_title">Děkujeme !</string>
+    <string name="rate_us_thanks_body">budeme pracovat ještě víc,\nabychom vás potěšili.</string>
+    <string name="rate_us_google_play">Ohodnotit na Google Play</string>
+    <string name="rate_us_no_thanks">Ne, děkuji !</string>
     <string name="settings_log_out">Odhlásit se</string>
     <string name="language_title">Jazyk</string>
     <string name="language_option_english">English</string>
