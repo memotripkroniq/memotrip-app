@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -69,6 +70,16 @@ fun TripHistoryItemRow(
                 .weight(1f),
             maxLines = 1
         )
+
+        if (item.isSharedInKroniq) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_add_first_trip),
+                contentDescription = "Shared trip",
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+        }
 
         // 🔹 ZELENÁ ŠIPKA – DETAIL TRIPU
         Icon(

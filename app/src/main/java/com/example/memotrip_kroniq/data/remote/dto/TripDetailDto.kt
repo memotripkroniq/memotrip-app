@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TripDetailDto(
     val id: String = "",
+    val ownerId: String? = null,
 
     // ✅ udělej tolerantní
     val name: String? = null,

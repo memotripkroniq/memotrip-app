@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.trips.TripsRepository
@@ -28,6 +29,7 @@ import com.example.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 
@@ -54,8 +56,16 @@ fun TripDetailScreen(
         )
     }
 
-    val factory = remember(tripsRepository, tripId) {
+    val authRepository = remember(tokenStore) {
+        AuthRepository(
+            api = RetrofitClient.authApi,
+            tokenStore = tokenStore
+        )
+    }
+
+    val factory = remember(authRepository, tripsRepository, tripId) {
         TripDetailViewModelFactory(
+            authRepository = authRepository,
             tripsRepository = tripsRepository,
             tripId = tripId
         )
@@ -63,6 +73,7 @@ fun TripDetailScreen(
 
     val vm: TripDetailViewModel = viewModel(factory = factory)
     val uiState by vm.uiState.collectAsState()
+    val canEditTrip = uiState.canEditTrip
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val savedStateHandle = currentBackStackEntry?.savedStateHandle
     val tripUpdated by remember(savedStateHandle) {
@@ -80,12 +91,16 @@ fun TripDetailScreen(
         {
             if (vm.uiState.value.isSaving) return@remember
 
-            vm.save {
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set("trip_updated", true)
-
+            if (!vm.uiState.value.canEditTrip) {
                 navController.popBackStack()
+            } else {
+                vm.save {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("trip_updated", true)
+
+                    navController.popBackStack()
+                }
             }
         }
     }
@@ -137,55 +152,59 @@ fun TripDetailScreen(
                     .padding(horizontal = 16.dp),
                 uiState = uiState,
                 onTabSelected = vm::onTabSelected,
-                onToggleShareInKroniq = vm::toggleShareInKroniq,
+                onToggleShareInKroniq = if (canEditTrip) vm::toggleShareInKroniq else ({}),
                 onEditTripInfoClick = {
-                    navController.navigate(Screen.EditTrip.createRoute(tripId))
-                },
-                onAddMemberClick = vm::onAddMemberClick,
-                onAddChecklistItem = vm::addChecklistItem,
-                onToggleChecklistItem = vm::toggleChecklistItem,
-                onRemoveChecklistItem = vm::removeChecklistItem,
-                onDeleteTripClick = {
-                    vm.onDeleteTripClick {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("trip_deleted", true)
-
-                        navController.popBackStack()
+                    if (canEditTrip) {
+                        navController.navigate(Screen.EditTrip.createRoute(tripId))
                     }
                 },
-                onStartEditChecklistItem = vm::startEditChecklistItem,
-                onEditingChecklistTextChange = vm::updateEditingChecklistText,
-                onCommitEditChecklistItem = vm::commitEditChecklistItem,
-                onCancelEditChecklistItem = vm::cancelEditChecklistItem,
-                onAddNoteItem = vm::addNoteItem,
-                onRemoveNoteItem = vm::removeNoteItem,
-                onStartEditNoteItem = vm::startEditNoteItem,
-                onEditingNoteTextChange = vm::updateEditingNoteText,
-                onCommitEditNoteItem = vm::commitEditNoteItem,
-                onCancelEditNoteItem = vm::cancelEditNoteItem,
+                onAddMemberClick = if (canEditTrip) vm::onAddMemberClick else ({}),
+                onAddChecklistItem = if (canEditTrip) vm::addChecklistItem else ({}),
+                onToggleChecklistItem = if (canEditTrip) vm::toggleChecklistItem else ({ _ -> }),
+                onRemoveChecklistItem = if (canEditTrip) vm::removeChecklistItem else ({ _ -> }),
+                onDeleteTripClick = {
+                    if (canEditTrip) {
+                        vm.onDeleteTripClick {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("trip_deleted", true)
+
+                            navController.popBackStack()
+                        }
+                    }
+                },
+                onStartEditChecklistItem = if (canEditTrip) vm::startEditChecklistItem else ({ _ -> }),
+                onEditingChecklistTextChange = if (canEditTrip) vm::updateEditingChecklistText else ({}),
+                onCommitEditChecklistItem = if (canEditTrip) vm::commitEditChecklistItem else ({}),
+                onCancelEditChecklistItem = if (canEditTrip) vm::cancelEditChecklistItem else ({}),
+                onAddNoteItem = if (canEditTrip) vm::addNoteItem else ({}),
+                onRemoveNoteItem = if (canEditTrip) vm::removeNoteItem else ({ _ -> }),
+                onStartEditNoteItem = if (canEditTrip) vm::startEditNoteItem else ({ _ -> }),
+                onEditingNoteTextChange = if (canEditTrip) vm::updateEditingNoteText else ({}),
+                onCommitEditNoteItem = if (canEditTrip) vm::commitEditNoteItem else ({}),
+                onCancelEditNoteItem = if (canEditTrip) vm::cancelEditNoteItem else ({}),
                 onToggleBudgetVisibility = vm::toggleBudgetVisibility,
-                onStartEditBudget = vm::startEditBudget,
-                onEditingBudgetTextChange = vm::updateEditingBudgetText,
-                onCommitEditBudget = vm::commitEditBudget,
-                onTipsAddClick = vm::addTipsAndTripsItem,
-                onTipsCancelAddClick = vm::cancelAddTipsAndTrips,
-                onTipsRemoveItem = vm::removeTipsAndTripsItem,
-                onStartEditTipsItem = vm::startEditTipsAndTripsItem,
-                onEditingTipsTextChange = vm::updateEditingTipsText,
-                onCommitEditTipsItem = vm::commitEditTipsAndTrips,
-                onTipsRequestPickPhoto = vm::requestPickTipsPhoto,
-                onTipsPhotoPicked = vm::onTipsPhotoPicked,
-                onCoverPhotoSelected = vm::onCoverPhotoSelected,
-                onAddPhotoCategory = vm::createPhotoCategory,
-                onRenamePhotoCategory = vm::renamePhotoCategory,
-                onDeletePhotoCategory = vm::deletePhotoCategory,
-                onTripPhotoPicked = vm::uploadTripPhoto,
-                onDeleteTripPhoto = vm::deleteTripPhoto,
-                onFromTextChange = vm::onFromTextChange,
-                onToTextChange = vm::onToTextChange,
-                onThemeSelected = vm::onThemeSelected,
-                onToggleTransport = vm::toggleTransport,
+                onStartEditBudget = if (canEditTrip) vm::startEditBudget else ({ _: BudgetEditField -> }),
+                onEditingBudgetTextChange = if (canEditTrip) vm::updateEditingBudgetText else ({}),
+                onCommitEditBudget = if (canEditTrip) vm::commitEditBudget else ({}),
+                onTipsAddClick = if (canEditTrip) vm::addTipsAndTripsItem else ({}),
+                onTipsCancelAddClick = if (canEditTrip) vm::cancelAddTipsAndTrips else ({}),
+                onTipsRemoveItem = if (canEditTrip) vm::removeTipsAndTripsItem else ({ _ -> }),
+                onStartEditTipsItem = if (canEditTrip) vm::startEditTipsAndTripsItem else ({ _ -> }),
+                onEditingTipsTextChange = if (canEditTrip) vm::updateEditingTipsText else ({}),
+                onCommitEditTipsItem = if (canEditTrip) vm::commitEditTipsAndTrips else ({}),
+                onTipsRequestPickPhoto = if (canEditTrip) vm::requestPickTipsPhoto else ({ _ -> }),
+                onTipsPhotoPicked = if (canEditTrip) vm::onTipsPhotoPicked else ({}),
+                onCoverPhotoSelected = if (canEditTrip) vm::onCoverPhotoSelected else ({}),
+                onAddPhotoCategory = if (canEditTrip) vm::createPhotoCategory else ({}),
+                onRenamePhotoCategory = if (canEditTrip) vm::renamePhotoCategory else ({ _, _ -> }),
+                onDeletePhotoCategory = if (canEditTrip) vm::deletePhotoCategory else ({}),
+                onTripPhotoPicked = if (canEditTrip) vm::uploadTripPhoto else ({ _, _ -> }),
+                onDeleteTripPhoto = if (canEditTrip) vm::deleteTripPhoto else ({}),
+                onFromTextChange = if (canEditTrip) vm::onFromTextChange else ({}),
+                onToTextChange = if (canEditTrip) vm::onToTextChange else ({}),
+                onThemeSelected = if (canEditTrip) vm::onThemeSelected else ({}),
+                onToggleTransport = if (canEditTrip) vm::toggleTransport else ({ _ -> }),
 
 
                 )

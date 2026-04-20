@@ -3,9 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-
-    // Google Services (Google Login)
-    id("com.google.gms.google-services")
 }
 
 // ===============================================
@@ -21,7 +18,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.memotrip_kroniq"
+        applicationId = "com.memotrip_kroniq"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -166,11 +163,9 @@ dependencies {
     // ===== Datastore =====
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // ===== Google Login / Firebase Auth =====
+    // ===== Google Login =====
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
-    implementation("com.google.firebase:firebase-auth")
 
     // ===== Coil pro nahraní fotky Add Trip field =====
     implementation("io.coil-kt:coil-compose:2.6.0")

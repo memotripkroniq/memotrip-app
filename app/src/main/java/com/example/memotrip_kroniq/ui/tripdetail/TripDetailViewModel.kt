@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.R
+import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.core.model.TransportType
@@ -30,6 +31,7 @@ import java.util.Locale
 
 
 class TripDetailViewModel(
+    private val authRepository: AuthRepository,
     private val tripsRepository: TripsRepository,
     private val tripId: String
 ) : ViewModel() {
@@ -57,8 +59,10 @@ class TripDetailViewModel(
 
             try {
                 Log.d("TripDetailVM", "Loading tripId=$tripId")
+                val me = runCatching { authRepository.getMe() }.getOrNull()
                 val trip = tripsRepository.getTripDetail(tripId)
                 Log.d("TripDetailVM", "Loaded trip=$trip")
+                val canEditTrip = trip.ownerId.isNullOrBlank() || trip.ownerId == me?.id
 
                 val transportEnum = trip.transport?.let { raw ->
                     runCatching { TransportType.valueOf(raw.uppercase()) }.getOrNull()
@@ -118,6 +122,7 @@ class TripDetailViewModel(
 
                         plannedBudget = trip.plannedBudget.orEmpty(),
                         spentBudget = trip.spentBudget.orEmpty(),
+                        canEditTrip = canEditTrip,
                         isSharedInKroniq = trip.isSharedInKroniQ,
 
                         checklistItems = checklistUi,
@@ -134,7 +139,7 @@ class TripDetailViewModel(
                         editingTipsText = TextFieldValue(""),
                         pickingTipsPhotoIndex = null,
 
-                        hasKroniqPackage = true,
+                        hasKroniqPackage = me?.isKroniq == true,
                         isShareInKroniqUpdating = false,
                         shareInKroniqErrorMessage = null,
                         hasUnsavedChanges = false,
@@ -322,7 +327,7 @@ class TripDetailViewModel(
 
     fun toggleShareInKroniq() {
         val before = _uiState.value
-        if (before.isKroniqLocked || before.isShareInKroniqUpdating) return
+        if (!before.canEditTrip || before.isKroniqLocked || before.isShareInKroniqUpdating) return
 
         val target = !before.isSharedInKroniq
 
@@ -887,6 +892,10 @@ class TripDetailViewModel(
     fun save(onDone: () -> Unit) {
         Log.d("TRIP_DETAIL_SAVE", "save() called, hasUnsavedChanges=${_uiState.value.hasUnsavedChanges}")
         val current = _uiState.value
+        if (!current.canEditTrip) {
+            onDone()
+            return
+        }
         if (current.isSaving) return
 
         // 1) propsat rozeditované věci do state (aby se neztratil poslední znak)
@@ -991,6 +1000,7 @@ class TripDetailViewModel(
     }
 
     fun onDeleteTripClick(onDone: () -> Unit) {
+        if (!_uiState.value.canEditTrip) return
         if (_uiState.value.isSaving) return
 
         viewModelScope.launch {

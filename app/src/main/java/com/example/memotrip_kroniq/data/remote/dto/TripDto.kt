@@ -7,5 +7,6 @@ data class TripDto(
     val id: String,
     val title: String,
     val coverImageUrl: String? = null,
-    val theme: String? = null
+    val theme: String? = null,
+    val isSharedInKroniQ: Boolean = false
 )

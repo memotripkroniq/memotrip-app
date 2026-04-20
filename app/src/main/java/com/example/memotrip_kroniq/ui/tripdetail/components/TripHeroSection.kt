@@ -25,6 +25,7 @@ fun TripHeroSection(
     modifier: Modifier = Modifier,
     coverUrl: String? = null,
     mapUrl: String? = null,
+    canEdit: Boolean = true,
     onChangeCoverClick: () -> Unit = {},
     onMapClick: () -> Unit = {}
 ) {
@@ -57,18 +58,20 @@ fun TripHeroSection(
                 )
             }
 
-            Image(
-                painter = painterResource(R.drawable.tripdetail_ic_edit),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 12.dp, y = 12.dp)
-                    .size(32.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onChangeCoverClick() }
-            )
+            if (canEdit) {
+                Image(
+                    painter = painterResource(R.drawable.tripdetail_ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 12.dp, y = 12.dp)
+                        .size(32.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onChangeCoverClick() }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(18.dp))

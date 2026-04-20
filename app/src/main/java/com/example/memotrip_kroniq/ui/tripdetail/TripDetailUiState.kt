@@ -39,6 +39,7 @@ data class TripDetailUiState(
 
     // KroniQ
     val hasKroniqPackage: Boolean = false,
+    val canEditTrip: Boolean = true,
     val isSharedInKroniq: Boolean = false,
     val isShareInKroniqUpdating: Boolean = false,
     val shareInKroniqErrorMessage: String? = null,

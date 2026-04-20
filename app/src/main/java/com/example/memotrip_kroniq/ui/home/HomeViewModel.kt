@@ -67,7 +67,8 @@ class HomeViewModel(
                                 id = trip.id,
                                 title = trip.title,
                                 coverImageUrl = trip.coverImageUrl,
-                                theme = trip.theme
+                                theme = trip.theme,
+                                isSharedInKroniq = trip.isSharedInKroniQ
                             )
                         },
                         isTripsLoading = false

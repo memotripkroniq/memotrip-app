@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
@@ -28,6 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.memotrip_kroniq.R
@@ -42,6 +46,7 @@ import com.example.memotrip_kroniq.ui.settings.components.SectionTitle
 import com.example.memotrip_kroniq.ui.settings.components.SettingsArrowItem
 import com.example.memotrip_kroniq.ui.settings.components.SettingsSwitchItem
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
+import kotlinx.coroutines.launch
 
 private val ScreenBg = Color.Black
 
@@ -52,6 +57,8 @@ fun SettingsScreen(
 ) {
     val s = LocalUiScaler.current
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
 
     var pushNotifications by remember { mutableStateOf(true) }
     var emailNotifications by remember { mutableStateOf(true) }
@@ -67,7 +74,7 @@ fun SettingsScreen(
         )
     }
 
-    LaunchedEffect(authRepository) {
+    suspend fun reloadSettings() {
         runCatching { authRepository.getMe() }
             .onSuccess { me ->
                 isKroniq = me.isKroniq
@@ -81,6 +88,26 @@ fun SettingsScreen(
                 kroniqImageUrl = null
                 isSettingsLoading = false
             }
+    }
+
+    LaunchedEffect(authRepository) {
+        reloadSettings()
+    }
+
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner, authRepository) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isSettingsLoading = true
+                scope.launch {
+                    reloadSettings()
+                }
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(

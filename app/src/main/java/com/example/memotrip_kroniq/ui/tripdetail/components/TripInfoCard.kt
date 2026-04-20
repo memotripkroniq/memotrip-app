@@ -37,6 +37,7 @@ fun TripInfoCard(
     fromText: String,
     toText: String,
     transport: Set<TransportType>,
+    canEdit: Boolean = true,
     onEditClick: () -> Unit,
     theme: ThemeType?
 ) {
@@ -124,17 +125,19 @@ fun TripInfoCard(
                 }
             }
 
-            Image(
-                painter = painterResource(R.drawable.tripdetail_ic_edit),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(24.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onEditClick() }
-            )
+            if (canEdit) {
+                Image(
+                    painter = painterResource(R.drawable.tripdetail_ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onEditClick() }
+                )
+            }
         }
     }
 }

@@ -178,6 +178,7 @@ fun TripDetailContent(
                 TripHeroSection(
                     coverUrl = uiState.localCoverPhotoUri?.toString() ?: uiState.coverImageUrl,
                     mapUrl = uiState.mapImageUrl,
+                    canEdit = uiState.canEditTrip,
                     onChangeCoverClick = { showPhotoActionSheet = true },
                     onMapClick = {
                         if (!uiState.mapImageUrl.isNullOrBlank()) showMap = true
@@ -194,14 +195,15 @@ fun TripDetailContent(
                 Spacer(Modifier.height(20f.sy(s)))
             }
 
-            TripPhotosTab(
-                modifier = Modifier.weight(1f),
-                categories = uiState.photoCategories,
-                photos = uiState.tripPhotos,
-                isLoading = uiState.isPhotosLoading,
-                onAddCategoryClick = onAddPhotoCategory,
-                onRenameCategoryClick = onRenamePhotoCategory,
-                onDeleteCategoryClick = onDeletePhotoCategory,
+                TripPhotosTab(
+                    modifier = Modifier.weight(1f),
+                    categories = uiState.photoCategories,
+                    photos = uiState.tripPhotos,
+                    isLoading = uiState.isPhotosLoading,
+                    canEdit = uiState.canEditTrip,
+                    onAddCategoryClick = onAddPhotoCategory,
+                    onRenameCategoryClick = onRenamePhotoCategory,
+                    onDeleteCategoryClick = onDeletePhotoCategory,
                 onAddPhotoClick = { categoryId ->
                     selectedTripPhotoCategoryId = categoryId
                     showTripPhotoActionSheet = true
@@ -227,6 +229,7 @@ fun TripDetailContent(
                 TripHeroSection(
                     coverUrl = uiState.localCoverPhotoUri?.toString() ?: uiState.coverImageUrl,
                     mapUrl = uiState.mapImageUrl,
+                    canEdit = uiState.canEditTrip,
                     onChangeCoverClick = { showPhotoActionSheet = true },
                     onMapClick = {
                         if (!uiState.mapImageUrl.isNullOrBlank()) showMap = true
@@ -257,7 +260,7 @@ fun TripDetailContent(
                 item {
                     ShareInKroniqSection(
                         checked = uiState.isSharedInKroniq,
-                        locked = uiState.isKroniqLocked,
+                        locked = uiState.isKroniqLocked || !uiState.canEditTrip,
                         isUpdating = uiState.isShareInKroniqUpdating,
                         errorMessage = uiState.shareInKroniqErrorMessage,
                         onToggle = onToggleShareInKroniq
@@ -268,7 +271,7 @@ fun TripDetailContent(
                 item {
                     ThemeSelector(
                         selected = uiState.selectedTheme,
-                        locked = uiState.isThemesLocked,
+                        locked = uiState.isThemesLocked || !uiState.canEditTrip,
                         onSelect = { theme ->
                             onThemeSelected(theme)
                         }
@@ -283,6 +286,7 @@ fun TripDetailContent(
                         fromText = uiState.fromText,
                         toText = uiState.toText,
                         transport = uiState.transport,
+                        canEdit = uiState.canEditTrip,
                         onEditClick = onEditTripInfoClick,
                         theme = uiState.selectedTheme
                     )
@@ -372,20 +376,22 @@ fun TripDetailContent(
                     Spacer(Modifier.height(24f.sy(s)))
                 }
 
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        PrimaryButton(
-                            text = stringResource(R.string.trip_detail_delete_trip),
-                            onClick = onDeleteTripClick,
-                            modifier = Modifier
-                                .width(200f.sx(s))
-                                .align(Alignment.Center)
-                        )
-                    }
+                if (uiState.canEditTrip) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            PrimaryButton(
+                                text = stringResource(R.string.trip_detail_delete_trip),
+                                onClick = onDeleteTripClick,
+                                modifier = Modifier
+                                    .width(200f.sx(s))
+                                    .align(Alignment.Center)
+                            )
+                        }
 
-                    Spacer(Modifier.height(24f.sy(s)))
+                        Spacer(Modifier.height(24f.sy(s)))
+                    }
                 }
             }
 
@@ -422,7 +428,7 @@ fun TripDetailContent(
         }
     }
 
-    if (showPhotoActionSheet) {
+    if (showPhotoActionSheet && uiState.canEditTrip) {
         PhotoPickerOverlay(
             canDelete = uiState.coverImageUrl != null,
             onTakePhoto = {
@@ -457,7 +463,7 @@ fun TripDetailContent(
         )
     }
 
-    if (showTripPhotoActionSheet) {
+    if (showTripPhotoActionSheet && uiState.canEditTrip) {
         PhotoPickerOverlay(
             canDelete = false,
             showDeleteAction = false,

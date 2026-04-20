@@ -81,7 +81,8 @@ private fun TripHistoryListPreview_UpsellOn() {
                             id = "1",
                             title = "TestsIsPremium",
                             coverImageUrl = null,
-                            theme = null
+                            theme = null,
+                            isSharedInKroniq = true
                         )
                     ),
                     showUpsell = true,
@@ -111,7 +112,8 @@ private fun TripHistoryListPreview_UpsellOff() {
                             id = "1",
                             title = "KroniQ user (no upsell)",
                             coverImageUrl = null,
-                            theme = null
+                            theme = null,
+                            isSharedInKroniq = false
                         )
                     ),
                     showUpsell = false,

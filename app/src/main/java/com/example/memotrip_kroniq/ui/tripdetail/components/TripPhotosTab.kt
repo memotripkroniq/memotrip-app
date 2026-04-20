@@ -57,6 +57,7 @@ fun TripPhotosTab(
     categories: List<TripPhotoCategoryUi>,
     photos: List<TripPhotoUi>,
     isLoading: Boolean,
+    canEdit: Boolean = true,
     onAddCategoryClick: (String) -> Unit,
     onRenameCategoryClick: (String, String) -> Unit,
     onDeleteCategoryClick: (String) -> Unit,
@@ -108,13 +109,17 @@ fun TripPhotosTab(
                 selectedCategoryId = selectedCategoryId,
                 onCategorySelected = { selectedCategoryId = it },
                 onAddCategoryClick = {
-                    categoryDialogState = PhotoCategoryDialogState.Create("")
+                    if (canEdit) {
+                        categoryDialogState = PhotoCategoryDialogState.Create("")
+                    }
                 },
                 onEditCategoryClick = { category ->
-                    categoryDialogState = PhotoCategoryDialogState.Edit(
-                        categoryId = category.id,
-                        value = category.name
-                    )
+                    if (canEdit) {
+                        categoryDialogState = PhotoCategoryDialogState.Edit(
+                            categoryId = category.id,
+                            value = category.name
+                        )
+                    }
                 }
             )
 
@@ -148,12 +153,14 @@ fun TripPhotosTab(
             }
         }
 
-        AddGalleryPhotoButton(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 8.dp),
-            onClick = { onAddPhotoClick(selectedCategoryId) }
-        )
+        if (canEdit) {
+            AddGalleryPhotoButton(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp),
+                onClick = { onAddPhotoClick(selectedCategoryId) }
+            )
+        }
 
         if (isLoading) {
             Box(
@@ -169,14 +176,16 @@ fun TripPhotosTab(
     }
 
     selectedPhoto?.let { photo ->
-        ZoomableImageDialog(
-            imageUrl = photo.imageUrl,
-            onDismiss = { selectedPhoto = null },
-            onDeleteClick = {
-                onDeletePhotoClick(photo.id)
-                selectedPhoto = null
-            }
-        )
+            ZoomableImageDialog(
+                imageUrl = photo.imageUrl,
+                onDismiss = { selectedPhoto = null },
+                onDeleteClick = if (canEdit) {
+                    {
+                        onDeletePhotoClick(photo.id)
+                        selectedPhoto = null
+                    }
+                } else null
+            )
     }
 
     categoryDialogState?.let { dialogState ->
@@ -294,7 +303,9 @@ private fun AddCategoryCard(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.height(92.dp),
+        modifier = modifier
+            .width(92.dp)
+            .height(80.dp),
         contentAlignment = Alignment.Center
     ) {
         Image(
