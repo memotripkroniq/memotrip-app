@@ -15,7 +15,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 

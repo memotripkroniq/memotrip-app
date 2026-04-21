@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
 import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler

@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues

@@ -1,7 +1,6 @@
 package com.example.memotrip_kroniq.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.Serializable
 
 data class CreateTripResponse(
     @SerializedName("id")

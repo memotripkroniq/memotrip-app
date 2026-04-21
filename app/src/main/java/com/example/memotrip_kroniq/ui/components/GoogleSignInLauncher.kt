@@ -2,7 +2,7 @@ package com.example.memotrip_kroniq.ui.components
 
 import android.app.Activity
 import android.content.Context
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 

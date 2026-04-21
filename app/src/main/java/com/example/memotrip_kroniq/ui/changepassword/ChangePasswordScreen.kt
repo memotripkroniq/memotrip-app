@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.auth.Validators
 import com.example.memotrip_kroniq.ui.auth.authMessage
 import com.example.memotrip_kroniq.ui.components.CustomInputBox

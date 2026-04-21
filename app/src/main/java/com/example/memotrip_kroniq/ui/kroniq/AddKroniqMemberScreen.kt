@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Text
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.components.CustomInputBox
 import com.example.memotrip_kroniq.ui.components.PrimaryButton
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler

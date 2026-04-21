@@ -23,9 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.home.components.modifiers.planButtonTopInnerShadow
-import com.example.memotrip_kroniq.ui.home.components.upsell.KroniqCtaButton
 import innerShadow
 
 @Composable

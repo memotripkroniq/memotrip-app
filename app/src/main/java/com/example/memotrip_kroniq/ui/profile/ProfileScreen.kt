@@ -50,7 +50,7 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import com.example.memotrip_kroniq.ui.utils.createImageFile
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.profile.components.ProfileDatePickerOverlay
 import java.time.LocalDate
 import java.time.OffsetDateTime

@@ -3,7 +3,7 @@ package com.example.memotrip_kroniq.ui.tripdetail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
@@ -21,7 +21,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.example.memotrip_kroniq.ui.tripdetail.components.BudgetEditField
 import android.net.Uri
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
-import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoCategoryUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoUi

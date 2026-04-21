@@ -4,7 +4,7 @@ import android.content.Context
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 fun createGoogleSignInClient(context: Context): GoogleSignInClient {
     return GoogleSignIn.getClient(

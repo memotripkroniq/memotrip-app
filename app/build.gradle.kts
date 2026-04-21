@@ -14,15 +14,15 @@ val RELEASE_KEY_ALIAS: String by project
 val RELEASE_KEY_PASSWORD: String by project
 
 android {
-    namespace = "com.example.memotrip_kroniq"
+    namespace = "com.memotrip_kroniq"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.memotrip_kroniq"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 6
+        versionName = "1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -82,7 +82,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://api.memotrip.app/\""
+                "\"https://memotrip-bff-production.up.railway.app/\""
             )
         }
     }

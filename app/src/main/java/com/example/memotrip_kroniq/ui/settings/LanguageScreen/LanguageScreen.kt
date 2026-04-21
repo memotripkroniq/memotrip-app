@@ -1,7 +1,6 @@
 package com.example.memotrip_kroniq.ui.settings
 
 import PreviewUiScaler
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.core.localization.AppLanguage
 import com.example.memotrip_kroniq.core.localization.AppLocaleManager
 import com.example.memotrip_kroniq.data.datastore.LanguageDataStore

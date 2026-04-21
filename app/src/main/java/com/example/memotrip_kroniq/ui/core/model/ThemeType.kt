@@ -1,6 +1,6 @@
 package com.example.memotrip_kroniq.ui.core.model
 
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 enum class Destination(
     val label: String,

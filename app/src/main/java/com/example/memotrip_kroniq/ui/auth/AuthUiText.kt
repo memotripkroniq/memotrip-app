@@ -2,7 +2,7 @@ package com.example.memotrip_kroniq.ui.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 @Composable
 fun authMessage(message: String?): String? {

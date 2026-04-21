@@ -94,7 +94,6 @@ class LoginViewModel(
                 _state.value = LoginState.Success(user = me)
 
             } catch (e: Exception) {
-                Log.e("AUTH", "Google login failed", e)
                 _state.value = LoginState.Error("Google login failed")
             }
         }

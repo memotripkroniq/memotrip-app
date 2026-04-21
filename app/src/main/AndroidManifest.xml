@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
-        android:name=".MemoTripApp"
+        android:name="com.example.memotrip_kroniq.MemoTripApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -34,7 +34,7 @@
             android:value="@string/default_web_client_id" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.memotrip_kroniq.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.MemoTripKroniQ">
             <intent-filter>

@@ -10,21 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavHostController
-import com.example.memotrip_kroniq.data.AuthRepository
-import com.example.memotrip_kroniq.data.datastore.TokenDataStore
-import com.example.memotrip_kroniq.data.remote.RetrofitClient
-import com.example.memotrip_kroniq.navigation.Screen
-import com.example.memotrip_kroniq.ui.core.LocalUiScaler
-import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.home.components.*
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
-import kotlinx.coroutines.launch
 
 @OptIn(UnstableApi::class)
 @Composable

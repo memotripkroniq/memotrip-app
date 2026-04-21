@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
-import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.core.topOverlayShadow

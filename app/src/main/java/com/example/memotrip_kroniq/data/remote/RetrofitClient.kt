@@ -1,8 +1,8 @@
 package com.example.memotrip_kroniq.data.remote
 
 import android.util.Log
-import com.example.memotrip_kroniq.BuildConfig
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient

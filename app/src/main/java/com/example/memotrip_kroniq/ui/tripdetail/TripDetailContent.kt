@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.model.ThemeType
 import com.example.memotrip_kroniq.ui.core.model.TransportType
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler

@@ -11,7 +11,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.example.memotrip_kroniq.R // uprav podle svého balíčku
+import com.memotrip_kroniq.R // uprav podle svého balíčku
 
 @Composable
 fun CustomOutlinedTextField(

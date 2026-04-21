@@ -39,7 +39,7 @@ import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.tripmap.RemoteTripMapGenerator
 import com.example.memotrip_kroniq.data.tripmap.TripMapGenerator
 import com.example.memotrip_kroniq.data.trips.TripsRepository
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.navigation.LOCATION_LAT_KEY
 import com.example.memotrip_kroniq.navigation.LOCATION_LON_KEY
 import com.example.memotrip_kroniq.navigation.LOCATION_NAME_KEY

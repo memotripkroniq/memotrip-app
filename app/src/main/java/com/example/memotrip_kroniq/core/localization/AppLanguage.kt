@@ -1,7 +1,7 @@
 package com.example.memotrip_kroniq.core.localization
 
 import androidx.annotation.StringRes
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 enum class AppLanguage(
     val languageTag: String,

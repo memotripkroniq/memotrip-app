@@ -15,7 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 @Composable
 fun InlinePhotoSlot(

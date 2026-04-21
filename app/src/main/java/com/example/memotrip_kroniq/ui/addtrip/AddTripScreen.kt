@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
@@ -33,8 +33,6 @@ import com.example.memotrip_kroniq.ui.addtrip.screens.SavingTripScreen
 import com.example.memotrip_kroniq.ui.addtrip.screens.TripSuccessScreen
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
-import com.example.memotrip_kroniq.ui.home.HomeScreen
-import com.example.memotrip_kroniq.ui.home.HomeTab
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 import kotlinx.coroutines.flow.MutableStateFlow

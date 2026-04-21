@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.memotrip_kroniq.ui.core.model.Destination
 import androidx.compose.ui.unit.sp
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 
 
 @Composable

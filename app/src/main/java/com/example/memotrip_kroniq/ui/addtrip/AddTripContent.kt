@@ -41,7 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.location.LocationSuggestion
 import com.example.memotrip_kroniq.ui.addtrip.components.AddStopButton
 import com.example.memotrip_kroniq.ui.addtrip.components.AddTripHeroBanner

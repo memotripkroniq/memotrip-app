@@ -1,6 +1,5 @@
 package com.example.memotrip_kroniq.ui.tripdetail.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.memotrip_kroniq.R
+import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.fs
 import com.example.memotrip_kroniq.ui.core.sx
@@ -27,7 +26,6 @@ import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.theme.AppTheme
 import com.example.memotrip_kroniq.ui.tripdetail.TripDetailTab
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerTopShadow
-import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
 @Composable
 fun TripTabs(
