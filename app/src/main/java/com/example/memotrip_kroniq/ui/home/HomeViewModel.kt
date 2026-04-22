@@ -100,8 +100,8 @@ class HomeViewModel(
                     )
                 }
             } catch (e: Exception) {
-                // MVP: když to selže, necháme tlačítko enabled
-                _uiState.update { it.copy(isAddTripEnabled = true) }
+                // Fail-safe: bez potvrzených limitů nedovolíme otevřít Add Trip flow.
+                _uiState.update { it.copy(isAddTripEnabled = false) }
             }
         }
     }

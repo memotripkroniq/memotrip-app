@@ -201,6 +201,7 @@ fun TripDetailContent(
                     photos = uiState.tripPhotos,
                     isLoading = uiState.isPhotosLoading,
                     canEdit = uiState.canEditTrip,
+                    isAddPhotoEnabled = uiState.canAddTripPhoto,
                     onAddCategoryClick = onAddPhotoCategory,
                     onRenameCategoryClick = onRenamePhotoCategory,
                     onDeleteCategoryClick = onDeletePhotoCategory,
@@ -592,5 +593,4 @@ private fun TripDetailContentPreview() {
         }
     }
 }
-
 

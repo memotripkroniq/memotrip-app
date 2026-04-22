@@ -55,10 +55,10 @@ fun LanguageScreen(
     val s = LocalUiScaler.current
     val languageDataStore = remember(context) { LanguageDataStore(context) }
     val coroutineScope = rememberCoroutineScope()
-    var selectedLanguage by remember { mutableStateOf(AppLanguage.default) }
+    var selectedLanguage by remember { mutableStateOf(AppLocaleManager.getCurrentLanguage()) }
 
     LaunchedEffect(languageDataStore) {
-        selectedLanguage = AppLanguage.fromTag(languageDataStore.getLanguageTag())
+        selectedLanguage = AppLocaleManager.getCurrentLanguage()
     }
 
     Column(

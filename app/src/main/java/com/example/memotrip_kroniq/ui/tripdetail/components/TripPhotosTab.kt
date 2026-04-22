@@ -35,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -58,6 +59,7 @@ fun TripPhotosTab(
     photos: List<TripPhotoUi>,
     isLoading: Boolean,
     canEdit: Boolean = true,
+    isAddPhotoEnabled: Boolean = false,
     onAddCategoryClick: (String) -> Unit,
     onRenameCategoryClick: (String, String) -> Unit,
     onDeleteCategoryClick: (String) -> Unit,
@@ -158,6 +160,7 @@ fun TripPhotosTab(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 8.dp),
+                enabled = isAddPhotoEnabled,
                 onClick = { onAddPhotoClick(selectedCategoryId) }
             )
         }
@@ -428,6 +431,7 @@ private fun PhotoTile(
 @Composable
 private fun AddGalleryPhotoButton(
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Box(
@@ -439,7 +443,9 @@ private fun AddGalleryPhotoButton(
             contentDescription = stringResource(R.string.trip_detail_photos_add_photo),
             modifier = Modifier
                 .size(80.dp)
+                .alpha(if (enabled) 1f else 0.38f)
                 .clickable(
+                    enabled = enabled,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { onClick() }

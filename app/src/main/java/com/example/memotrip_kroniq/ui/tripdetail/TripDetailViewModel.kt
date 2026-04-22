@@ -219,13 +219,25 @@ class TripDetailViewModel(
         }
     }
 
+    private suspend fun fetchPhotoLimitsIntoState() {
+        val limits = tripsRepository.getTripPhotoLimits(tripId)
+        _uiState.update { state ->
+            state.copy(
+                canAddTripPhoto = limits.allowed
+            )
+        }
+    }
+
     fun loadPhotos() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isPhotosLoading = true) }
-            runCatching { fetchPhotosIntoState() }
+            _uiState.update { it.copy(isPhotosLoading = true, canAddTripPhoto = false) }
+            runCatching {
+                fetchPhotosIntoState()
+                fetchPhotoLimitsIntoState()
+            }
                 .onFailure { error ->
                     Log.e("TripDetailVM", "loadPhotos failed", error)
-                    _uiState.update { it.copy(isPhotosLoading = false) }
+                    _uiState.update { it.copy(isPhotosLoading = false, canAddTripPhoto = false) }
                 }
         }
     }
@@ -236,6 +248,7 @@ class TripDetailViewModel(
             runCatching {
                 tripsRepository.uploadTripPhoto(tripId, uri, categoryId)
                 fetchPhotosIntoState()
+                fetchPhotoLimitsIntoState()
             }.onFailure { error ->
                 Log.e("TripDetailVM", "uploadTripPhoto failed", error)
                 _uiState.update { it.copy(isPhotosLoading = false) }
@@ -288,6 +301,7 @@ class TripDetailViewModel(
             runCatching {
                 tripsRepository.deleteTripPhoto(tripId, photoId)
                 fetchPhotosIntoState()
+                fetchPhotoLimitsIntoState()
             }.onFailure { error ->
                 Log.e("TripDetailVM", "deleteTripPhoto failed", error)
                 _uiState.update { it.copy(isPhotosLoading = false) }

@@ -31,6 +31,7 @@ data class TripDetailUiState(
     // Tabs
     val selectedTab: TripDetailTab = TripDetailTab.DETAILS,
     val isPhotosLoading: Boolean = false,
+    val canAddTripPhoto: Boolean = false,
     val photoCategories: List<TripPhotoCategoryUi> = emptyList(),
     val tripPhotos: List<TripPhotoUi> = emptyList(),
 

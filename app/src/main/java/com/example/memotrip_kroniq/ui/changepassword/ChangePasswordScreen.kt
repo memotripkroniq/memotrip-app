@@ -27,6 +27,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.auth.Validators
 import com.example.memotrip_kroniq.ui.auth.authMessage
@@ -180,6 +181,7 @@ fun ChangePasswordScreen(
                     text = stringResource(R.string.auth_continue),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 62.dp)
                         .height(40f.sy(s)),
                     onClick = {
                         submitted = true

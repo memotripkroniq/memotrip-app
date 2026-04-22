@@ -1,7 +1,6 @@
 package com.example.memotrip_kroniq
 
 import android.app.Application
-import com.example.memotrip_kroniq.core.localization.AppLanguage
 import com.example.memotrip_kroniq.core.localization.AppLocaleManager
 import com.example.memotrip_kroniq.data.datastore.LanguageDataStore
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
@@ -14,9 +13,11 @@ class MemoTripApp : Application() {
         super.onCreate()
 
         runBlocking {
-            val languageTag = LanguageDataStore(this@MemoTripApp).getLanguageTag()
-                ?: AppLanguage.default.languageTag
+            val languageDataStore = LanguageDataStore(this@MemoTripApp)
+            val languageTag = languageDataStore.getLanguageTag()
+                ?: AppLocaleManager.getCurrentLanguage().languageTag
             AppLocaleManager.applyLanguage(languageTag)
+            languageDataStore.saveLanguageTag(languageTag)
         }
 
         val tokenStore = TokenDataStore(this)

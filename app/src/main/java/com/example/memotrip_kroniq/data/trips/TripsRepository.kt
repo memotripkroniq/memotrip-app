@@ -9,6 +9,7 @@ import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
 import com.example.memotrip_kroniq.data.remote.dto.SimpleSuccessResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailDto
 import com.example.memotrip_kroniq.data.remote.dto.TripKroniqShareResponse
+import com.example.memotrip_kroniq.data.remote.dto.TripPhotoLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripPhotosResponse
 import com.example.memotrip_kroniq.data.remote.dto.TripDto
 import okhttp3.MediaType.Companion.toMediaType
@@ -35,6 +36,9 @@ class TripsRepository(
 
     suspend fun getTripPhotos(tripId: String): TripPhotosResponse =
         api.getTripPhotos(tripId)
+
+    suspend fun getTripPhotoLimits(tripId: String): TripPhotoLimitsResponse =
+        api.getTripPhotoLimits(tripId)
 
 
     suspend fun uploadCoverImage(uri: Uri): String {
