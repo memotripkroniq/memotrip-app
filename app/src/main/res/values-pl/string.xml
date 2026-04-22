@@ -172,6 +172,8 @@
     <string name="trip_detail_tips_and_trips">Tips &amp; Trips</string>
     <string name="trip_detail_add_tips_and_trips">Dodaj tips &amp; trips</string>
     <string name="trip_detail_tip_placeholder">Tip</string>
+    <string name="trip_detail_exports_highlights">Highlights</string>
+    <string name="trip_detail_exports_memories">Memories</string>
     <string name="edit_trip_title">Edytuj Trip</string>
     <string name="edit_trip_save">Zapisz</string>
     <string name="edit_trip_saving">Zapisywanie</string>

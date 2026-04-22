@@ -193,6 +193,8 @@
     <string name="trip_detail_photos_dialog_delete">Zmazať</string>
     <string name="trip_detail_photos_dialog_cancel">Zrušiť</string>
     <string name="trip_detail_exports_placeholder">Exporty budú dostupné čoskoro</string>
+    <string name="trip_detail_exports_highlights">Highlights</string>
+    <string name="trip_detail_exports_memories">Memories</string>
     <string name="edit_trip_title">Upraviť Trip</string>
     <string name="edit_trip_save">Uložiť</string>
     <string name="edit_trip_saving">Ukladanie</string>

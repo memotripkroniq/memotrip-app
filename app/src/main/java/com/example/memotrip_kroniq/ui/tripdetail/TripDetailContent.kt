@@ -402,20 +402,7 @@ fun TripDetailContent(
 
             TripDetailTab.EXPORTS -> {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
-                            .background(Color(0xFF383A41))
-                            .padding(horizontal = 20.dp, vertical = 28.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.material3.Text(
-                            text = stringResource(R.string.trip_detail_exports_placeholder),
-                            color = Color.White.copy(alpha = 0.72f)
-                        )
-                    }
-
+                    TripExportsTab()
                     Spacer(Modifier.height(24f.sy(s)))
                 }
             }
@@ -593,4 +580,3 @@ private fun TripDetailContentPreview() {
         }
     }
 }
-
