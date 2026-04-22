@@ -48,8 +48,8 @@ object RetrofitClient {
                 val response = chain.proceed(request)
 
                 val path = request.url.encodedPath
-                if (path.startsWith("/trips")) {
-                    val body = response.peekBody(Long.MAX_VALUE).string()
+                if (path.startsWith("/trips") || path.startsWith("/auth")) {
+                    val body = response.peekBody(1024 * 1024).string()
                     Log.d("RetrofitClient", "📦 $path code=${response.code} body=$body")
                 }
 

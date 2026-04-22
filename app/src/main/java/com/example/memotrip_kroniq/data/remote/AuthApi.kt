@@ -97,6 +97,9 @@ interface AuthApi {
     @POST("/auth/forgot-password")
     suspend fun forgotPassword(@Body body: Map<String, String>)
 
+    @POST("/auth/reset-password")
+    suspend fun resetPassword(@Body body: Map<String, String>)
+
     @POST("auth/me/password")
     suspend fun changePassword(
         @Body body: Map<String, String>

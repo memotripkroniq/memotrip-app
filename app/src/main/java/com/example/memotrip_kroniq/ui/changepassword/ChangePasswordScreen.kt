@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +42,9 @@ import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 @Composable
 fun ChangePasswordScreen(
     hasPassword: Boolean,
+    @StringRes titleRes: Int = R.string.change_password_title,
+    @StringRes headingWithPasswordRes: Int = R.string.change_password_heading,
+    @StringRes headingWithoutPasswordRes: Int = R.string.change_password_create_heading,
     backendErrorMessage: String? = null,
     onBackendErrorConsumed: () -> Unit = {},
     onBack: () -> Unit = {},
@@ -102,7 +106,7 @@ fun ChangePasswordScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = stringResource(R.string.change_password_title),
+                title = stringResource(titleRes),
                 showBack = true,
                 onBackClick = onBack,
                 onMenuClick = null
@@ -119,9 +123,9 @@ fun ChangePasswordScreen(
                 TextBlock(
                     title = stringResource(
                         if (hasPassword) {
-                            R.string.change_password_heading
+                            headingWithPasswordRes
                         } else {
-                            R.string.change_password_create_heading
+                            headingWithoutPasswordRes
                         }
                     )
                 )

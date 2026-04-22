@@ -124,6 +124,22 @@ class AuthRepository(
         )
     }
 
+    suspend fun resetPassword(
+        token: String,
+        newPassword: String
+    ) {
+        try {
+            api.resetPassword(
+                mapOf(
+                    "token" to token,
+                    "newPassword" to newPassword
+                )
+            )
+        } catch (e: HttpException) {
+            throw extractApiError(e)
+        }
+    }
+
     suspend fun changePassword(
         currentPassword: String?,
         newPassword: String

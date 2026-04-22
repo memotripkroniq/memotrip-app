@@ -32,8 +32,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
@@ -50,6 +53,7 @@ import com.example.memotrip_kroniq.ui.auth.SignUpScreen
 import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordScreen
 import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSavingScreen
 import com.example.memotrip_kroniq.ui.changepassword.ChangePasswordSuccessScreen
+import com.example.memotrip_kroniq.ui.changepassword.ResetPasswordSavingScreen
 import com.example.memotrip_kroniq.ui.edittrip.EditTripScreen
 import com.example.memotrip_kroniq.ui.home.HomeScreen
 import com.example.memotrip_kroniq.ui.home.HomeTab
@@ -86,6 +90,10 @@ sealed class Screen(val route: String) {
     }
 
     object ForgotPassword : Screen("forgot_password")
+    object ResetPassword : Screen("reset_password?token={token}") {
+        fun createRoute(token: String) = "reset_password?token=$token"
+    }
+    object ResetPasswordSaving : Screen("reset_password_saving")
     object ChangePassword : Screen("change_password")
     object ChangePasswordSaving : Screen("change_password_saving")
     object ChangePasswordSuccess : Screen("change_password_success")
@@ -133,6 +141,9 @@ const val LOCATION_LON_KEY = "location_lon"
 private const val CHANGE_PASSWORD_CURRENT_KEY = "change_password_current"
 private const val CHANGE_PASSWORD_NEW_KEY = "change_password_new"
 private const val CHANGE_PASSWORD_ERROR_KEY = "change_password_error"
+private const val RESET_PASSWORD_TOKEN_KEY = "reset_password_token"
+private const val RESET_PASSWORD_NEW_KEY = "reset_password_new"
+private const val RESET_PASSWORD_ERROR_KEY = "reset_password_error"
 private const val KRONIQ_ADD_MEMBER_EMAIL_KEY = "kroniq_add_member_email"
 private const val KRONIQ_ADD_MEMBER_ERROR_KEY = "kroniq_add_member_error"
 private const val KRONIQ_RELOAD_TOKEN_KEY = "kroniq_reload_token"
@@ -231,6 +242,103 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             ForgotPasswordScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(
+                navArgument("token") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "memotrip://reset-password?token={token}"
+                }
+            ),
+            enterTransition = { defaultEnter(initialState, targetState) },
+            exitTransition = { defaultExit(initialState, targetState) }
+        ) { backStackEntry ->
+            val context = LocalContext.current
+            val token = backStackEntry.arguments?.getString("token").orEmpty()
+            val errorMessage = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<String?>(RESET_PASSWORD_ERROR_KEY)
+                ?: if (token.isBlank()) {
+                    context.getString(R.string.reset_password_error_invalid_link)
+                } else {
+                    null
+                }
+
+            ChangePasswordScreen(
+                hasPassword = false,
+                titleRes = R.string.reset_password_title,
+                headingWithoutPasswordRes = R.string.reset_password_heading,
+                backendErrorMessage = errorMessage,
+                onBackendErrorConsumed = {
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String?>(RESET_PASSWORD_ERROR_KEY)
+                },
+                onBack = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                },
+                onContinue = { _, newPassword ->
+                    if (token.isNotBlank()) {
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                            RESET_PASSWORD_TOKEN_KEY,
+                            token
+                        )
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                            RESET_PASSWORD_NEW_KEY,
+                            newPassword
+                        )
+                        navController.navigate(Screen.ResetPasswordSaving.route)
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ResetPasswordSaving.route) {
+            val context = LocalContext.current
+            val tokenStore = remember { TokenDataStore(context) }
+            val authRepository = remember {
+                AuthRepository(
+                    api = RetrofitClient.authApi,
+                    tokenStore = tokenStore
+                )
+            }
+            val requestEntry = remember(navController) {
+                navController.getBackStackEntry(Screen.ResetPassword.route)
+            }
+            val token = requestEntry.savedStateHandle.get<String>(RESET_PASSWORD_TOKEN_KEY).orEmpty()
+            val newPassword = requestEntry.savedStateHandle.get<String>(RESET_PASSWORD_NEW_KEY).orEmpty()
+
+            ResetPasswordSavingScreen(
+                token = token,
+                newPassword = newPassword,
+                resetPassword = { resetToken, freshPassword ->
+                    authRepository.resetPassword(resetToken, freshPassword)
+                },
+                onFinished = {
+                    requestEntry.savedStateHandle.remove<String>(RESET_PASSWORD_TOKEN_KEY)
+                    requestEntry.savedStateHandle.remove<String>(RESET_PASSWORD_NEW_KEY)
+                    requestEntry.savedStateHandle.remove<String?>(RESET_PASSWORD_ERROR_KEY)
+                    navController.navigate(Screen.ChangePasswordSuccess.route) {
+                        popUpTo(Screen.ResetPasswordSaving.route) { inclusive = true }
+                    }
+                },
+                onFailed = { message ->
+                    requestEntry.savedStateHandle.remove<String>(RESET_PASSWORD_TOKEN_KEY)
+                    requestEntry.savedStateHandle.remove<String>(RESET_PASSWORD_NEW_KEY)
+                    requestEntry.savedStateHandle.set(RESET_PASSWORD_ERROR_KEY, message)
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -339,14 +447,22 @@ fun AppNavGraph(navController: NavHostController) {
             val context = LocalContext.current
             val tokenStore = remember { TokenDataStore(context) }
             val coroutineScope = rememberCoroutineScope()
+            val previousRoute = navController.previousBackStackEntry?.destination?.route
 
             ChangePasswordSuccessScreen(
                 onFinished = {
                     coroutineScope.launch {
-                        tokenStore.clearTokens()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0)
-                            launchSingleTop = true
+                        if (previousRoute == Screen.ResetPasswordSaving.route) {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
+                        } else {
+                            tokenStore.clearTokens()
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
                         }
                     }
                 }
@@ -1028,4 +1144,3 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultExit(
         )
     }
 }
-
