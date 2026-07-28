@@ -76,6 +76,7 @@ import com.example.memotrip_kroniq.ui.splash.SplashScreen
 import com.example.memotrip_kroniq.ui.tripdetail.TripDetailScreen
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
+import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -1034,10 +1035,9 @@ fun AppNavGraph(navController: NavHostController) {
                                         authRepository.getMe()
                                     }
 
-                                    Log.d(
-                                        "PROFILE_SAVE",
-                                        "Profile updated successfully for userId=${updatedUser.id}, photoUri=$photoUri, accountType=$accountType, kroniqRole=$kroniqRole, email=$email"
-                                    )
+                                    if (BuildConfig.DEBUG) {
+                                        Log.d("PROFILE_SAVE", "Profile updated successfully")
+                                    }
 
                                     navController.navigate(Screen.Home.createRoute(HomeTab.TRIP_HISTORY)) {
                                         popUpTo(Screen.Profile.route) { inclusive = true }

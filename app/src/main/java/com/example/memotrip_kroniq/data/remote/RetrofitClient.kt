@@ -6,6 +6,7 @@ import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.google.gson.GsonBuilder
@@ -13,11 +14,16 @@ import com.google.gson.GsonBuilder
 object RetrofitClient {
 
     private var retrofit: Retrofit? = null
+    private const val TAG = "RetrofitClient"
+    private val isVerboseHttpLoggingEnabled: Boolean
+        get() = BuildConfig.DEBUG
 
     fun build(tokenStore: TokenDataStore) {
         if (retrofit != null) return
 
-        Log.d("RetrofitClient", "🔌 USING BASE_URL = ${BuildConfig.BASE_URL}")
+        if (isVerboseHttpLoggingEnabled) {
+            Log.d(TAG, "Using BASE_URL=${BuildConfig.BASE_URL}")
+        }
 
         val okHttp = OkHttpClient.Builder()
             .addInterceptor { chain ->
@@ -25,15 +31,11 @@ object RetrofitClient {
                     tokenStore.accessToken.first()
                 }
 
-                Log.d("RetrofitClient", "🔐 ACCESS TOKEN = ${token?.take(20)}")
-
                 val request = if (!token.isNullOrEmpty()) {
-                    Log.d("RetrofitClient", "➡️ ADDING Authorization header")
                     chain.request().newBuilder()
                         .addHeader("Authorization", "Bearer $token")
                         .build()
                 } else {
-                    Log.w("RetrofitClient", "⚠️ NO TOKEN, sending request WITHOUT auth")
                     chain.request()
                 }
 
@@ -41,19 +43,33 @@ object RetrofitClient {
             }
             .addInterceptor { chain ->
                 val request = chain.request()
-                // užitečné: metoda + url + content-type
-                val contentType = request.body?.contentType()?.toString()
-                Log.d("RetrofitClient", "➡️ ${request.method} ${request.url.encodedPath} contentType=$contentType")
+                val startedAt = System.nanoTime()
 
-                val response = chain.proceed(request)
+                try {
+                    val response = chain.proceed(request)
+                    val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
 
-                val path = request.url.encodedPath
-                if (path.startsWith("/trips") || path.startsWith("/auth")) {
-                    val body = response.peekBody(1024 * 1024).string()
-                    Log.d("RetrofitClient", "📦 $path code=${response.code} body=$body")
+                    if (isVerboseHttpLoggingEnabled) {
+                        Log.d(
+                            TAG,
+                            "${request.method} ${request.url.encodedPath} code=${response.code} durationMs=$durationMs"
+                        )
+                    } else if (!response.isSuccessful) {
+                        Log.w(
+                            TAG,
+                            "HTTP error ${request.method} ${request.url.encodedPath} code=${response.code}"
+                        )
+                    }
+
+                    response
+                } catch (e: Exception) {
+                    val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
+                    Log.e(
+                        TAG,
+                        "HTTP request failed ${request.method} ${request.url.encodedPath} after ${durationMs}ms: ${e.javaClass.simpleName}"
+                    )
+                    throw e
                 }
-
-                response
             }
 
             .build()

@@ -24,6 +24,7 @@ import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoCategoryUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoUi
+import com.memotrip_kroniq.BuildConfig
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -57,10 +58,11 @@ class TripDetailViewModel(
             }
 
             try {
-                Log.d("TripDetailVM", "Loading tripId=$tripId")
                 val me = runCatching { authRepository.getMe() }.getOrNull()
                 val trip = tripsRepository.getTripDetail(tripId)
-                Log.d("TripDetailVM", "Loaded trip=$trip")
+                if (BuildConfig.DEBUG) {
+                    Log.d("TripDetailVM", "Trip detail loaded")
+                }
                 val canEditTrip = trip.ownerId.isNullOrBlank() || trip.ownerId == me?.id
 
                 val transportEnum = trip.transport?.let { raw ->
@@ -945,7 +947,9 @@ class TripDetailViewModel(
                     )
                 )
 
-                Log.d("TRIP_DETAIL_SAVE", "PATCH dto=$dto")
+                if (BuildConfig.DEBUG) {
+                    Log.d("TRIP_DETAIL_SAVE", "Submitting trip detail update")
+                }
                 tripsRepository.updateTripDetail(tripId, dto)
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }

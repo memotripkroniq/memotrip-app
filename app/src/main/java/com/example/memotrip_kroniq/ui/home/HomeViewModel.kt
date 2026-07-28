@@ -1,10 +1,12 @@
 package com.example.memotrip_kroniq.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
+import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -58,7 +60,9 @@ class HomeViewModel(
 
             try {
                 val trips = tripsRepository.getMyTrips()
-                android.util.Log.d("HOME_TRIPS", trips.toString())
+                if (BuildConfig.DEBUG) {
+                    Log.d("HOME_TRIPS", "Loaded trips count=${trips.size}")
+                }
 
                 _uiState.update { state ->
                     state.copy(
@@ -107,7 +111,9 @@ class HomeViewModel(
     }
 
     fun onThemeClick(theme: String) {
-        android.util.Log.d("HOME_THEME", "clicked theme = $theme")
+        if (BuildConfig.DEBUG) {
+            Log.d("HOME_THEME", "Theme selected")
+        }
 
         _uiState.update {
             it.copy(
@@ -117,7 +123,9 @@ class HomeViewModel(
     }
 
     fun onThemesBackClick() {
-        android.util.Log.d("HOME_THEME", "back to grid")
+        if (BuildConfig.DEBUG) {
+            Log.d("HOME_THEME", "Returned to theme grid")
+        }
 
         _uiState.update {
             it.copy(

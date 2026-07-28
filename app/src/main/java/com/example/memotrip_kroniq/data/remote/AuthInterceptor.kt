@@ -1,6 +1,5 @@
 package com.example.memotrip_kroniq.data.remote
 
-import android.util.Log
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -20,8 +19,6 @@ class AuthInterceptor(
         }
 
         val request = if (!token.isNullOrEmpty()) {
-            Log.d("AUTH", "➡ Authorization: Bearer $token")
-
             original.newBuilder()
                 .addHeader("Authorization", "Bearer $token")
                 .build()

@@ -16,6 +16,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
+import com.memotrip_kroniq.BuildConfig
 
 class TripsRepository(
     private val api: TripsApi,
@@ -24,7 +25,9 @@ class TripsRepository(
 
     suspend fun createTrip(request: CreateTripRequest): CreateTripResponse {
         val created = api.createTrip(request)
-        Log.d("CREATE_TRIP", "created=$created")
+        if (BuildConfig.DEBUG) {
+            Log.d("CREATE_TRIP", "Trip created successfully")
+        }
         return created
     }
 
@@ -62,8 +65,9 @@ class TripsRepository(
 
         val response = api.uploadTripCover(part)
 
-        Log.d("COVER_UPLOAD", "upload response=$response")
-        Log.d("COVER_UPLOAD", "coverImageUrl=${response.coverImageUrl}")
+        if (BuildConfig.DEBUG) {
+            Log.d("COVER_UPLOAD", "Cover upload completed")
+        }
 
         return response.coverImageUrl
     }
