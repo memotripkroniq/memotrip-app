@@ -60,25 +60,37 @@ android {
 
 
     // ==========================================================
-    //  🔥 PRODUCT FLAVORS (jen staging + production)
+    //  🔥 PRODUCT FLAVORS
     // ==========================================================
     flavorDimensions += "environment"
 
     productFlavors {
 
-        // 🟠 STAGING (Railway backend)
-        create("staging") {
+        create("development") {
             dimension = "environment"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "MemoTrip Dev")
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://memotrip-bff-production.up.railway.app/\""
+                "\"https://memotrip-bff-development.up.railway.app/\""
             )
         }
 
-        // 🟢 PRODUCTION
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            resValue("string", "app_name", "MemoTrip Staging")
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://memotrip-bff-staging.up.railway.app/\""
+            )
+        }
+
         create("production") {
             dimension = "environment"
+            resValue("string", "app_name", "MemoTrip")
             buildConfigField(
                 "String",
                 "BASE_URL",
@@ -102,13 +114,6 @@ android {
         debug {
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
-
-            // Debug má vlastní BASE_URL, aby bylo jasné logování
-            buildConfigField(
-                "String",
-                "BASE_URL",
-                "\"https://memotrip-bff-production.up.railway.app/\""
-            )
         }
 
         release {

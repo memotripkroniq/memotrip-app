@@ -1,5 +1,6 @@
 package com.example.memotrip_kroniq.data.tripmap
 
+import com.memotrip_kroniq.BuildConfig
 import com.example.memotrip_kroniq.ui.core.model.TransportType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -20,7 +21,7 @@ class RemoteTripMapGenerator(
     ): String {
 
         val response: GenerateTripMapResponse =
-            client.post("https://memotrip-bff-production.up.railway.app/trips/render-map") {
+            client.post("${BuildConfig.BASE_URL}trips/render-map") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     GenerateTripMapRequest(
