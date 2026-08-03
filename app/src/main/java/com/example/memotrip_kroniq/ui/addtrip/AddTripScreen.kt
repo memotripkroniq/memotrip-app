@@ -82,7 +82,8 @@ fun AddTripScreen(
 
     val tripMapGenerator: TripMapGenerator = remember {
         RemoteTripMapGenerator(
-            client = HttpClientProvider.client
+            client = HttpClientProvider.client,
+            tokenStore = tokenStore
         )
     }
 
