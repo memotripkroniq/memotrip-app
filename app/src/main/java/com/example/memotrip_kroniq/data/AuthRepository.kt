@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.net.Uri
 import LoginRequest
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.image.ImageUploadNormalizer
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
 import com.example.memotrip_kroniq.data.remote.dto.KroniqMeResponse
@@ -187,20 +188,16 @@ class AuthRepository(
         contentResolver: ContentResolver,
         uri: Uri
     ): String {
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+        val normalizedImage = ImageUploadNormalizer.normalize(
+            contentResolver = contentResolver,
+            uri = uri,
+            filenamePrefix = "profile"
+        )
 
-        val mime = contentResolver.getType(uri) ?: "image/jpeg"
-        val ext = when (mime.lowercase()) {
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
             name = "file",
-            filename = "profile.$ext",
+            filename = normalizedImage.filename,
             body = requestBody
         )
 
@@ -215,20 +212,16 @@ class AuthRepository(
         contentResolver: ContentResolver,
         uri: Uri
     ): String {
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+        val normalizedImage = ImageUploadNormalizer.normalize(
+            contentResolver = contentResolver,
+            uri = uri,
+            filenamePrefix = "kroniq"
+        )
 
-        val mime = contentResolver.getType(uri) ?: "image/jpeg"
-        val ext = when (mime.lowercase()) {
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
             name = "file",
-            filename = "kroniq.$ext",
+            filename = normalizedImage.filename,
             body = requestBody
         )
 

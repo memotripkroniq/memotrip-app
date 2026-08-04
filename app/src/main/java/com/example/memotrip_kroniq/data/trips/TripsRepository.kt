@@ -3,6 +3,7 @@ package com.example.memotrip_kroniq.data.trips
 import android.content.ContentResolver
 import android.net.Uri
 import android.util.Log
+import com.example.memotrip_kroniq.data.image.ImageUploadNormalizer
 import com.example.memotrip_kroniq.data.remote.TripsApi
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripRequest
 import com.example.memotrip_kroniq.data.remote.dto.CreateTripResponse
@@ -45,21 +46,16 @@ class TripsRepository(
 
 
     suspend fun uploadCoverImage(uri: Uri): String {
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+        val normalizedImage = ImageUploadNormalizer.normalize(
+            contentResolver = contentResolver,
+            uri = uri,
+            filenamePrefix = "cover"
+        )
 
-        // Lepší: zkusíme zjistit content type z ContentResolveru (u PhotoPickeru to bývá image/jpeg)
-        val mime = contentResolver.getType(uri) ?: "image/jpeg"
-        val ext = when (mime.lowercase()) {
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
             name = "file",
-            filename = "cover.$ext",
+            filename = normalizedImage.filename,
             body = requestBody
         )
 
@@ -73,20 +69,16 @@ class TripsRepository(
     }
 
     suspend fun uploadTripPhoto(tripId: String, uri: Uri, categoryId: String?) {
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: throw IllegalStateException("Cannot open input stream for uri=$uri")
+        val normalizedImage = ImageUploadNormalizer.normalize(
+            contentResolver = contentResolver,
+            uri = uri,
+            filenamePrefix = "trip_photo"
+        )
 
-        val mime = contentResolver.getType(uri) ?: "image/jpeg"
-        val ext = when (mime.lowercase()) {
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val requestBody = bytes.toRequestBody(mime.toMediaType())
+        val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val filePart = MultipartBody.Part.createFormData(
             name = "file",
-            filename = "trip_photo.$ext",
+            filename = normalizedImage.filename,
             body = requestBody
         )
         val categoryPart = categoryId
