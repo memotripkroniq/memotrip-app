@@ -89,9 +89,13 @@ fun TripDetailScreen(
 
     val onBack = remember(vm, navController) {
         {
-            if (vm.uiState.value.isSaving) return@remember
+            val currentState = vm.uiState.value
 
-            if (!vm.uiState.value.canEditTrip) {
+            if (currentState.isSaving) return@remember
+
+            if (!currentState.canEditTrip) {
+                navController.popBackStack()
+            } else if (!currentState.hasUnsavedChanges) {
                 navController.popBackStack()
             } else {
                 vm.save {

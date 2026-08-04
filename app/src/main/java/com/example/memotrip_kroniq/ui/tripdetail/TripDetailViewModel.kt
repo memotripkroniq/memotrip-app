@@ -25,9 +25,11 @@ import com.example.memotrip_kroniq.ui.tripdetail.components.TipsAndTripsItemUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoCategoryUi
 import com.example.memotrip_kroniq.ui.tripdetail.components.TripPhotoUi
 import com.memotrip_kroniq.BuildConfig
+import kotlinx.coroutines.CancellationException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class TripDetailViewModel(
@@ -38,6 +40,7 @@ class TripDetailViewModel(
 
     private val _uiState = MutableStateFlow(TripDetailUiState())
     val uiState: StateFlow<TripDetailUiState> = _uiState.asStateFlow()
+    private val saveInProgress = AtomicBoolean(false)
 
     init {
         loadTrip()
@@ -922,41 +925,49 @@ class TripDetailViewModel(
             return
         }
 
+        if (!saveInProgress.compareAndSet(false, true)) return
+
+        _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                try {
+                    val currentState = _uiState.value
 
-            runCatching {
-                val currentState = _uiState.value
+                    val uploadedCoverUrl = when {
+                        currentState.localCoverPhotoUri != null -> {
+                            tripsRepository.uploadCoverImage(currentState.localCoverPhotoUri)
+                        }
+                        currentState.coverImageUrl == null -> {
+                            null
+                        }
+                        else -> {
+                            currentState.coverImageUrl
+                        }
+                    }
 
-                val uploadedCoverUrl = when {
-                    currentState.localCoverPhotoUri != null -> {
-                        tripsRepository.uploadCoverImage(currentState.localCoverPhotoUri)
-                    }
-                    currentState.coverImageUrl == null -> {
-                        null
-                    }
-                    else -> {
-                        currentState.coverImageUrl
-                    }
-                }
-
-                val dto = buildUpdateDto(
-                    currentState.copy(
-                        coverImageUrl = uploadedCoverUrl,
-                        localCoverPhotoUri = null
+                    val dto = buildUpdateDto(
+                        currentState.copy(
+                            coverImageUrl = uploadedCoverUrl,
+                            localCoverPhotoUri = null
+                        )
                     )
-                )
 
-                if (BuildConfig.DEBUG) {
-                    Log.d("TRIP_DETAIL_SAVE", "Submitting trip detail update")
+                    if (BuildConfig.DEBUG) {
+                        Log.d("TRIP_DETAIL_SAVE", "Submitting trip detail update")
+                    }
+                    tripsRepository.updateTripDetail(tripId, dto)
+                    _uiState.update { it.copy(hasUnsavedChanges = false) }
+                    loadTrip()
+                    onDone()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(errorMessage = e.message) }
                 }
-                tripsRepository.updateTripDetail(tripId, dto)
-            }.onSuccess {
-                _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
-                loadTrip()
-                onDone()
-            }.onFailure { e ->
-                _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
+                saveInProgress.set(false)
             }
         }
     }
