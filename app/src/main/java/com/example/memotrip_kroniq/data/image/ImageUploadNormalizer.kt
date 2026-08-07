@@ -25,9 +25,12 @@ object ImageUploadNormalizer {
             inJustDecodeBounds = true
         }
 
-        contentResolver.openInputStream(uri)?.use { stream ->
+        val boundsStream = contentResolver.openInputStream(uri)
+            ?: throw IllegalStateException("Cannot open image for reading.")
+
+        boundsStream.use { stream ->
             BitmapFactory.decodeStream(stream, null, bounds)
-        } ?: throw IllegalStateException("Cannot open image for reading.")
+        }
 
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
             throw IllegalStateException("Selected file is not a readable image.")

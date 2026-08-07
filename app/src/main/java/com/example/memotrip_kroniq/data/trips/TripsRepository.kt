@@ -18,6 +18,8 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 import com.memotrip_kroniq.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class TripsRepository(
     private val api: TripsApi,
@@ -46,11 +48,13 @@ class TripsRepository(
 
 
     suspend fun uploadCoverImage(uri: Uri): String {
-        val normalizedImage = ImageUploadNormalizer.normalize(
-            contentResolver = contentResolver,
-            uri = uri,
-            filenamePrefix = "cover"
-        )
+        val normalizedImage = withContext(Dispatchers.Default) {
+            ImageUploadNormalizer.normalize(
+                contentResolver = contentResolver,
+                uri = uri,
+                filenamePrefix = "cover"
+            )
+        }
 
         val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
@@ -61,19 +65,17 @@ class TripsRepository(
 
         val response = api.uploadTripCover(part)
 
-        if (BuildConfig.DEBUG) {
-            Log.d("COVER_UPLOAD", "Cover upload completed")
-        }
-
         return response.coverImageUrl
     }
 
     suspend fun uploadTripPhoto(tripId: String, uri: Uri, categoryId: String?) {
-        val normalizedImage = ImageUploadNormalizer.normalize(
-            contentResolver = contentResolver,
-            uri = uri,
-            filenamePrefix = "trip_photo"
-        )
+        val normalizedImage = withContext(Dispatchers.Default) {
+            ImageUploadNormalizer.normalize(
+                contentResolver = contentResolver,
+                uri = uri,
+                filenamePrefix = "trip_photo"
+            )
+        }
 
         val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val filePart = MultipartBody.Part.createFormData(

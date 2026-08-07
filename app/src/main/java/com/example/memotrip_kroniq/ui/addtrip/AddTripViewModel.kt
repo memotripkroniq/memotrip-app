@@ -94,8 +94,6 @@ class AddTripViewModel(
     }
 
     fun onCoverPhotoSelected(uri: Uri?) {
-        Log.d("COVER_UPLOAD", "onCoverPhotoSelected called uri=$uri")
-
         // ✅ Delete photo
         if (uri == null) {
             _uiState.update {
@@ -119,7 +117,6 @@ class AddTripViewModel(
         }
 
         viewModelScope.launch {
-            Log.d("COVER_UPLOAD", "UPLOAD_START time=${System.currentTimeMillis()}")
             try {
                 val uploadedUrl = tripsRepository.uploadCoverImage(uri)
 
@@ -131,7 +128,6 @@ class AddTripViewModel(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("COVER_UPLOAD", "UPLOAD_FAIL time=${System.currentTimeMillis()}", e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

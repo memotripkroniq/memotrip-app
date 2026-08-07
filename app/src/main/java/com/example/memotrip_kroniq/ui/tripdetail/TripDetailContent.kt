@@ -16,6 +16,7 @@ import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.tripdetail.components.*
 import PreviewUiScaler
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.runtime.CompositionLocalProvider
@@ -102,9 +103,15 @@ fun TripDetailContent(
     var tempTripPhotoUri by remember { mutableStateOf<Uri?>(null) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        if (uri != null) onCoverPhotoSelected(uri)
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            onCoverPhotoSelected(uri)
+        }
         showPhotoActionSheet = false
     }
 
@@ -418,7 +425,7 @@ fun TripDetailContent(
 
     if (showPhotoActionSheet && uiState.canEditTrip) {
         PhotoPickerOverlay(
-            canDelete = uiState.coverImageUrl != null,
+            canDelete = uiState.localCoverPhotoUri != null || uiState.coverImageUrl != null,
             onTakePhoto = {
                 showPhotoActionSheet = false
                 if (
@@ -441,7 +448,7 @@ fun TripDetailContent(
             },
             onPickFromGallery = {
                 showPhotoActionSheet = false
-                galleryLauncher.launch("image/*")
+                galleryLauncher.launch(arrayOf("image/*"))
             },
             onDeletePhoto = {
                 onCoverPhotoSelected(null)

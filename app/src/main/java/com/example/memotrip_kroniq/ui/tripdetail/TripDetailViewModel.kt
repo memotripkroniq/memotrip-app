@@ -908,7 +908,6 @@ class TripDetailViewModel(
     }
 
     fun save(onDone: () -> Unit) {
-        Log.d("TRIP_DETAIL_SAVE", "save() called, hasUnsavedChanges=${_uiState.value.hasUnsavedChanges}")
         val current = _uiState.value
         if (!current.canEditTrip) {
             onDone()
@@ -935,9 +934,8 @@ class TripDetailViewModel(
                     val currentState = _uiState.value
 
                     val uploadedCoverUrl = when {
-                        currentState.localCoverPhotoUri != null -> {
+                        currentState.localCoverPhotoUri != null ->
                             tripsRepository.uploadCoverImage(currentState.localCoverPhotoUri)
-                        }
                         currentState.coverImageUrl == null -> {
                             null
                         }
@@ -953,9 +951,6 @@ class TripDetailViewModel(
                         )
                     )
 
-                    if (BuildConfig.DEBUG) {
-                        Log.d("TRIP_DETAIL_SAVE", "Submitting trip detail update")
-                    }
                     tripsRepository.updateTripDetail(tripId, dto)
                     _uiState.update { it.copy(hasUnsavedChanges = false) }
                     loadTrip()

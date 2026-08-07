@@ -6,7 +6,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -97,7 +96,6 @@ fun AddTripContent(
     ) {
     val s = LocalUiScaler.current
 
-    Log.d("COVER_UPLOAD", "AddTripContent composed")
 
     // 🧹 CLEANED – pouze state LazyColumn
     val listState = rememberLazyListState()
@@ -110,7 +108,6 @@ fun AddTripContent(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        Log.d("COVER_UPLOAD", "AddTripContent gallery uri=$uri")
         if (uri != null) onCoverPhotoSelected(uri)
         showPhotoActionSheet = false
     }
@@ -118,7 +115,6 @@ fun AddTripContent(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        Log.d("COVER_UPLOAD", "AddTripContent camera success=$success temp=$tempPhotoUri")
         if (success && tempPhotoUri != null) {
             onCoverPhotoSelected(tempPhotoUri)
         }

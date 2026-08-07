@@ -16,6 +16,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
 class AuthRepository(
@@ -188,11 +190,13 @@ class AuthRepository(
         contentResolver: ContentResolver,
         uri: Uri
     ): String {
-        val normalizedImage = ImageUploadNormalizer.normalize(
-            contentResolver = contentResolver,
-            uri = uri,
-            filenamePrefix = "profile"
-        )
+        val normalizedImage = withContext(Dispatchers.Default) {
+            ImageUploadNormalizer.normalize(
+                contentResolver = contentResolver,
+                uri = uri,
+                filenamePrefix = "profile"
+            )
+        }
 
         val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
@@ -212,11 +216,13 @@ class AuthRepository(
         contentResolver: ContentResolver,
         uri: Uri
     ): String {
-        val normalizedImage = ImageUploadNormalizer.normalize(
-            contentResolver = contentResolver,
-            uri = uri,
-            filenamePrefix = "kroniq"
-        )
+        val normalizedImage = withContext(Dispatchers.Default) {
+            ImageUploadNormalizer.normalize(
+                contentResolver = contentResolver,
+                uri = uri,
+                filenamePrefix = "kroniq"
+            )
+        }
 
         val requestBody = normalizedImage.bytes.toRequestBody(normalizedImage.mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData(
