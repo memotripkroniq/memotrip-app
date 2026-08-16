@@ -1,7 +1,6 @@
 package com.example.memotrip_kroniq.ui.home
 
 import PreviewUiScaler
-import androidx.annotation.OptIn
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -42,7 +42,7 @@ import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
-@OptIn(UnstableApi::class)
+@kotlin.OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController? = null,
@@ -92,11 +92,16 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshTrips()
+                if (hasHandledInitialResume) {
+                    viewModel.refreshHomeData()
+                } else {
+                    hasHandledInitialResume = true
+                }
             }
         }
 
@@ -115,13 +120,11 @@ fun HomeScreen(
         if (deleted) {
             savedStateHandle["trip_deleted"] = false
             selectedTab = HomeTab.TRIP_HISTORY
-            viewModel.refreshTrips()
         }
 
         val updated = savedStateHandle?.get<Boolean>("trip_updated") ?: false
         if (updated) {
             savedStateHandle["trip_updated"] = false
-            viewModel.refreshTrips()
         }
     }
 
@@ -169,12 +172,24 @@ fun HomeScreen(
                     themeTrips = viewModel.getTripsForSelectedTheme(),
                     themesContentState = uiState.themesContentState,
                     isTripsLoading = uiState.isTripsLoading,
+                    isRefreshingHome = uiState.isRefreshingHome,
+                    isCheckingAddTripAccess = uiState.isCheckingAddTripAccess,
                     isKroniq = uiState.isKroniq,
                     isAddTripEnabled = uiState.isAddTripEnabled,
                     onTabSelected = { selectedTab = it },
                     onThemeClick = viewModel::onThemeClick,
                     onThemesBackClick = viewModel::onThemesBackClick,
-                    onAddTripClick = { navController?.navigate(Screen.AddTrip.route) },
+                    onAddTripClick = {
+                        viewModel.verifyAddTripAccess(
+                            onAllowed = {
+                                navController?.navigate(Screen.AddTrip.route)
+                            },
+                            onBlocked = {
+                                selectedTab = HomeTab.TRIP_HISTORY
+                            }
+                        )
+                    },
+                    onTripHistoryRefresh = viewModel::refreshHomeData,
                     onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
                 )
             }

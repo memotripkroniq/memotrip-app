@@ -4,9 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.AuthRepository
+import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.memotrip_kroniq.BuildConfig
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -19,11 +23,17 @@ class HomeViewModel(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
+    private var refreshHomeJob: Job? = null
+    private var addTripAccessJob: Job? = null
+
+    private data class HomeRefreshPayload(
+        val trips: List<TripHistoryItem>?,
+        val limits: TripLimitsResponse?
+    )
 
     init {
         loadMe()
-        loadTripLimits()
-        loadTrips()
+        refreshHomeData(showTripLoader = true)
     }
 
     private fun loadMe() {
@@ -52,60 +62,60 @@ class HomeViewModel(
     }
 
 
-    private fun loadTrips(showLoader: Boolean = true) {
-        viewModelScope.launch {
-            if (showLoader) {
-                _uiState.update { it.copy(isTripsLoading = true) }
+    fun refreshHomeData(showTripLoader: Boolean = false) {
+        if (refreshHomeJob?.isActive == true) return
+
+        refreshHomeJob = viewModelScope.launch {
+            if (showTripLoader) {
+                _uiState.update {
+                    it.copy(
+                        isTripsLoading = true,
+                        isRefreshingHome = false
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(isRefreshingHome = true) }
             }
 
             try {
-                val trips = tripsRepository.getMyTrips()
-                if (BuildConfig.DEBUG) {
-                    Log.d("HOME_TRIPS", "Loaded trips count=${trips.size}")
-                }
+                val payload = fetchHomeRefreshPayload()
+                applyHomeRefreshPayload(payload)
 
-                _uiState.update { state ->
-                    state.copy(
-                        trips = trips.map { trip ->
-                            TripHistoryItem(
-                                id = trip.id,
-                                title = trip.title,
-                                coverImageUrl = trip.coverImageUrl,
-                                theme = trip.theme,
-                                isSharedInKroniq = trip.isSharedInKroniQ
-                            )
-                        },
-                        isTripsLoading = false
-                    )
+                if (payload.limits == null && showTripLoader) {
+                    val fallbackEnabled = _uiState.value.isKroniq
+                    _uiState.update { it.copy(isAddTripEnabled = fallbackEnabled) }
                 }
-
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(isTripsLoading = false)
-                }
+            } finally {
+                _uiState.update { it.copy(isTripsLoading = false, isRefreshingHome = false) }
             }
         }
     }
 
-    fun refreshTrips() {
-        loadTrips(showLoader = false)
-    }
+    fun verifyAddTripAccess(
+        onAllowed: () -> Unit,
+        onBlocked: () -> Unit = {}
+    ) {
+        if (addTripAccessJob?.isActive == true) return
 
-    private fun loadTripLimits() {
-        viewModelScope.launch {
+        addTripAccessJob = viewModelScope.launch {
+            _uiState.update { it.copy(isCheckingAddTripAccess = true) }
+
             try {
-                val limits = authRepository.getTripLimits()
-                _uiState.update {
-                    it.copy(
-                        isAddTripEnabled = limits.allowed,
-                        tripLimitPlan = limits.plan,
-                        tripLimitUsed = limits.used,
-                        tripLimitLimit = limits.limit
-                    )
+                val payload = fetchHomeRefreshPayload()
+                applyHomeRefreshPayload(payload)
+
+                val limits = payload.limits
+                val isAllowed = resolveIsAddTripEnabled(limits)
+
+                if (isAllowed == true) {
+                    onAllowed()
+                } else if (isAllowed == false) {
+                    onBlocked()
                 }
             } catch (e: Exception) {
-                // Fail-safe: bez potvrzených limitů nedovolíme otevřít Add Trip flow.
-                _uiState.update { it.copy(isAddTripEnabled = false) }
+                // Keep the current state on transient verification failures.
+            } finally {
+                _uiState.update { it.copy(isCheckingAddTripAccess = false) }
             }
         }
     }
@@ -144,6 +154,57 @@ class HomeViewModel(
         } else {
             emptyList()
         }
+    }
+
+    private suspend fun fetchHomeRefreshPayload(): HomeRefreshPayload = coroutineScope {
+        val limitsDeferred = async { runCatching { authRepository.getTripLimits() }.getOrNull() }
+        val tripsDeferred = async { runCatching { tripsRepository.getMyTrips() }.getOrNull() }
+
+        val trips = tripsDeferred.await()?.map { trip ->
+            TripHistoryItem(
+                id = trip.id,
+                title = trip.title,
+                coverImageUrl = trip.coverImageUrl,
+                theme = trip.theme,
+                isSharedInKroniq = trip.isSharedInKroniQ
+            )
+        }
+
+        HomeRefreshPayload(
+            trips = trips,
+            limits = limitsDeferred.await()
+        )
+    }
+
+    private fun applyHomeRefreshPayload(payload: HomeRefreshPayload) {
+        payload.trips?.let { trips ->
+            if (BuildConfig.DEBUG) {
+                Log.d("HOME_TRIPS", "Loaded trips count=${trips.size}")
+            }
+
+            _uiState.update { state ->
+                state.copy(trips = trips)
+            }
+        }
+
+        payload.limits?.let { limits ->
+            val isAddTripEnabled = resolveIsAddTripEnabled(limits) ?: false
+            _uiState.update {
+                it.copy(
+                    // `limit == null` is the backend contract for unlimited trips (KroniQ).
+                    isAddTripEnabled = isAddTripEnabled,
+                    tripLimitPlan = limits.plan,
+                    tripLimitUsed = limits.used,
+                    tripLimitLimit = limits.limit
+                )
+            }
+        }
+    }
+
+    private fun resolveIsAddTripEnabled(limits: TripLimitsResponse?): Boolean? {
+        if (limits == null) return null
+        if (limits.limit == null) return true
+        return limits.allowed
     }
 
 

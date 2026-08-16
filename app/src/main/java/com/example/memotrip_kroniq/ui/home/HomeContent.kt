@@ -3,7 +3,6 @@ package com.example.memotrip_kroniq.ui.home
 import androidx.compose.runtime.Composable
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import PreviewUiScaler
-import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -12,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.media3.common.util.UnstableApi
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.home.components.*
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
-@OptIn(UnstableApi::class)
+@kotlin.OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
@@ -28,12 +29,15 @@ fun HomeContent(
     themeTrips: List<TripHistoryItem>,
     themesContentState: ThemesContentState,
     isTripsLoading: Boolean,
+    isRefreshingHome: Boolean,
+    isCheckingAddTripAccess: Boolean,
     isKroniq: Boolean,
     isAddTripEnabled: Boolean,
     onTabSelected: (HomeTab) -> Unit,
     onThemeClick: (String) -> Unit,
     onThemesBackClick: () -> Unit,
     onAddTripClick: () -> Unit,
+    onTripHistoryRefresh: () -> Unit,
     onTripClick: (String) -> Unit
 ) {
     val s = LocalUiScaler.current
@@ -47,7 +51,7 @@ fun HomeContent(
 
         HeroBanner(
             onAddTripClick = onAddTripClick,
-            isAddTripEnabled = isAddTripEnabled
+            isAddTripEnabled = isAddTripEnabled && !isCheckingAddTripAccess
         )
 
         Spacer(modifier = Modifier.height(13f.sy(s)))
@@ -93,19 +97,25 @@ fun HomeContent(
                 }
             }
             HomeTab.TRIP_HISTORY -> {
-                when {
-                    isTripsLoading -> {
-                        TripHistoryLoadingContent() // klidně jen loader
-                    }
-                    trips.isEmpty() -> {
-                        TripHistoryEmptyContent()
-                    }
-                    else -> {
-                        TripHistoryList(
-                            trips = trips,
-                            showUpsell = !isHomeLoading && !isKroniq,
-                            onTripClick = onTripClick
-                        )
+                PullToRefreshBox(
+                    isRefreshing = isRefreshingHome,
+                    onRefresh = onTripHistoryRefresh,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when {
+                        isTripsLoading -> {
+                            TripHistoryLoadingContent() // initial loader
+                        }
+                        trips.isEmpty() -> {
+                            TripHistoryEmptyContent()
+                        }
+                        else -> {
+                            TripHistoryList(
+                                trips = trips,
+                                showUpsell = !isHomeLoading && !isKroniq,
+                                onTripClick = onTripClick
+                            )
+                        }
                     }
                 }
             }
@@ -146,10 +156,13 @@ fun HomeContentPreview_TripHistory() {
                 themeTrips = emptyList(),
                 themesContentState = ThemesContentState.Grid,
                 isTripsLoading = false,
+                isRefreshingHome = false,
+                isCheckingAddTripAccess = false,
                 onTabSelected = {},
                 onThemeClick = {},
                 onThemesBackClick = {},
                 onAddTripClick = {},
+                onTripHistoryRefresh = {},
                 isKroniq = false,
                 isAddTripEnabled = true,
                 onTripClick = {}

@@ -16,6 +16,8 @@ data class HomeUiState(
     // 🆕 TRIPS
     val trips: List<TripHistoryItem> = emptyList(),
     val isTripsLoading: Boolean = false,
+    val isRefreshingHome: Boolean = false,
+    val isCheckingAddTripAccess: Boolean = false,
     val isKroniq: Boolean = false,
     val isAddTripEnabled: Boolean = true,
     val tripLimitPlan: String? = null,
