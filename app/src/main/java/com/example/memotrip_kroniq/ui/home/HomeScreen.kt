@@ -1,6 +1,7 @@
 package com.example.memotrip_kroniq.ui.home
 
 import PreviewUiScaler
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -33,6 +34,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.memotrip_kroniq.data.AuthRepository
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.payments.PaymentsRepository
 import com.example.memotrip_kroniq.data.remote.RetrofitClient
 import com.example.memotrip_kroniq.data.trips.TripsRepository
 import com.example.memotrip_kroniq.navigation.Screen
@@ -40,6 +42,7 @@ import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
 import com.example.memotrip_kroniq.ui.core.sx
 import com.example.memotrip_kroniq.ui.home.components.AppTopBar
+import com.example.memotrip_kroniq.ui.home.payments.launchDummyPayUrl
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
 
 @kotlin.OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
@@ -76,6 +79,12 @@ fun HomeScreen(
         )
     }
 
+    val paymentsRepository = remember {
+        PaymentsRepository(
+            api = RetrofitClient.paymentsApi
+        )
+    }
+
     // 🔹 ViewModel – lifecycle-safe
     val viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -83,13 +92,37 @@ fun HomeScreen(
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return HomeViewModel(
                     authRepository = authRepository,
-                    tripsRepository = tripsRepository
+                    tripsRepository = tripsRepository,
+                    paymentsRepository = paymentsRepository
                 ) as T
             }
         }
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.dummyPayUrlToOpen) {
+        val paymentUrl = uiState.dummyPayUrlToOpen ?: return@LaunchedEffect
+
+        runCatching {
+            launchDummyPayUrl(context, paymentUrl)
+            viewModel.onDummyPayBrowserOpened()
+        }.onFailure {
+            Toast.makeText(
+                context,
+                it.message ?: "Unable to open payment page.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        viewModel.consumeDummyPayUrl()
+    }
+
+    LaunchedEffect(uiState.dummyPayErrorMessage) {
+        val errorMessage = uiState.dummyPayErrorMessage ?: return@LaunchedEffect
+        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+        viewModel.consumeDummyPayError()
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     var hasHandledInitialResume by remember { mutableStateOf(false) }
@@ -99,6 +132,7 @@ fun HomeScreen(
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (hasHandledInitialResume) {
                     viewModel.refreshHomeData()
+                    viewModel.refreshUserFromPaymentReturnIfNeeded()
                 } else {
                     hasHandledInitialResume = true
                 }
@@ -174,6 +208,7 @@ fun HomeScreen(
                     isTripsLoading = uiState.isTripsLoading,
                     isRefreshingHome = uiState.isRefreshingHome,
                     isCheckingAddTripAccess = uiState.isCheckingAddTripAccess,
+                    isPremium = uiState.isPremium,
                     isKroniq = uiState.isKroniq,
                     isAddTripEnabled = uiState.isAddTripEnabled,
                     onTabSelected = { selectedTab = it },
@@ -190,7 +225,10 @@ fun HomeScreen(
                         )
                     },
                     onTripHistoryRefresh = viewModel::refreshHomeData,
-                    onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) }
+                    onTripClick = { tripId -> navController?.navigate(Screen.TripDetail.createRoute(tripId)) },
+                    onGetPremiumClick = viewModel::startPremiumDummyPay,
+                    onGetKroniqClick = viewModel::startKroniqDummyPay,
+                    dummyPayLoadingPlan = uiState.dummyPayLoadingPlan
                 )
             }
         }

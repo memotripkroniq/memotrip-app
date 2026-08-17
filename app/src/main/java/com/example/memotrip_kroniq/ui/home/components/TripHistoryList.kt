@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.memotrip_kroniq.data.payments.DummyPaymentPlan
 import com.example.memotrip_kroniq.ui.core.LocalUiScaler
+import com.example.memotrip_kroniq.ui.home.HomePlanTier
 import com.example.memotrip_kroniq.ui.home.components.upsell.PlansTable
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.example.memotrip_kroniq.ui.theme.MemoTripTheme
@@ -27,7 +29,12 @@ import com.example.memotrip_kroniq.ui.home.components.upsell.UpsellPromptBox
 fun TripHistoryList(
     trips: List<TripHistoryItem>,
     showUpsell: Boolean,
-    onTripClick: (String) -> Unit
+    showUpsellPrompt: Boolean,
+    currentPlan: HomePlanTier,
+    onTripClick: (String) -> Unit,
+    onGetPremiumClick: () -> Unit,
+    onGetKroniqClick: () -> Unit,
+    dummyPayLoadingPlan: DummyPaymentPlan?
 
 ) {
     LazyColumn(
@@ -48,11 +55,16 @@ fun TripHistoryList(
         if (showUpsell) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
-                UpsellPromptBox()
-                Spacer(modifier = Modifier.height(12.dp))
+                if (showUpsellPrompt) {
+                    UpsellPromptBox()
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 PlansTable(
-                    onGetPremiumClick = { /* TODO */ },
-                    onGetKroniqClick = { /* TODO */ }
+                    currentPlan = currentPlan,
+                    onGetPremiumClick = onGetPremiumClick,
+                    onGetKroniqClick = onGetKroniqClick,
+                    premiumEnabled = dummyPayLoadingPlan == null,
+                    kroniqEnabled = dummyPayLoadingPlan == null
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -86,7 +98,12 @@ private fun TripHistoryListPreview_UpsellOn() {
                         )
                     ),
                     showUpsell = true,
-                    onTripClick = {}
+                    showUpsellPrompt = true,
+                    currentPlan = HomePlanTier.FREE,
+                    onTripClick = {},
+                    onGetPremiumClick = {},
+                    onGetKroniqClick = {},
+                    dummyPayLoadingPlan = null
                 )
             }
         }
@@ -117,7 +134,12 @@ private fun TripHistoryListPreview_UpsellOff() {
                         )
                     ),
                     showUpsell = false,
-                    onTripClick = {}
+                    showUpsellPrompt = false,
+                    currentPlan = HomePlanTier.KRONIQ,
+                    onTripClick = {},
+                    onGetPremiumClick = {},
+                    onGetKroniqClick = {},
+                    dummyPayLoadingPlan = null
                 )
             }
         }

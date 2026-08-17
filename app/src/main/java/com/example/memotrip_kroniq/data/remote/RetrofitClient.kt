@@ -90,5 +90,8 @@ object RetrofitClient {
 
     val tripsApi: TripsApi
         get() = retrofit!!.create(TripsApi::class.java)
+
+    val paymentsApi: PaymentsApi
+        get() = retrofit!!.create(PaymentsApi::class.java)
 }
 

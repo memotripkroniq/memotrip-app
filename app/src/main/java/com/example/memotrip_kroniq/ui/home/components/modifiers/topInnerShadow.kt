@@ -13,7 +13,8 @@ import androidx.compose.ui.unit.dp
 
 fun Modifier.planButtonTopInnerShadow(
     backgroundColor: Color,
-    onClick: (() -> Unit)?
+    onClick: (() -> Unit)?,
+    enabled: Boolean
 ): Modifier {
     return this
         .fillMaxWidth()
@@ -27,6 +28,7 @@ fun Modifier.planButtonTopInnerShadow(
         .let {
             if (onClick != null) {
                 it.clickable(
+                    enabled = enabled,
                     indication = null,
                     interactionSource = MutableInteractionSource()
                 ) { onClick() }

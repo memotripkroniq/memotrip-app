@@ -19,11 +19,12 @@ import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import com.example.memotrip_kroniq.ui.home.HomeAuthDataSource
 
 class AuthRepository(
     private val api: AuthApi,
     private val tokenStore: TokenDataStore
-) {
+) : HomeAuthDataSource {
 
     // ⭐ SIGNUP
     suspend fun signup(
@@ -109,13 +110,13 @@ class AuthRepository(
     // ============================================================
     // ⭐ GET ME
     // ============================================================
-    suspend fun getMe() =
+    override suspend fun getMe() =
         api.getMe()
 
     // ============================================================
     // ⭐ GET TRIP LIMITS
     // ============================================================
-    suspend fun getTripLimits(): TripLimitsResponse =
+    override suspend fun getTripLimits(): TripLimitsResponse =
         api.getTripLimits()
 
     // ============================================================

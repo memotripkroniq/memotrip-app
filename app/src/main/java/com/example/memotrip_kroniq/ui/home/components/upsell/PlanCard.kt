@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -40,7 +41,10 @@ fun PlanCard(
     strokeColor: Color?,
     innerShadowEnabled: Boolean,
     buttonBackgroundColor: Color,
-    onClick: (() -> Unit)?
+    onClick: (() -> Unit)?,
+    buttonEnabled: Boolean = true,
+    showBadge: Boolean = false,
+    isActive: Boolean = false
 ) {
     val shape = RoundedCornerShape(10.dp)
     val isKroniq = title == "KroniQ"
@@ -131,14 +135,21 @@ fun PlanCard(
         if (isKroniq) {
             KroniqCtaButton(
                 modifier = Modifier.fillMaxWidth(),
+                text = buttonText,
+                backgroundColor = buttonBackgroundColor,
+                enabled = buttonEnabled,
+                showBadge = showBadge,
+                isActive = isActive,
                 onClick = { onClick?.invoke() }
             )
         } else {
             Box(
                 modifier = Modifier
+                    .alpha(if (buttonEnabled || isActive) 1f else 0.65f)
                     .planButtonTopInnerShadow(
                         backgroundColor = buttonBackgroundColor,
-                        onClick = onClick
+                        onClick = onClick,
+                        enabled = buttonEnabled
                     ),
                 contentAlignment = Alignment.Center
             ) {

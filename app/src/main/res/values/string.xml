@@ -247,6 +247,9 @@
     <string name="upsell_plan_kroniq">KroniQ</string>
     <string name="upsell_button_active">ACTIVE</string>
     <string name="upsell_button_get">GET</string>
+    <string name="upsell_dummy_pay_unavailable">DummyPay is not available in production.</string>
+    <string name="upsell_dummy_pay_open_error">Unable to open payment page.</string>
+    <string name="upsell_dummy_pay_start_error">Unable to start payment.</string>
     <string name="upsell_badge_50_off">50%% OFF</string>
     <string name="upsell_prompt_more_trips">For more trips update Premium version !</string>
     <string name="upsell_free_feature_1">1 Trip / 3 Month</string>

@@ -20,11 +20,12 @@ import com.example.memotrip_kroniq.data.remote.dto.TripDetailUpdateDto
 import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.memotrip_kroniq.ui.home.HomeTripsDataSource
 
 class TripsRepository(
     private val api: TripsApi,
     private val contentResolver: ContentResolver
-) {
+) : HomeTripsDataSource {
 
     suspend fun createTrip(request: CreateTripRequest): CreateTripResponse {
         val created = api.createTrip(request)
@@ -34,7 +35,7 @@ class TripsRepository(
         return created
     }
 
-    suspend fun getMyTrips(): List<TripDto> =
+    override suspend fun getMyTrips(): List<TripDto> =
         api.getMyTrips()
 
     suspend fun getTripDetail(tripId: String): TripDetailDto =

@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.media3.common.util.UnstableApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.example.memotrip_kroniq.data.payments.DummyPaymentPlan
 import com.example.memotrip_kroniq.ui.core.sy
 import com.example.memotrip_kroniq.ui.home.components.*
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
@@ -31,6 +32,7 @@ fun HomeContent(
     isTripsLoading: Boolean,
     isRefreshingHome: Boolean,
     isCheckingAddTripAccess: Boolean,
+    isPremium: Boolean,
     isKroniq: Boolean,
     isAddTripEnabled: Boolean,
     onTabSelected: (HomeTab) -> Unit,
@@ -38,7 +40,10 @@ fun HomeContent(
     onThemesBackClick: () -> Unit,
     onAddTripClick: () -> Unit,
     onTripHistoryRefresh: () -> Unit,
-    onTripClick: (String) -> Unit
+    onTripClick: (String) -> Unit,
+    onGetPremiumClick: () -> Unit,
+    onGetKroniqClick: () -> Unit,
+    dummyPayLoadingPlan: DummyPaymentPlan?
 ) {
     val s = LocalUiScaler.current
 
@@ -89,7 +94,12 @@ fun HomeContent(
                                 TripHistoryList(
                                     trips = themeTrips,
                                     showUpsell = false,
-                                    onTripClick = onTripClick
+                                    showUpsellPrompt = false,
+                                    currentPlan = resolveCurrentPlan(isPremium = isPremium, isKroniq = isKroniq),
+                                    onTripClick = onTripClick,
+                                    onGetPremiumClick = onGetPremiumClick,
+                                    onGetKroniqClick = onGetKroniqClick,
+                                    dummyPayLoadingPlan = dummyPayLoadingPlan
                                 )
                             }
                         }
@@ -112,8 +122,13 @@ fun HomeContent(
                         else -> {
                             TripHistoryList(
                                 trips = trips,
-                                showUpsell = !isHomeLoading && !isKroniq,
-                                onTripClick = onTripClick
+                                showUpsell = !isHomeLoading,
+                                showUpsellPrompt = !isHomeLoading && !isPremium && !isKroniq,
+                                currentPlan = resolveCurrentPlan(isPremium = isPremium, isKroniq = isKroniq),
+                                onTripClick = onTripClick,
+                                onGetPremiumClick = onGetPremiumClick,
+                                onGetKroniqClick = onGetKroniqClick,
+                                dummyPayLoadingPlan = dummyPayLoadingPlan
                             )
                         }
                     }
@@ -158,6 +173,7 @@ fun HomeContentPreview_TripHistory() {
                 isTripsLoading = false,
                 isRefreshingHome = false,
                 isCheckingAddTripAccess = false,
+                isPremium = false,
                 onTabSelected = {},
                 onThemeClick = {},
                 onThemesBackClick = {},
@@ -165,7 +181,10 @@ fun HomeContentPreview_TripHistory() {
                 onTripHistoryRefresh = {},
                 isKroniq = false,
                 isAddTripEnabled = true,
-                onTripClick = {}
+                onTripClick = {},
+                onGetPremiumClick = {},
+                onGetKroniqClick = {},
+                dummyPayLoadingPlan = null
             )
         }
     }

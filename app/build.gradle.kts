@@ -148,6 +148,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.material3:material3:1.3.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.browser:browser:1.8.0")
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation)
     debugImplementation(libs.androidx.ui.tooling)
@@ -185,5 +186,8 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
 }

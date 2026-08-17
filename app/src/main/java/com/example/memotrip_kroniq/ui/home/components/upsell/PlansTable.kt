@@ -17,14 +17,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.memotrip_kroniq.R
+import com.example.memotrip_kroniq.ui.home.HomePlanTier
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerTopRightShadow
 
 @Composable
 fun PlansTable(
+    currentPlan: HomePlanTier,
     onGetPremiumClick: () -> Unit,
-    onGetKroniqClick: () -> Unit
+    onGetKroniqClick: () -> Unit,
+    premiumEnabled: Boolean,
+    kroniqEnabled: Boolean
 ) {
     val figmaTitleStrokeColor = Color(0x33000000) // 20% black
+    val isFreeActive = currentPlan == HomePlanTier.FREE
+    val isPremiumActive = currentPlan == HomePlanTier.PREMIUM
+    val isKroniqActive = currentPlan == HomePlanTier.KRONIQ
 
     Row(
         modifier = Modifier
@@ -52,12 +59,18 @@ fun PlansTable(
                 stringResource(R.string.upsell_free_feature_2)
             ),
             price = null,
-            buttonText = stringResource(R.string.upsell_button_active),
+            buttonText = if (isFreeActive) {
+                stringResource(R.string.upsell_button_active)
+            } else {
+                stringResource(R.string.upsell_plan_free)
+            },
             backgroundColor = Color(0xFF383A41),
             strokeColor = Color(0xFF747781),
             innerShadowEnabled = true,
-            buttonBackgroundColor = Color(0xFF6F9E5E),
-            onClick = null
+            buttonBackgroundColor = if (isFreeActive) Color(0xFF6F9E5E) else Color(0xFF383A41),
+            onClick = null,
+            buttonEnabled = false,
+            isActive = isFreeActive
         )
 
         PlanCard(
@@ -72,12 +85,19 @@ fun PlansTable(
                 stringResource(R.string.upsell_premium_feature_4)
             ),
             price = "5.99 €",
-            buttonText = stringResource(R.string.upsell_button_get),
+            buttonText = if (isPremiumActive) {
+                stringResource(R.string.upsell_button_active)
+            } else {
+                stringResource(R.string.upsell_button_get)
+            },
             backgroundColor = Color(0xFF7BA065),
             strokeColor = Color(0xFF747781),
             innerShadowEnabled = true,
-            buttonBackgroundColor = Color(0xFF383A41),
-            onClick = onGetPremiumClick
+            buttonBackgroundColor = if (isPremiumActive) Color(0xFF6F9E5E) else Color(0xFF383A41),
+            onClick = if (isPremiumActive) null else onGetPremiumClick,
+            buttonEnabled = premiumEnabled && !isPremiumActive,
+            showBadge = false,
+            isActive = isPremiumActive
         )
 
         // ✅ KroniQ: místo textového buttonu dáme KroniqCtaButton
@@ -95,12 +115,19 @@ fun PlansTable(
                 stringResource(R.string.upsell_kroniq_feature_6)
             ),
             price = "36 €",
-            buttonText = "", // ✅ povinný parametr – nebude se používat
+            buttonText = if (isKroniqActive) {
+                stringResource(R.string.upsell_button_active)
+            } else {
+                stringResource(R.string.upsell_button_get)
+            },
             backgroundColor = Color(0xFF4E6E3E),
             strokeColor = Color(0xFF747781),
             innerShadowEnabled = true,
-            buttonBackgroundColor = Color(0xFF2E3037), // ✅ povinný parametr – nebude se používat
-            onClick = onGetKroniqClick
+            buttonBackgroundColor = if (isKroniqActive) Color(0xFF6F9E5E) else Color(0xFF383A41),
+            onClick = if (isKroniqActive) null else onGetKroniqClick,
+            buttonEnabled = kroniqEnabled && !isKroniqActive,
+            showBadge = !isKroniqActive,
+            isActive = isKroniqActive
         )
     }
 }
