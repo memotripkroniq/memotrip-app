@@ -5,7 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -18,11 +21,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.ui.home.components.modifiers.innerTopShadow
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun KroniqCtaButton(
     modifier: Modifier = Modifier,
@@ -33,11 +38,13 @@ fun KroniqCtaButton(
     isActive: Boolean = false,
     onClick: () -> Unit
 ) {
-    Box(
+    // Reserve real space for each child. On narrow cards (or larger font scales),
+    // wrap the badge below the label rather than drawing it over the label.
+    FlowRow(
         modifier = modifier
             .alpha(if (enabled || isActive) 1f else 0.65f)
             .fillMaxWidth()
-            .height(24.dp)
+            .heightIn(min = 24.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .innerTopShadow(
@@ -48,31 +55,30 @@ fun KroniqCtaButton(
                 enabled = enabled,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ) { onClick() },
-        contentAlignment = Alignment.Center
+            ) { onClick() }
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = text,
             color = Color.White,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.align(Alignment.Center)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 3.dp, vertical = 2.dp)
         )
 
         if (showBadge) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 3.dp)
+                    .align(Alignment.CenterVertically)
                     .clip(RoundedCornerShape(5.dp))
                     .background(Color(0xFFA8C59E))
                     .innerTopShadow(
                         alpha = 0.25f,
                         height = 15f
                     )
-                    // ✅ menší badge, aby byl vidět šedý okraj kolem
                     .padding(horizontal = 6.dp, vertical = 4.dp)
             ) {
                 Text(
@@ -80,8 +86,7 @@ fun KroniqCtaButton(
                     color = Color(0xFF2E3037),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    softWrap = false
+                    textAlign = TextAlign.Center
                 )
             }
         }

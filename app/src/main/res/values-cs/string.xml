@@ -138,7 +138,7 @@
     <string name="upsell_plan_kroniq">KroniQ</string>
     <string name="upsell_button_active">AKTIVNÍ</string>
     <string name="upsell_button_get">ZÍSKAT</string>
-    <string name="upsell_badge_50_off">SLEVA 50%%</string>
+    <string name="upsell_badge_50_off" formatted="false">SLEVA 50%</string>
     <string name="upsell_prompt_more_trips">Pro více tripů přejděte na Premium verzi !</string>
     <string name="upsell_free_feature_1">1 Trip / 3 měsíce</string>
     <string name="upsell_free_feature_2">30 fotek / Trip</string>
