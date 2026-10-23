@@ -1,10 +1,19 @@
 package com.example.memotrip_kroniq.data.payments
 
 import com.example.memotrip_kroniq.data.remote.PaymentsApi
+import com.example.memotrip_kroniq.data.remote.dto.DummyPaymentStatusResponse
 import com.example.memotrip_kroniq.data.remote.dto.DummyPaymentResponse
 import com.example.memotrip_kroniq.ui.home.HomePaymentsDataSource
-import org.json.JSONObject
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import retrofit2.HttpException
+
+class PaymentApiException(
+    val statusCode: Int,
+    val apiCode: String?,
+    message: String,
+    cause: Throwable
+) : Exception(message, cause)
 
 class PaymentsRepository(
     private val api: PaymentsApi
@@ -18,15 +27,30 @@ class PaymentsRepository(
         }
     }
 
-    private fun extractApiError(e: HttpException): Exception {
-        val error = e.response()?.errorBody()?.string()
-
-        val message = try {
-            JSONObject(error ?: "{}").optString("message", "Unknown error")
-        } catch (_: Exception) {
-            "Unknown error"
+    override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse {
+        try {
+            return api.getDummyPaymentStatus(purchaseId)
+        } catch (e: HttpException) {
+            throw extractApiError(e)
         }
+    }
 
-        return Exception(message)
+    private fun extractApiError(e: HttpException): Exception {
+        val error = runCatching { e.response()?.errorBody()?.string() }.getOrNull()
+
+        val json = runCatching { Gson().fromJson(error ?: "{}", JsonObject::class.java) }.getOrNull()
+        val apiCode = runCatching { json?.get("error")?.asString }.getOrNull()
+        val message = runCatching {
+            json?.get("message")?.let {
+                if (it.isJsonArray) it.asJsonArray.joinToString("; ") { value -> value.asString }
+                else it.asString
+            }
+        }.getOrNull()
+        return PaymentApiException(
+            statusCode = e.code(),
+            apiCode = apiCode?.takeIf { it.isNotBlank() },
+            message = message?.takeIf { it.isNotBlank() } ?: "Unable to start payment.",
+            cause = e
+        )
     }
 }

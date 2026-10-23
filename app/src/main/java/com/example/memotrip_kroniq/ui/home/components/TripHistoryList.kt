@@ -34,7 +34,8 @@ fun TripHistoryList(
     onTripClick: (String) -> Unit,
     onGetPremiumClick: () -> Unit,
     onGetKroniqClick: () -> Unit,
-    dummyPayLoadingPlan: DummyPaymentPlan?
+    dummyPayLoadingPlan: DummyPaymentPlan?,
+    isPurchaseBlocked: Boolean = false
 
 ) {
     LazyColumn(
@@ -63,8 +64,8 @@ fun TripHistoryList(
                     currentPlan = currentPlan,
                     onGetPremiumClick = onGetPremiumClick,
                     onGetKroniqClick = onGetKroniqClick,
-                    premiumEnabled = dummyPayLoadingPlan == null,
-                    kroniqEnabled = dummyPayLoadingPlan == null
+                    premiumEnabled = dummyPayLoadingPlan == null && !isPurchaseBlocked,
+                    kroniqEnabled = dummyPayLoadingPlan == null && !isPurchaseBlocked
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }

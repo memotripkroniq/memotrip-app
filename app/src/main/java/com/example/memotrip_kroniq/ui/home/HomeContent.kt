@@ -43,7 +43,8 @@ fun HomeContent(
     onTripClick: (String) -> Unit,
     onGetPremiumClick: () -> Unit,
     onGetKroniqClick: () -> Unit,
-    dummyPayLoadingPlan: DummyPaymentPlan?
+    dummyPayLoadingPlan: DummyPaymentPlan?,
+    isPurchaseBlocked: Boolean = false
 ) {
     val s = LocalUiScaler.current
 
@@ -99,7 +100,8 @@ fun HomeContent(
                                     onTripClick = onTripClick,
                                     onGetPremiumClick = onGetPremiumClick,
                                     onGetKroniqClick = onGetKroniqClick,
-                                    dummyPayLoadingPlan = dummyPayLoadingPlan
+                                    dummyPayLoadingPlan = dummyPayLoadingPlan,
+                                    isPurchaseBlocked = isPurchaseBlocked
                                 )
                             }
                         }
@@ -128,7 +130,8 @@ fun HomeContent(
                                 onTripClick = onTripClick,
                                 onGetPremiumClick = onGetPremiumClick,
                                 onGetKroniqClick = onGetKroniqClick,
-                                dummyPayLoadingPlan = dummyPayLoadingPlan
+                                dummyPayLoadingPlan = dummyPayLoadingPlan,
+                                    isPurchaseBlocked = isPurchaseBlocked
                             )
                         }
                     }

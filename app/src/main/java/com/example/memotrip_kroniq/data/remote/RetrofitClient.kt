@@ -6,6 +6,8 @@ import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okio.BufferedSink
 import java.util.concurrent.TimeUnit
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -39,7 +41,20 @@ object RetrofitClient {
                     chain.request()
                 }
 
-                chain.proceed(request)
+                // A sent payment POST must not be replayed by OkHttp after a connection
+                // failure. The backend has no idempotency key for creating purchases.
+                val body = request.body
+                val paymentRequest = if (request.method == "POST" &&
+                    request.url.encodedPath == "/payments/dummy" && body != null) {
+                    request.newBuilder().method(request.method, object : RequestBody() {
+                        override fun contentType() = body.contentType()
+                        override fun contentLength() = body.contentLength()
+                        override fun isOneShot() = true
+                        override fun writeTo(sink: BufferedSink) = body.writeTo(sink)
+                    }).build()
+                } else request
+
+                chain.proceed(paymentRequest)
             }
             .addInterceptor { chain ->
                 val request = chain.request()

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dummy_pay_creating">Vytváram platbu…</string>
+    <string name="dummy_pay_waiting">Platba čaká na dokončenie. Pokračujte na rovnakej platobnej stránke alebo stav znova overte. Nový nákup sa nevytvorí.</string>
+    <string name="dummy_pay_verifying">Overujem stav platby a po jej dokončení oprávnenia účtu…</string>
+    <string name="dummy_pay_confirmed">Platba bola dokončená.</string>
+    <string name="dummy_pay_unconfirmed">Aktivácia tarifu nebola potvrdená. Môžete stav znova overiť alebo otvoriť tú istú platbu. Kým je výsledok nejasný, nový nákup je blokovaný.</string>
+    <string name="dummy_pay_verification_error">Stav platby alebo obnovenie účtu a limitov tripov sa nepodarilo overiť. Nákup zostáva zachovaný. Skúste to znova.</string>
+    <string name="dummy_pay_open_error">Platobnú stránku sa nepodarilo otvoriť. Môžete znova otvoriť tú istú platbu alebo overiť účet.</string>
+    <string name="dummy_pay_creation_unknown">Výsledok požiadavky na platbu nie je známy. Nákup už môže existovať; nový nákup je blokovaný. Znova overte účet.</string>
+    <string name="dummy_pay_start_error">Požiadavka na platbu bola odmietnutá. Ak prihlásenie vypršalo, prihláste sa znova; inak to skúste neskôr.</string>
+    <string name="dummy_pay_verify_again">Overiť znova</string>
+    <string name="dummy_pay_reopen">Znova otvoriť platbu</string>
+    <string name="dummy_pay_url_unavailable">Odkaz na platbu nie je dostupný, napríklad po obnovení aplikácie. Stav účtu môžete ďalej overovať.</string>
+    <string name="dummy_pay_failed">Platba sa nepodarila. Môžete to skúsiť znova.</string>
+    <string name="dummy_pay_pending_title">Platba čaká na dokončenie</string>
+    <string name="dummy_pay_pending_indicator">Rozpracovaná platba · Zobraziť možnosti</string>
+    <string name="dummy_pay_hide_notice">Skryť oznámenie platby</string>
+    <string name="dummy_pay_verification_notice">Platbu sa nepodarilo overiť. Skúste to znova.</string>
+</resources>

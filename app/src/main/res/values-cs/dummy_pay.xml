@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dummy_pay_creating">Vytvářím platbu…</string>
+    <string name="dummy_pay_waiting">Platba čeká na dokončení. Pokračujte na stejné platební stránce nebo stav znovu ověřte. Nový nákup se nevytvoří.</string>
+    <string name="dummy_pay_verifying">Ověřuji stav platby a po jejím dokončení oprávnění účtu…</string>
+    <string name="dummy_pay_confirmed">Platba byla dokončena.</string>
+    <string name="dummy_pay_unconfirmed">Aktivace tarifu nebyla potvrzena. Můžete stav znovu ověřit nebo otevřít stejnou platbu. Dokud je výsledek nejasný, nový nákup je blokován.</string>
+    <string name="dummy_pay_verification_error">Stav platby nebo obnovení účtu a limitů tripů se nepodařilo ověřit. Nákup zůstává zachován. Zkuste to znovu.</string>
+    <string name="dummy_pay_open_error">Platební stránku se nepodařilo otevřít. Můžete znovu otevřít stejnou platbu nebo ověřit účet.</string>
+    <string name="dummy_pay_creation_unknown">Výsledek požadavku na platbu není znám. Nákup už může existovat; nový nákup je blokován. Znovu ověřte účet.</string>
+    <string name="dummy_pay_start_error">Požadavek na platbu byl odmítnut. Pokud přihlášení vypršelo, přihlaste se znovu; jinak to zkuste později.</string>
+    <string name="dummy_pay_verify_again">Ověřit znovu</string>
+    <string name="dummy_pay_reopen">Znovu otevřít platbu</string>
+    <string name="dummy_pay_url_unavailable">Odkaz na platbu není dostupný, například po obnovení aplikace. Stav účtu můžete dále ověřovat.</string>
+    <string name="dummy_pay_failed">Platba se nezdařila. Můžete to zkusit znovu.</string>
+    <string name="dummy_pay_pending_title">Platba čeká na dokončení</string>
+    <string name="dummy_pay_pending_indicator">Rozpracovaná platba · Zobrazit možnosti</string>
+    <string name="dummy_pay_hide_notice">Skrýt oznámení platby</string>
+    <string name="dummy_pay_verification_notice">Platbu se nepodařilo ověřit. Zkuste to znovu.</string>
+</resources>

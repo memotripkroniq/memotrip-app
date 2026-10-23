@@ -2,12 +2,17 @@ package com.example.memotrip_kroniq.ui.home
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.payments.DummyPaymentPlan
+import com.example.memotrip_kroniq.data.payments.PaymentApiException
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.ui.home.model.TripHistoryItem
 import com.memotrip_kroniq.BuildConfig
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +23,8 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val authRepository: HomeAuthDataSource,
     private val tripsRepository: HomeTripsDataSource,
-    private val paymentsRepository: HomePaymentsDataSource
+    private val paymentsRepository: HomePaymentsDataSource,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -26,6 +32,15 @@ class HomeViewModel(
     private var refreshHomeJob: Job? = null
     private var addTripAccessJob: Job? = null
     private var paymentReturnRefreshJob: Job? = null
+    private var createPaymentJob: Job? = null
+    private var loadMeJob: Job? = null
+    // Serialize account/limit reads and their application, including initial loading.
+    private val accountRefreshMutex = Mutex()
+    private var paymentUrl: String? = null // Never persisted: contains a bearer capability.
+    private var userId: String? = null
+
+    private val restoredPlan = savedStateHandle.get<String>("dummy_plan")
+        ?.let { value -> DummyPaymentPlan.entries.firstOrNull { it.name == value } }
 
     private data class HomeRefreshPayload(
         val trips: List<TripHistoryItem>?,
@@ -33,23 +48,41 @@ class HomeViewModel(
     )
 
     init {
+        if (restoredPlan != null) {
+            _uiState.update { it.copy(
+                dummyPayPlan = restoredPlan,
+                dummyPayPurchaseId = savedStateHandle["dummy_purchase"],
+                isDummyPayNoticeDismissed = savedStateHandle.get<Boolean>("dummy_notice_dismissed") == true,
+                dummyPayState = DummyPayState.UNCONFIRMED,
+                isAwaitingDummyPayReturn = true
+            ) }
+        }
         loadMe()
         refreshHomeData(showTripLoader = true)
     }
 
     private fun loadMe() {
-        viewModelScope.launch {
-            try {
-                applyUserState(authRepository.getMe(), isLoading = false)
-
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isPremium = false,
-                        isKroniq = false,
-                        isThemesLocked = true,
-                        isLoading = false
-                    )
+        if (loadMeJob?.isActive == true) return
+        loadMeJob = viewModelScope.launch {
+            accountRefreshMutex.withLock {
+                try {
+                    val me = authRepository.getMe()
+                    val owner = savedStateHandle.get<String>("dummy_owner")
+                    if (owner != null && owner != me.id) clearDummyPay(cancelJobs = false)
+                    userId = me.id
+                    applyUserState(me, isLoading = false)
+                    if (_uiState.value.dummyPayPlan != null) verifyDummyPay()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            dummyPayState = if (it.dummyPayPlan != null)
+                                DummyPayState.VERIFICATION_ERROR else it.dummyPayState,
+                            isDummyPayVerificationNoticePending = it.dummyPayPlan != null
+                        )
+                    }
                 }
             }
         }
@@ -57,6 +90,7 @@ class HomeViewModel(
 
 
     fun refreshHomeData(showTripLoader: Boolean = false) {
+        if (_uiState.value.dummyPayState == DummyPayState.VERIFYING) return
         if (refreshHomeJob?.isActive == true) return
 
         refreshHomeJob = viewModelScope.launch {
@@ -72,12 +106,14 @@ class HomeViewModel(
             }
 
             try {
-                val payload = fetchHomeRefreshPayload()
-                applyHomeRefreshPayload(payload)
+                accountRefreshMutex.withLock {
+                    val payload = fetchHomeRefreshPayload()
+                    applyHomeRefreshPayload(payload)
 
-                if (payload.limits == null && showTripLoader) {
-                    val fallbackEnabled = _uiState.value.isKroniq
-                    _uiState.update { it.copy(isAddTripEnabled = fallbackEnabled) }
+                    if (payload.limits == null && showTripLoader) {
+                        val fallbackEnabled = _uiState.value.isKroniq
+                        _uiState.update { it.copy(isAddTripEnabled = fallbackEnabled) }
+                    }
                 }
             } finally {
                 _uiState.update { it.copy(isTripsLoading = false, isRefreshingHome = false) }
@@ -89,23 +125,28 @@ class HomeViewModel(
         onAllowed: () -> Unit,
         onBlocked: () -> Unit = {}
     ) {
+        if (_uiState.value.dummyPayState == DummyPayState.VERIFYING) return
         if (addTripAccessJob?.isActive == true) return
 
         addTripAccessJob = viewModelScope.launch {
             _uiState.update { it.copy(isCheckingAddTripAccess = true) }
 
             try {
-                val payload = fetchHomeRefreshPayload()
-                applyHomeRefreshPayload(payload)
+                accountRefreshMutex.withLock {
+                    val payload = fetchHomeRefreshPayload()
+                    applyHomeRefreshPayload(payload)
 
-                val limits = payload.limits
-                val isAllowed = resolveIsAddTripEnabled(limits)
+                    val limits = payload.limits
+                    val isAllowed = resolveIsAddTripEnabled(limits)
 
-                if (isAllowed == true) {
-                    onAllowed()
-                } else if (isAllowed == false) {
-                    onBlocked()
+                    if (isAllowed == true) {
+                        onAllowed()
+                    } else if (isAllowed == false) {
+                        onBlocked()
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Keep the current state on transient verification failures.
             } finally {
@@ -158,40 +199,160 @@ class HomeViewModel(
         startDummyPay(DummyPaymentPlan.KRONIQ)
     }
 
+    fun dismissDummyPayNotice() {
+        if (_uiState.value.dummyPayState != DummyPayState.WAITING) return
+        savedStateHandle["dummy_notice_dismissed"] = true
+        _uiState.update { it.copy(isDummyPayNoticeDismissed = true) }
+    }
+
+    fun showDummyPayNotice() {
+        if (_uiState.value.dummyPayState != DummyPayState.WAITING) return
+        savedStateHandle.remove<Boolean>("dummy_notice_dismissed")
+        _uiState.update { it.copy(isDummyPayNoticeDismissed = false) }
+    }
+
     fun onDummyPayBrowserOpened() {
-        _uiState.update { it.copy(isAwaitingDummyPayReturn = true) }
+        _uiState.update { it.copy(isAwaitingDummyPayReturn = true, dummyPayState = DummyPayState.WAITING) }
+    }
+
+    fun onDummyPayOpenFailed() {
+        _uiState.update { it.copy(dummyPayState = DummyPayState.OPEN_ERROR) }
+    }
+
+    fun reopenDummyPay() {
+        if (_uiState.value.dummyPayState in setOf(DummyPayState.CREATING, DummyPayState.VERIFYING)) return
+        paymentUrl?.let { url -> _uiState.update { it.copy(dummyPayUrlToOpen = url) } }
     }
 
     fun refreshUserFromPaymentReturnIfNeeded() {
         if (!_uiState.value.isAwaitingDummyPayReturn) return
-        if (paymentReturnRefreshJob?.isActive == true) return
+        verifyDummyPay()
+    }
 
+    fun verifyDummyPay() {
+        if (_uiState.value.dummyPayPlan == null) {
+            if (!_uiState.value.isAccountVerified) loadMe()
+            return
+        }
+        if (_uiState.value.dummyPayState == DummyPayState.CREATING) return
+        if (paymentReturnRefreshJob?.isActive == true) return
+        if (BuildConfig.FLAVOR == "production") return
+        val purchaseId = _uiState.value.dummyPayPurchaseId
+        if (purchaseId.isNullOrBlank()) {
+            // A timed-out create may have succeeded, but the server never returned its ID.
+            // The status endpoint cannot recover that ID; never replace it with another POST.
+            _uiState.update { it.copy(dummyPayState = DummyPayState.CREATION_UNKNOWN) }
+            return
+        }
+        val plan = _uiState.value.dummyPayPlan ?: return
+        _uiState.update { it.copy(
+            dummyPayState = DummyPayState.VERIFYING,
+            isDummyPayVerificationNoticePending = false
+        ) }
         paymentReturnRefreshJob = viewModelScope.launch {
-            try {
-                applyUserState(authRepository.getMe())
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        dummyPayErrorMessage = e.message ?: "Unable to refresh payment status."
-                    )
+            accountRefreshMutex.withLock {
+                try {
+                    val payment = paymentsRepository.getDummyPaymentStatus(purchaseId)
+                    check(payment.purchaseId == purchaseId && payment.provider == "DUMMY_PAY" &&
+                        payment.plan == plan.apiValue) { "Unexpected payment status response." }
+                    when (payment.status) {
+                        "PENDING" -> _uiState.update { it.copy(
+                            dummyPayState = DummyPayState.WAITING,
+                            isAwaitingDummyPayReturn = true
+                        ) }
+                        "FAILED" -> finishDummyPay(DummyPayState.FAILED)
+                        "COMPLETED" -> {
+                            val me = authRepository.getMe()
+                            val owner = savedStateHandle.get<String>("dummy_owner")
+                            if (owner != null && owner != me.id) {
+                                clearDummyPay(cancelJobs = false)
+                                userId = me.id
+                                applyUserState(me)
+                                return@withLock
+                            }
+                            // Only account responses grant access, never payment.plan/status.
+                            val limits = authRepository.getTripLimits()
+                            userId = me.id
+                            applyUserState(me)
+                            applyHomeRefreshPayload(HomeRefreshPayload(trips = null, limits = limits))
+                            finishDummyPay(DummyPayState.CONFIRMED)
+                        }
+                        else -> error("Unknown payment status.")
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(
+                        dummyPayState = DummyPayState.VERIFICATION_ERROR,
+                        isAwaitingDummyPayReturn = true,
+                        isDummyPayVerificationNoticePending = true
+                    ) }
                 }
-            } finally {
-                _uiState.update { it.copy(isAwaitingDummyPayReturn = false) }
             }
         }
+    }
+
+    private fun finishDummyPay(state: DummyPayState) {
+        paymentUrl = null
+        clearSavedPayment()
+        _uiState.update { it.copy(
+            dummyPayState = state, dummyPayPlan = null, dummyPayPurchaseId = null,
+            dummyPayUrlToOpen = null, dummyPayLoadingPlan = null,
+            canReopenDummyPay = false, isAwaitingDummyPayReturn = false,
+            isDummyPayNoticeDismissed = false,
+            isDummyPayVerificationNoticePending = false
+        ) }
+    }
+
+    // Claim before displaying: navigation, backgrounding or a new collector cannot replay it.
+    fun consumeDummyPayResult(): DummyPayState? {
+        val result = _uiState.value.dummyPayState
+        if (result != DummyPayState.CONFIRMED && result != DummyPayState.FAILED) return null
+        _uiState.update { it.copy(dummyPayState = DummyPayState.IDLE) }
+        return result
+    }
+
+    fun consumeDummyPayVerificationNotice(): Boolean {
+        if (!_uiState.value.isDummyPayVerificationNoticePending) return false
+        _uiState.update { it.copy(isDummyPayVerificationNoticePending = false) }
+        return true
+    }
+
+    private fun clearSavedPayment() {
+        savedStateHandle.remove<String>("dummy_plan")
+        savedStateHandle.remove<String>("dummy_purchase")
+        savedStateHandle.remove<String>("dummy_owner")
+        savedStateHandle.remove<Boolean>("dummy_notice_dismissed")
+    }
+
+    fun clearDummyPay(cancelJobs: Boolean = true) {
+        if (cancelJobs) {
+            createPaymentJob?.cancel()
+            paymentReturnRefreshJob?.cancel()
+            loadMeJob?.cancel()
+            refreshHomeJob?.cancel()
+            addTripAccessJob?.cancel()
+            userId = null
+        }
+        paymentUrl = null
+        clearSavedPayment()
+        _uiState.update { it.copy(
+            dummyPayState = DummyPayState.IDLE, dummyPayPlan = null,
+            dummyPayPurchaseId = null, dummyPayUrlToOpen = null,
+            dummyPayLoadingPlan = null, canReopenDummyPay = false,
+            isAwaitingDummyPayReturn = false, isAccountVerified = false,
+            isDummyPayNoticeDismissed = false,
+            isDummyPayVerificationNoticePending = false
+        ) }
     }
 
     fun consumeDummyPayUrl() {
         _uiState.update { it.copy(dummyPayUrlToOpen = null) }
     }
 
-    fun consumeDummyPayError() {
-        _uiState.update { it.copy(dummyPayErrorMessage = null) }
-    }
-
     private suspend fun fetchHomeRefreshPayload(): HomeRefreshPayload = coroutineScope {
-        val limitsDeferred = async { runCatching { authRepository.getTripLimits() }.getOrNull() }
-        val tripsDeferred = async { runCatching { tripsRepository.getMyTrips() }.getOrNull() }
+        val limitsDeferred = async { optionalRead { authRepository.getTripLimits() } }
+        val tripsDeferred = async { optionalRead { tripsRepository.getMyTrips() } }
 
         val trips = tripsDeferred.await()?.map { trip ->
             TripHistoryItem(
@@ -207,6 +368,14 @@ class HomeViewModel(
             trips = trips,
             limits = limitsDeferred.await()
         )
+    }
+
+    private suspend fun <T> optionalRead(read: suspend () -> T): T? = try {
+        read()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        null
     }
 
     private fun applyHomeRefreshPayload(payload: HomeRefreshPayload) {
@@ -244,6 +413,7 @@ class HomeViewModel(
                 isPremium = me.isPremium,
                 isKroniq = me.isKroniq,
                 isThemesLocked = !me.isKroniq,
+                isAccountVerified = true,
                 isLoading = isLoading
             )
         }
@@ -258,39 +428,55 @@ class HomeViewModel(
     private fun startDummyPay(plan: DummyPaymentPlan) {
         if (BuildConfig.FLAVOR == "production") {
             _uiState.update {
-                it.copy(dummyPayErrorMessage = "DummyPay is not available in production.")
+                it.copy(dummyPayState = DummyPayState.UNAVAILABLE)
             }
             return
         }
 
         if (isPlanAlreadyActive(plan)) return
-        if (_uiState.value.dummyPayLoadingPlan != null) return
+        if (_uiState.value.isPurchaseBlocked) return
 
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    dummyPayLoadingPlan = plan,
-                    dummyPayErrorMessage = null,
-                    dummyPayUrlToOpen = null
-                )
-            }
+        // Reserve synchronously, before launching, to reject even same-frame double taps.
+        savedStateHandle["dummy_plan"] = plan.name
+        savedStateHandle["dummy_owner"] = userId
+        savedStateHandle.remove<String>("dummy_purchase")
+        savedStateHandle.remove<Boolean>("dummy_notice_dismissed")
+        paymentUrl = null
+        _uiState.update { it.copy(
+            dummyPayLoadingPlan = plan, dummyPayPlan = plan,
+            dummyPayPurchaseId = null, dummyPayState = DummyPayState.CREATING,
+            canReopenDummyPay = false, isAwaitingDummyPayReturn = false,
+            isDummyPayNoticeDismissed = false, dummyPayUrlToOpen = null,
+            isDummyPayVerificationNoticePending = false
+        ) }
 
+        createPaymentJob = viewModelScope.launch {
             try {
                 val response = paymentsRepository.createDummyPayment(plan)
-                val paymentUrl = response.paymentUrl.takeIf { it.isNotBlank() }
-                    ?: throw IllegalStateException("Payment URL is missing.")
+                savedStateHandle["dummy_purchase"] = response.purchaseId
+                paymentUrl = response.paymentUrl.takeIf { it.isNotBlank() }
 
                 _uiState.update {
                     it.copy(
                         dummyPayLoadingPlan = null,
+                        dummyPayPurchaseId = response.purchaseId,
+                        dummyPayState = if (paymentUrl != null) DummyPayState.WAITING else DummyPayState.OPEN_ERROR,
+                        canReopenDummyPay = paymentUrl != null,
                         dummyPayUrlToOpen = paymentUrl
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                // Only an explicit rejecting response is safe to retry. Transport/5xx outcomes
+                // may have created a purchase already; never automatically repeat POST.
+                val rejected = e is PaymentApiException && e.statusCode in setOf(400, 401, 404)
+                if (rejected) clearSavedPayment()
                 _uiState.update {
                     it.copy(
                         dummyPayLoadingPlan = null,
-                        dummyPayErrorMessage = e.message ?: "Unable to start payment."
+                        dummyPayState = if (rejected) DummyPayState.START_ERROR else DummyPayState.CREATION_UNKNOWN,
+                        dummyPayPlan = if (rejected) null else plan
                     )
                 }
             }
@@ -302,6 +488,12 @@ class HomeViewModel(
             DummyPaymentPlan.PREMIUM -> _uiState.value.currentPlan == HomePlanTier.PREMIUM
             DummyPaymentPlan.KRONIQ -> _uiState.value.currentPlan == HomePlanTier.KRONIQ
         }
+    }
+
+    override fun onCleared() {
+        paymentUrl = null
+        clearSavedPayment()
+        super.onCleared()
     }
 
 }

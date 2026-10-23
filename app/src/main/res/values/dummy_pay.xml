@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dummy_pay_creating">Creating payment…</string>
+    <string name="dummy_pay_waiting">This payment is pending. Continue on the same payment page or verify again. No new purchase will be created.</string>
+    <string name="dummy_pay_verifying">Verifying payment status and, if completed, account access…</string>
+    <string name="dummy_pay_confirmed">Payment completed.</string>
+    <string name="dummy_pay_unconfirmed">Plan activation has not been confirmed. You can verify again or reopen the same payment. A new purchase is blocked while this result is unknown.</string>
+    <string name="dummy_pay_verification_error">Unable to verify the payment or refresh your account and trip limits. Your purchase is preserved. Please try again.</string>
+    <string name="dummy_pay_open_error">Unable to open the payment page. You can reopen the same payment or verify your account.</string>
+    <string name="dummy_pay_creation_unknown">The payment request outcome is unknown. It may already exist; a new purchase is blocked. Verify your account again.</string>
+    <string name="dummy_pay_start_error">The payment request was rejected. Please sign in again if your session expired, or try later.</string>
+    <string name="dummy_pay_verify_again">Verify again</string>
+    <string name="dummy_pay_reopen">Reopen payment</string>
+    <string name="dummy_pay_url_unavailable">The payment link is unavailable, for example after restoring the app. You can still verify your account.</string>
+    <string name="dummy_pay_failed">Payment failed. You can try again.</string>
+    <string name="dummy_pay_pending_title">Payment in progress</string>
+    <string name="dummy_pay_pending_indicator">Pending payment · Show options</string>
+    <string name="dummy_pay_hide_notice">Hide payment notice</string>
+    <string name="dummy_pay_verification_notice">Unable to verify payment. Please try again.</string>
+</resources>
