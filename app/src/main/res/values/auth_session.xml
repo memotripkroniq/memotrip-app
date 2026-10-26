@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_storage_unavailable">Secure sign-in storage is unavailable. Your saved data has not been deleted.</string>
+    <string name="auth_storage_retry">Try again</string>
+    <string name="auth_storage_exit_error">Local sign-out could not be completed safely. Saved data has not been reset. Please try again.</string>
+    <string name="auth_storage_exit_close">Close</string>
+</resources>

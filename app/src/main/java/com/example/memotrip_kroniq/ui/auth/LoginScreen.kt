@@ -65,8 +65,7 @@ fun LoginScreen(
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return LoginViewModel(
-                    repository = repository,
-                    tokenStore = tokenStore
+                    repository = repository
                 ) as T
             }
         }

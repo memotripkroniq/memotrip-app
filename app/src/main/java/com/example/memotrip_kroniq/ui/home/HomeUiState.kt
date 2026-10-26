@@ -40,7 +40,8 @@ data class HomeUiState(
     val canReopenDummyPay: Boolean = false,
     val isDummyPayNoticeDismissed: Boolean = false,
     val isDummyPayVerificationNoticePending: Boolean = false,
-    val isAccountVerified: Boolean = false
+    val isAccountVerified: Boolean = false,
+    val requiresSignIn: Boolean = false
 
 ) {
     val currentPlan: HomePlanTier

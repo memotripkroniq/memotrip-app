@@ -16,6 +16,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +41,9 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.memotrip_kroniq.R
 import com.example.memotrip_kroniq.data.AuthRepository
+import com.example.memotrip_kroniq.data.LocalSessionExit
+import com.example.memotrip_kroniq.data.finishLocalSession
+import com.example.memotrip_kroniq.ui.auth.SessionStorageErrorDialog
 import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.location.LocationSearchRepository
 import com.example.memotrip_kroniq.data.network.HttpClientProvider
@@ -174,23 +179,34 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             val context = LocalContext.current
             val tokenStore = remember { TokenDataStore(context) }
-            val token by tokenStore.token.collectAsState(initial = null)
-
-            LaunchedEffect(token) {
-                if (token != null) {
-                    navController.navigate(Screen.Home.route) {
+            var splashFinished by remember { mutableStateOf(false) }
+            var storageError by remember { mutableStateOf(false) }
+            var storageAttempt by remember { mutableStateOf(0) }
+            LaunchedEffect(splashFinished, storageAttempt) {
+                if (splashFinished) {
+                    storageError = false
+                    val snapshot = try { tokenStore.snapshot() }
+                    catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                    catch (_: Exception) { storageError = true; return@LaunchedEffect }
+                    val session = snapshot.session
+                    val destination = if (session != null &&
+                        session.hasUsableAccessToken()) Screen.Home.route
+                    else Screen.Login.route
+                    navController.navigate(destination) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
             }
-
-            SplashScreen(
-                onTimeout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+            if (storageError) {
+                Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                    androidx.compose.foundation.layout.Column {
+                        androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(R.string.auth_storage_unavailable))
+                        androidx.compose.material3.TextButton(onClick = { storageAttempt++ }) {
+                            androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(R.string.auth_storage_retry))
+                        }
                     }
                 }
-            )
+            } else SplashScreen(onTimeout = { splashFinished = true })
         }
 
         // =============================================================
@@ -450,24 +466,28 @@ fun AppNavGraph(navController: NavHostController) {
             val coroutineScope = rememberCoroutineScope()
             val previousRoute = navController.previousBackStackEntry?.destination?.route
 
-            ChangePasswordSuccessScreen(
-                onFinished = {
-                    coroutineScope.launch {
-                        if (previousRoute == Screen.ResetPasswordSaving.route) {
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(0)
-                                launchSingleTop = true
-                            }
-                        } else {
-                            tokenStore.clearTokens()
+            var storageError by remember { mutableStateOf(false) }
+            var exitBusy by remember { mutableStateOf(false) }
+            fun finish() {
+                if (exitBusy) return
+                exitBusy = true
+                storageError = false
+                coroutineScope.launch {
+                    try {
+                        val navigate = {
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0)
                                 launchSingleTop = true
                             }
                         }
-                    }
+                        if (previousRoute == Screen.ResetPasswordSaving.route) navigate()
+                        else finishLocalSession(tokenStore, LocalSessionExit.REAUTHENTICATION,
+                            onComplete = navigate, onStorageError = { storageError = true })
+                    } finally { exitBusy = false }
                 }
-            )
+            }
+            ChangePasswordSuccessScreen(onFinished = ::finish)
+            if (storageError) SessionStorageErrorDialog(onRetry = ::finish)
         }
 
         // =============================================================
@@ -579,18 +599,26 @@ fun AppNavGraph(navController: NavHostController) {
             val tokenStore = remember { TokenDataStore(context) }
             val coroutineScope = rememberCoroutineScope()
 
-            SettingsScreen(
-                navController = navController,
-                onLogoutClick = {
-                    coroutineScope.launch {
-                        tokenStore.clearTokens()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0)
-                            launchSingleTop = true
-                        }
-                    }
+            var storageError by remember { mutableStateOf(false) }
+            var exitBusy by remember { mutableStateOf(false) }
+            fun logout() {
+                if (exitBusy) return
+                exitBusy = true
+                storageError = false
+                coroutineScope.launch {
+                    try {
+                        finishLocalSession(tokenStore, LocalSessionExit.LOGOUT,
+                            onComplete = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0)
+                                    launchSingleTop = true
+                                }
+                            }, onStorageError = { storageError = true })
+                    } finally { exitBusy = false }
                 }
-            )
+            }
+            SettingsScreen(navController = navController, onLogoutClick = ::logout)
+            if (storageError) SessionStorageErrorDialog(onRetry = ::logout, onDismiss = { storageError = false })
         }
 
         composable(

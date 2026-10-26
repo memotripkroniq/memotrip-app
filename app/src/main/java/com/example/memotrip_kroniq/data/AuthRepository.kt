@@ -3,7 +3,7 @@ package com.example.memotrip_kroniq.data
 import android.content.ContentResolver
 import android.net.Uri
 import LoginRequest
-import com.example.memotrip_kroniq.data.datastore.TokenDataStore
+import com.example.memotrip_kroniq.data.datastore.AuthSessionStore
 import com.example.memotrip_kroniq.data.image.ImageUploadNormalizer
 import com.example.memotrip_kroniq.data.remote.dto.TripLimitsResponse
 import com.example.memotrip_kroniq.data.remote.dto.ChangePasswordResponse
@@ -23,7 +23,7 @@ import com.example.memotrip_kroniq.ui.home.HomeAuthDataSource
 
 class AuthRepository(
     private val api: AuthApi,
-    private val tokenStore: TokenDataStore
+    private val tokenStore: AuthSessionStore
 ) : HomeAuthDataSource {
 
     // ⭐ SIGNUP
@@ -33,8 +33,9 @@ class AuthRepository(
         name: String?,
         country: String
     ): SignupResponse {
+        val generation = tokenStore.beginAuthentication()
         try {
-            return api.signup(
+            val response = api.signup(
                 SignupRequest(
                     email = email.trim().lowercase(),
                     password = password,
@@ -42,6 +43,8 @@ class AuthRepository(
                     country = country
                 )
             )
+            check(tokenStore.saveSession(response.toSession(), generation)) { "Authentication was superseded" }
+            return response
         } catch (e: HttpException) {
             throw extractApiError(e)
         }
@@ -49,6 +52,7 @@ class AuthRepository(
 
     // ⭐ LOGIN
     suspend fun login(email: String, password: String): UserMe {
+        val generation = tokenStore.beginAuthentication()
         try {
             // 1️⃣ LOGIN
             val response = api.login(
@@ -59,16 +63,14 @@ class AuthRepository(
             )
 
             // 2️⃣ ULOŽ TOKEN – MUSÍ DOBĚHNOUT
-            tokenStore.saveAccessToken(response.accessToken)
+            check(tokenStore.saveSession(response.toSession(), generation)) { "Authentication was superseded" }
 
             // 🔥 3️⃣ TEPRVE TEĎ /me
-            return api.getMe()
+            return getMeForSession(response.sessionId)
 
         } catch (e: HttpException) {
-            println("REPO HttpException CODE=${e.code()} message=${e.message()}")
             throw e
         } catch (e: Exception) {
-            println("🔥 REPO Unknown login error = ${e.message}")
             throw e
         }
     }
@@ -77,8 +79,11 @@ class AuthRepository(
 
     // ⭐ GOOGLE LOGIN
     suspend fun loginWithGoogle(idToken: String): AuthResponse {
+        val generation = tokenStore.beginAuthentication()
         try {
-            return api.loginWithGoogle(mapOf("idToken" to idToken))
+            val response = api.loginWithGoogle(mapOf("idToken" to idToken))
+            check(tokenStore.saveSession(response.toSession(), generation)) { "Authentication was superseded" }
+            return response
         } catch (e: HttpException) {
             throw extractApiError(e)
         }
@@ -110,8 +115,22 @@ class AuthRepository(
     // ============================================================
     // ⭐ GET ME
     // ============================================================
-    override suspend fun getMe() =
-        api.getMe()
+    override suspend fun getMe(): UserMe {
+        val before = tokenStore.snapshot()
+        val session = checkNotNull(before.session) { "Sign-in is required" }
+        val me = api.getMe()
+        check(me.id == session.userId && tokenStore.snapshot().generation == before.generation) {
+            "Authentication was superseded"
+        }
+        return me
+    }
+
+    suspend fun getMeForSession(sessionId: String): UserMe {
+        check(tokenStore.snapshot().session?.sessionId == sessionId) { "Authentication was superseded" }
+        val me = getMe()
+        check(tokenStore.snapshot().session?.sessionId == sessionId) { "Authentication was superseded" }
+        return me
+    }
 
     // ============================================================
     // ⭐ GET TRIP LIMITS

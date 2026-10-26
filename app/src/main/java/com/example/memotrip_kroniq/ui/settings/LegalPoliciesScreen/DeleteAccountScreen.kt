@@ -309,11 +309,18 @@ private suspend fun runDeleteAccount(
             googleIdToken = googleIdToken
         )
     }.onSuccess {
-        tokenStore.clearTokens()
-        navController.navigate(com.example.memotrip_kroniq.navigation.Screen.Login.route) {
-            popUpTo(0)
-            launchSingleTop = true
-        }
+        com.example.memotrip_kroniq.data.finishLocalSession(
+            tokenStore, com.example.memotrip_kroniq.data.LocalSessionExit.LOGOUT,
+            onComplete = {
+                navController.navigate(com.example.memotrip_kroniq.navigation.Screen.Login.route) {
+                    popUpTo(0)
+                    launchSingleTop = true
+                }
+            },
+            onStorageError = {
+                onError(navController.context.getString(R.string.auth_storage_exit_error))
+            }
+        )
     }.onFailure {
         onError(it.message ?: "Delete account failed")
     }

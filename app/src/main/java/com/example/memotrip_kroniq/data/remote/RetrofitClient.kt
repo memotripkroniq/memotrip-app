@@ -67,12 +67,12 @@ object RetrofitClient {
                     if (isVerboseHttpLoggingEnabled) {
                         Log.d(
                             TAG,
-                            "${request.method} ${request.url.encodedPath} code=${response.code} durationMs=$durationMs"
+                            "${request.method} ${redactPaymentLogPath(request.url.encodedPath)} code=${response.code} durationMs=$durationMs"
                         )
                     } else if (!response.isSuccessful) {
                         Log.w(
                             TAG,
-                            "HTTP error ${request.method} ${request.url.encodedPath} code=${response.code}"
+                            "HTTP error ${request.method} ${redactPaymentLogPath(request.url.encodedPath)} code=${response.code}"
                         )
                     }
 
@@ -81,7 +81,7 @@ object RetrofitClient {
                     val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
                     Log.e(
                         TAG,
-                        "HTTP request failed ${request.method} ${request.url.encodedPath} after ${durationMs}ms: ${e.javaClass.simpleName}"
+                        "HTTP request failed ${request.method} ${redactPaymentLogPath(request.url.encodedPath)} after ${durationMs}ms: ${e.javaClass.simpleName}"
                     )
                     throw e
                 }
@@ -110,3 +110,7 @@ object RetrofitClient {
         get() = retrofit!!.create(PaymentsApi::class.java)
 }
 
+
+// Standard HTTP logs retain status/timing while excluding purchase identifiers.
+internal fun redactPaymentLogPath(path: String): String =
+    path.substringBefore('?').replace(Regex("^(/payments/dummy/)[^/]+"), "${'$'}1{purchaseId}")

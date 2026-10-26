@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.util.Log
 import com.example.memotrip_kroniq.data.AuthRepository
-import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import com.example.memotrip_kroniq.data.model.UserMe
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +20,7 @@ sealed class LoginState {
 }
 
 class LoginViewModel(
-    private val repository: AuthRepository,
-    private val tokenStore: TokenDataStore
+    private val repository: AuthRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -79,14 +77,10 @@ class LoginViewModel(
                 // 1️⃣ Google login → dostaneme TOKENY
                 val response = repository.loginWithGoogle(idToken)
 
-                // 2️⃣ uložíme tokeny do DataStore
-                tokenStore.saveTokens(
-                    accessToken = response.accessToken,
-                    refreshToken = response.refreshToken
-                )
+                // The repository has atomically saved the complete session.
 
                 // 3️⃣ zavoláme /auth/me (už s Authorization headerem)
-                val me = repository.getMe()
+                val me = repository.getMeForSession(response.sessionId)
 
                 Log.d("AUTH", "GOOGLE LOGIN → isKroniq = ${me.isKroniq}")
 

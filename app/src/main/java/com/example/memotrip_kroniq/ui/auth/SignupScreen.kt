@@ -35,7 +35,7 @@ import com.google.android.gms.common.api.ApiException
 
 @Composable
 fun SignUpScreen(
-    onSuccess: (String) -> Unit = {},
+    onSuccess: () -> Unit = {},
 ) {
     val s = LocalUiScaler.current
     val focusManager = LocalFocusManager.current
@@ -58,8 +58,7 @@ fun SignUpScreen(
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return SignupViewModel(
-                    repository = repository,
-                    tokenStore = tokenStore
+                    repository = repository
                 ) as T
             }
         }
@@ -109,7 +108,7 @@ fun SignUpScreen(
         }
 
         if (state is SignupState.Success) {
-            onSuccess((state as SignupState.Success).token)
+            onSuccess()
         }
     }
 

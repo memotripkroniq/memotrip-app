@@ -644,6 +644,164 @@ class HomeViewModelTest {
         assertEquals(1, payments.requests.size)
     }
 
+    @Test fun durablePending_restoresAfterFreshLoginWithoutOpeningBrowserOrPosting() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertFalse(vm.uiState.value.canReopenDummyPay)
+        assertNull(vm.uiState.value.dummyPayUrlToOpen)
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertTrue(payments.requests.isEmpty())
+        assertEquals(listOf("purchase-1"), payments.statusRequests)
+    }
+
+    @Test fun durablePending_survivesOfflineAccountAndVerificationErrors() = runTest(dispatcher) {
+        val store = paymentStore()
+        auth.failMe = true
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        payments.statusFailure = PaymentApiException(401, "ACCESS_TOKEN_EXPIRED", "Expired", IllegalStateException())
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun durablePending_otherUserDoesNotSeeOrVerifyPreviousPurchase() = runTest(dispatcher) {
+        val store = paymentStore()
+        val other = store.snapshot().session!!.copy(userId = "user-2")
+        store.saveSession(other, store.beginAuthentication())
+        auth.me = me().copy(id = "user-2")
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+        assertTrue(payments.statusRequests.isEmpty())
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+    }
+
+    @Test fun durablePending_terminalStatusesClearPersistentMetadata() = runTest(dispatcher) {
+        for (status in listOf("FAILED", "COMPLETED")) {
+            val store = paymentStore()
+            payments.status = status
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            assertTrue(store.snapshot().pendingPayments.isEmpty())
+            assertNotNull(vm.consumeDummyPayResult())
+            assertNull(vm.consumeDummyPayResult())
+        }
+    }
+
+    @Test fun newPurchase_persistsMetadataBeforeOfferingUrl() = runTest(dispatcher) {
+        val store = paymentStore()
+        store.clearPendingPayment(store.snapshot().pendingPayments["user-1"]!!)
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertEquals("purchase-1", store.snapshot().pendingPayments["user-1"]!!.purchaseId)
+        assertNotNull(vm.uiState.value.dummyPayUrlToOpen)
+    }
+
+    @Test fun legacySavedPayment_isImportedBeforeForcingNewSignIn() = runTest(dispatcher) {
+        val store = com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore()
+        store.value.value = store.value.value.copy(legacyPendingImportAllowed = true)
+        val handle = SavedStateHandle(mapOf("dummy_owner" to "user-1", "dummy_purchase" to "purchase-1", "dummy_plan" to "PREMIUM"))
+        val vm = HomeViewModel(auth, FakeTrips(), payments, handle, store)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.requiresSignIn)
+        assertEquals("purchase-1", store.snapshot().pendingPayments["user-1"]!!.purchaseId)
+        assertTrue(payments.statusRequests.isEmpty())
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun logout_newHomeWithOldSavedStateAndCurrentGenerationCannotReimportPurchase() = runTest(dispatcher) {
+        val store = paymentStore()
+        val originalSession = store.snapshot().session!!
+        store.clearTokens()
+        val current = store.snapshot().generation
+        fun staleHandle() = SavedStateHandle(mapOf(
+            "dummy_owner" to "user-1", "dummy_purchase" to "purchase-1", "dummy_plan" to "PREMIUM",
+            "dummy_session_generation" to current
+        ))
+        val loggedOutHome = HomeViewModel(auth, FakeTrips(), payments, staleHandle(), store)
+        advanceUntilIdle()
+        assertTrue(loggedOutHome.uiState.value.requiresSignIn)
+        assertTrue(store.snapshot().pendingPayments.isEmpty())
+        assertNull(loggedOutHome.uiState.value.dummyPayPurchaseId)
+        store.saveSession(originalSession, store.beginAuthentication())
+        val signedInHome = HomeViewModel(auth, FakeTrips(), payments, staleHandle(), store)
+        advanceUntilIdle()
+        assertNull(signedInHome.uiState.value.dummyPayPurchaseId)
+        assertTrue(payments.statusRequests.isEmpty())
+        assertTrue(store.snapshot().pendingPayments.isEmpty())
+    }
+
+    @Test fun passwordChange_reauthenticationRestoresPendingOnlyForSameUser() = runTest(dispatcher) {
+        val store = paymentStore()
+        val original = store.snapshot().session!!
+        val lateLogin = store.beginAuthentication()
+        store.requireReauthentication()
+        assertFalse(store.saveSession(original, lateLogin))
+        assertNull(store.snapshot().session)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        store.saveSession(original.copy(userId = "other"), store.beginAuthentication())
+        auth.me = me().copy(id = "other")
+        val other = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertNull(other.uiState.value.dummyPayPurchaseId)
+        assertTrue(payments.statusRequests.isEmpty())
+        store.saveSession(original, store.beginAuthentication())
+        auth.me = me()
+        payments.status = "PENDING"
+        val same = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertEquals("purchase-1", same.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.WAITING, same.uiState.value.dummyPayState)
+        assertEquals(listOf("purchase-1"), payments.statusRequests)
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun completedPurchase_cannotBeRestoredFromStaleSavedState() = runTest(dispatcher) {
+        val store = paymentStore()
+        val old = SavedStateHandle(mapOf("dummy_owner" to "user-1", "dummy_purchase" to "purchase-1", "dummy_plan" to "PREMIUM"))
+        store.clearPendingPayment(store.snapshot().pendingPayments["user-1"]!!)
+        val vm = HomeViewModel(auth, FakeTrips(), payments, old, store)
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+        assertTrue(payments.statusRequests.isEmpty())
+    }
+
+    @Test fun invalidPaymentUrlDoesNotOfferOrEmitReopenAction() = runTest(dispatcher) {
+        payments.paymentUrl = "https://untrusted.example/payment?token=fixture"
+        val vm = model()
+        advanceUntilIdle()
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        vm.consumeDummyPayUrl()
+        assertFalse(vm.uiState.value.canReopenDummyPay)
+        vm.reopenDummyPay()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayUrlToOpen)
+        assertEquals(1, payments.requests.size)
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+    }
+
+    private suspend fun paymentStore(): com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore {
+        val store = com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore()
+        store.saveSession(com.example.memotrip_kroniq.data.datastore.AuthSession(
+            "access", "refresh", "Bearer", 900, "2099-01-01T00:00:00.000Z", "session", "user-1", System.currentTimeMillis()
+        ), store.beginAuthentication())
+        store.savePendingPayment(com.example.memotrip_kroniq.data.datastore.PendingPayment("purchase-1", "PREMIUM", "user-1"))
+        return store
+    }
+
     private fun copySavedState() = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
 
     private class FakeAuth : HomeAuthDataSource {
@@ -675,6 +833,7 @@ class HomeViewModelTest {
         val requests = mutableListOf<DummyPaymentPlan>()
         var failure: Exception? = null
         var status = "COMPLETED"
+        var paymentUrl = "${com.memotrip_kroniq.BuildConfig.BASE_URL}payments/dummy/purchase-1?token=fixture"
         var statusFailure: Exception? = null
         var statusResponse: DummyPaymentStatusResponse? = null
         val statusRequests = mutableListOf<String>()
@@ -689,7 +848,7 @@ class HomeViewModelTest {
             lastPlan = plan
             failure?.let { throw it }
             return DummyPaymentResponse("purchase-1", "DUMMY_PAY", "PENDING", plan.apiValue,
-                "5.99", "EUR", "https://example.com/pay?token=secret")
+                "5.99", "EUR", paymentUrl)
         }
     }
     companion object {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_storage_unavailable">Zabezpečené úložisko prihlásenia nie je dostupné. Uložené údaje neboli vymazané.</string>
+    <string name="auth_storage_retry">Skúsiť znova</string>
+    <string name="auth_storage_exit_error">Miestne odhlásenie sa nepodarilo bezpečne dokončiť. Uložené údaje neboli resetované. Skúste to znova.</string>
+    <string name="auth_storage_exit_close">Zavrieť</string>
+</resources>

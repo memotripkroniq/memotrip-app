@@ -3,7 +3,6 @@ package com.example.memotrip_kroniq.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memotrip_kroniq.data.AuthRepository
-import com.example.memotrip_kroniq.data.datastore.TokenDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -11,13 +10,12 @@ import kotlinx.coroutines.launch
 sealed class SignupState {
     object Idle : SignupState()
     object Loading : SignupState()
-    data class Success(val token: String) : SignupState()
+    data object Success : SignupState()
     data class Error(val message: String) : SignupState()
 }
 
 class SignupViewModel(
-    private val repository: AuthRepository,
-    private val tokenStore: TokenDataStore
+    private val repository: AuthRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<SignupState>(SignupState.Idle)
@@ -28,19 +26,16 @@ class SignupViewModel(
 
         viewModelScope.launch {
             try {
-                val response = repository.signup(
+                repository.signup(
                     email = email.trim().lowercase(),
                     password = password,
                     name = name,
                     country = "EN"       // 🔥 sem patří
                 )
 
-                tokenStore.saveToken(response.accessToken)
-
-                _state.value = SignupState.Success(response.accessToken)
+                _state.value = SignupState.Success
 
             } catch (e: Exception) {
-                e.printStackTrace()
                 _state.value = SignupState.Error("Signup failed")
             }
         }
@@ -51,14 +46,9 @@ class SignupViewModel(
             _state.value = SignupState.Loading
 
             try {
-                val response = repository.loginWithGoogle(idToken)
+                repository.loginWithGoogle(idToken)
 
-                tokenStore.saveTokens(
-                    accessToken = response.accessToken,
-                    refreshToken = response.refreshToken
-                )
-
-                _state.value = SignupState.Success(response.accessToken)
+                _state.value = SignupState.Success
 
             } catch (e: Exception) {
                 _state.value = SignupState.Error(e.message ?: "Google signup failed")

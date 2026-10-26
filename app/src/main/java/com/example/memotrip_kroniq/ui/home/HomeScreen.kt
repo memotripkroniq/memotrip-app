@@ -104,7 +104,8 @@ fun HomeScreen(
                     authRepository = authRepository,
                     tripsRepository = tripsRepository,
                     paymentsRepository = paymentsRepository,
-                    savedStateHandle = extras.createSavedStateHandle()
+                    savedStateHandle = extras.createSavedStateHandle(),
+                    sessionStore = tokenStore
                 ) as T
             }
         }
@@ -112,20 +113,20 @@ fun HomeScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(uiState.requiresSignIn) {
+        if (uiState.requiresSignIn) navController?.navigate(Screen.Login.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
     LaunchedEffect(uiState.dummyPayUrlToOpen) {
-        val paymentUrl = uiState.dummyPayUrlToOpen ?: return@LaunchedEffect
-        // Consume before launching; recomposition/rotation must not reopen the browser.
-        viewModel.consumeDummyPayUrl()
+        val paymentUrl = viewModel.claimDummyPayUrl() ?: return@LaunchedEffect
         runCatching { launchDummyPayUrl(context, paymentUrl) }
             .onSuccess { viewModel.onDummyPayBrowserOpened() }
             .onFailure { viewModel.onDummyPayOpenFailed() }
     }
 
-    LaunchedEffect(tokenStore) {
-        tokenStore.accessToken.collect { token ->
-            if (token.isNullOrBlank()) viewModel.clearDummyPay()
-        }
-    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }

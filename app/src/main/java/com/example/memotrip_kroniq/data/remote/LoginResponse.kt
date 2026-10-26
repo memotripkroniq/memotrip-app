@@ -1,3 +1,1 @@
-data class LoginResponse(
-    val accessToken: String
-)
+typealias LoginResponse = com.example.memotrip_kroniq.data.remote.AuthResponse
