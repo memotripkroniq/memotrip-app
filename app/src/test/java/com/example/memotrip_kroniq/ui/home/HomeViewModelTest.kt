@@ -208,7 +208,7 @@ class HomeViewModelTest {
         assertEquals(1, payments.requests.size)
     }
 
-    @Test fun timeout_doesNotRetryPostEvenAfterRecreation() = runTest(dispatcher) {
+    @Test fun timeout_doesNotRetryPostAfterRecreationWhenRecoveryIsUnavailable() = runTest(dispatcher) {
         payments.failure = SocketTimeoutException()
         val vm = model()
         advanceUntilIdle()
@@ -216,12 +216,13 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertEquals(DummyPayState.CREATION_UNKNOWN, vm.uiState.value.dummyPayState)
         vm.startPremiumDummyPay()
+        payments.recoveryFailure = SocketTimeoutException()
         val restored = model(copySavedState())
         advanceUntilIdle()
         restored.startPremiumDummyPay()
         advanceUntilIdle()
         assertEquals(1, payments.requests.size)
-        assertEquals(DummyPayState.CREATION_UNKNOWN, restored.uiState.value.dummyPayState)
+        assertEquals(DummyPayState.VERIFICATION_ERROR, restored.uiState.value.dummyPayState)
         assertNull(restored.uiState.value.dummyPayPurchaseId)
     }
 
@@ -248,12 +249,16 @@ class HomeViewModelTest {
         assertEquals(1, payments.requests.size)
     }
 
-    @Test fun recreationWhileCreating_verifiesWithoutPostingAgain() = runTest(dispatcher) {
+    @Test fun recreationWhileCreating_recoversWithoutPostingAgain() = runTest(dispatcher) {
+        payments.recovered = listOf(pendingItem())
+        payments.status = "PENDING"
         saved["dummy_plan"] = "PREMIUM"
         saved["dummy_owner"] = "user-1"
         val restored = model(copySavedState())
         advanceUntilIdle()
-        assertEquals(DummyPayState.CREATION_UNKNOWN, restored.uiState.value.dummyPayState)
+        assertEquals(DummyPayState.WAITING, restored.uiState.value.dummyPayState)
+        assertEquals("purchase-1", restored.uiState.value.dummyPayPurchaseId)
+        assertEquals(1, payments.recoveryCalls)
         assertEquals(0, payments.requests.size)
     }
 
@@ -1091,6 +1096,357 @@ class HomeViewModelTest {
         assertNull(vm.claimDummyPayUrl())
     }
 
+    private fun pendingItem(id: String = "purchase-1", plan: String = "PREMIUM") =
+        com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem(
+            id, "DUMMY_PAY", "PENDING", plan, "2026-10-26T10:00:00.000Z")
+
+    @Test fun failedPersistence_keepsKnownIdAndVerifiesWithoutCreatingAgain() = runTest(dispatcher) {
+        val base = paymentStore()
+        base.clearPendingPayment(base.snapshot().pendingPayments["user-1"]!!)
+        val store = FaultStore(base)
+        val vm = HomeViewModel(auth, FakeTrips(), payments, saved, store)
+        advanceUntilIdle()
+        store.failSave = true
+        payments.status = "PENDING"
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+        assertTrue(base.snapshot().pendingPayments.isEmpty())
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertEquals("purchase-1", saved.get<String>("dummy_purchase"))
+        vm.startKroniqDummyPay()
+        advanceUntilIdle()
+        assertEquals(1, payments.requests.size)
+        store.failSave = false
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals("purchase-1", base.snapshot().pendingPayments["user-1"]!!.purchaseId)
+    }
+
+    @Test fun restartWithoutSavedState_recoversIdAfterFailedPersistenceWithoutPostOrBrowser() = runTest(dispatcher) {
+        val base = paymentStore()
+        base.clearPendingPayment(base.snapshot().pendingPayments["user-1"]!!)
+        val store = FaultStore(base)
+        val original = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        store.failSave = true
+        original.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertTrue(base.snapshot().pendingPayments.isEmpty())
+        payments.recovered = listOf(pendingItem())
+        payments.status = "PENDING"
+        val restored = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertEquals("purchase-1", restored.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.WAITING, restored.uiState.value.dummyPayState)
+        assertNull(restored.claimDummyPayUrl())
+        assertTrue(restored.uiState.value.isPurchaseBlocked)
+        assertEquals(1, payments.requests.size)
+    }
+
+    @Test fun unknownCreate_manualRecoveryFindsExistingPurchaseAndNeverRepeatsPost() = runTest(dispatcher) {
+        val base = paymentStore()
+        base.clearPendingPayment(base.snapshot().pendingPayments["user-1"]!!)
+        val vm = HomeViewModel(auth, FakeTrips(), payments, saved, base)
+        advanceUntilIdle()
+        payments.failure = SocketTimeoutException()
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.CREATION_UNKNOWN, vm.uiState.value.dummyPayState)
+        payments.recovered = listOf(pendingItem())
+        payments.status = "PENDING"
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertEquals(1, payments.requests.size)
+    }
+
+    @Test fun pendingConflict_recoversActualPlanWithoutAutomaticCreateRetry() = runTest(dispatcher) {
+        val base = paymentStore()
+        base.clearPendingPayment(base.snapshot().pendingPayments["user-1"]!!)
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        payments.failure = PaymentApiException(409, "DUMMY_PAY_PENDING_EXISTS", "Conflict", Exception())
+        payments.recovered = listOf(pendingItem())
+        payments.status = "PENDING"
+        vm.startKroniqDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPaymentPlan.PREMIUM, vm.uiState.value.dummyPayPlan)
+        assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertEquals(1, payments.requests.size)
+        assertEquals(2, payments.recoveryCalls)
+    }
+
+    @Test fun multiplePending_areProcessedOneAtATimeAndBlockPurchasesUntilAllResolved() = runTest(dispatcher) {
+        val base = paymentStore()
+        payments.recovered = listOf(pendingItem(), pendingItem("purchase-2", "KRONIQ"))
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        assertEquals(2, vm.uiState.value.dummyPayPendingCount)
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isPurchaseBlocked)
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+        advanceUntilIdle()
+        assertEquals("purchase-2", vm.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPaymentPlan.KRONIQ, vm.uiState.value.dummyPayPlan)
+        assertEquals(1, vm.uiState.value.dummyPayPendingCount)
+        assertTrue(vm.uiState.value.isPurchaseBlocked)
+        vm.startPremiumDummyPay()
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+        assertFalse(vm.uiState.value.isPurchaseBlocked)
+        assertTrue(payments.requests.isEmpty())
+        assertEquals(listOf("purchase-1", "purchase-2"), payments.cancelRequests)
+        assertTrue(base.snapshot().pendingPayments.isEmpty())
+    }
+
+    @Test fun recoveryErrors_preserveSessionAndKnownIdAndBlockNewPurchasesUntilRetry() = runTest(dispatcher) {
+        for (failure in listOf(SocketTimeoutException(), PaymentApiException(401, null, "Unauthorized", Exception()))) {
+            val base = paymentStore()
+            payments.recoveryFailure = failure
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+            advanceUntilIdle()
+            assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+            assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+            assertFalse(vm.uiState.value.isDummyPayRecoveryComplete)
+            assertNotNull(base.snapshot().session)
+            assertNotNull(base.snapshot().pendingPayments["user-1"])
+            vm.startKroniqDummyPay()
+            assertTrue(payments.requests.isEmpty())
+            payments.recoveryFailure = null
+            payments.status = "PENDING"
+            vm.verifyDummyPay()
+            advanceUntilIdle()
+            assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+            assertTrue(vm.uiState.value.isDummyPayRecoveryComplete)
+        }
+    }
+
+    @Test fun lateRecoveryAfterAccountChange_cannotPersistOrDisplayForeignPurchases() = runTest(dispatcher) {
+        val base = paymentStore()
+        val gate = CompletableDeferred<List<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem>>()
+        payments.recoveryGate = gate
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        runCurrent()
+        assertTrue(vm.uiState.value.isRecoveringDummyPay)
+        val session = base.snapshot().session!!.copy(userId = "other")
+        base.saveSession(session, base.beginAuthentication())
+        gate.complete(listOf(pendingItem("foreign")))
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+        assertNull(vm.claimDummyPayUrl())
+        assertEquals("purchase-1", base.snapshot().pendingPayments["user-1"]!!.purchaseId)
+        assertNull(base.snapshot().pendingPayments["other"])
+    }
+
+    @Test fun terminalCleanupFollowedByReadFailure_isRetryableForFailedAndCompleted() = runTest(dispatcher) {
+        for (status in listOf("FAILED", "COMPLETED")) {
+            val base = paymentStore()
+            val store = FaultStore(base)
+            payments.status = "PENDING"
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", status, "PREMIUM")
+            store.readFailuresAfterClear = 1
+            if (status == "COMPLETED") auth.me = me(premium = true)
+            vm.cancelDummyPay()
+            advanceUntilIdle()
+            assertTrue(base.snapshot().pendingPayments.isEmpty())
+            assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+            assertTrue(vm.uiState.value.isPurchaseBlocked)
+            assertNull(vm.consumeDummyPayResult())
+            payments.status = status
+            vm.verifyDummyPay()
+            advanceUntilIdle()
+            assertEquals(if (status == "FAILED") DummyPayState.FAILED else DummyPayState.CONFIRMED,
+                vm.consumeDummyPayResult())
+            assertFalse(vm.uiState.value.isPurchaseBlocked)
+            assertTrue(payments.requests.isEmpty())
+        }
+    }
+
+    @Test fun restartAfterTerminalCleanupReadFailure_usesBackendAccountWithoutStaleSavedImport() = runTest(dispatcher) {
+        val base = paymentStore()
+        val store = FaultStore(base)
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, saved, store)
+        advanceUntilIdle()
+        store.readFailuresAfterClear = 1
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        val restored = HomeViewModel(auth, FakeTrips(), payments, copySavedState(), store)
+        advanceUntilIdle()
+        assertNull(restored.uiState.value.dummyPayPurchaseId)
+        assertEquals(DummyPayState.IDLE, restored.uiState.value.dummyPayState)
+        assertFalse(restored.uiState.value.isPurchaseBlocked)
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun failedTerminalWrite_retainsMetadataAndAllowsExplicitRetry() = runTest(dispatcher) {
+        val base = paymentStore()
+        val store = FaultStore(base)
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        store.failClear = true
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        assertNotNull(base.snapshot().pendingPayments["user-1"])
+        store.failClear = false
+        payments.status = "FAILED"
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+    }
+
+    @Test fun emptyRecoveryAfterAmbiguousCreate_doesNotAutomaticallyPostAgain() = runTest(dispatcher) {
+        val vm = model()
+        advanceUntilIdle()
+        payments.failure = SocketTimeoutException()
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(1, payments.recoveryCalls)
+        assertEquals(1, payments.requests.size)
+        assertEquals(DummyPayState.IDLE, vm.uiState.value.dummyPayState)
+        assertTrue(vm.uiState.value.isDummyPayRecoveryComplete)
+    }
+
+    @Test fun restartBetweenHistoricalPayments_recoversRemainingPlanAndContinueUsesSameId() = runTest(dispatcher) {
+        val base = paymentStore()
+        payments.status = "PENDING"
+        payments.recovered = listOf(pendingItem(), pendingItem("purchase-2", "KRONIQ"))
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        vm.consumeDummyPayResult()
+        advanceUntilIdle()
+        payments.recovered = listOf(pendingItem("purchase-2", "KRONIQ"))
+        val restored = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        assertEquals("purchase-2", restored.uiState.value.dummyPayPurchaseId)
+        assertEquals(1, restored.uiState.value.dummyPayPendingCount)
+        payments.paymentUrl = "${com.memotrip_kroniq.BuildConfig.BASE_URL}payments/dummy/purchase-2?token=fixture"
+        restored.continueDummyPay()
+        advanceUntilIdle()
+        assertEquals(listOf("purchase-2"), payments.continueRequests)
+        assertNotNull(restored.claimDummyPayUrl())
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun recoveryWithoutLocalId_remainsBlockedOn401AndCanExplicitlyRetry() = runTest(dispatcher) {
+        val base = paymentStore()
+        base.clearPendingPayment(base.snapshot().pendingPayments["user-1"]!!)
+        payments.recoveryFailure = PaymentApiException(401, null, "Unauthorized", Exception())
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayPlan)
+        assertFalse(vm.uiState.value.isDummyPayRecoveryComplete)
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        vm.startPremiumDummyPay()
+        assertTrue(payments.requests.isEmpty())
+        assertNotNull(base.snapshot().session)
+        payments.recoveryFailure = null
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.IDLE, vm.uiState.value.dummyPayState)
+        assertFalse(vm.uiState.value.isPurchaseBlocked)
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun lateRecoveryAfterLogout_neverResurrectsPendingOrPosts() = runTest(dispatcher) {
+        val base = paymentStore()
+        val gate = CompletableDeferred<List<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem>>()
+        payments.recoveryGate = gate
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        runCurrent()
+        vm.verifyDummyPay()
+        vm.startPremiumDummyPay()
+        assertEquals(1, payments.recoveryCalls)
+        base.clearTokens()
+        gate.complete(listOf(pendingItem()))
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+        assertNull(vm.claimDummyPayUrl())
+        assertTrue(base.snapshot().pendingPayments.isEmpty())
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun terminalResultAfterIncompleteRecovery_retriesListWithoutLosingRecoveryAction() = runTest(dispatcher) {
+        val base = paymentStore()
+        payments.recoveryFailure = SocketTimeoutException()
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), base)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isDummyPayRecoveryComplete)
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        assertTrue(vm.uiState.value.isPurchaseBlocked)
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+        payments.recoveryFailure = null
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isPurchaseBlocked)
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun emptyRecoveryAfterUnknownCreate_refreshesCompletedAccountAndTripLimits() = runTest(dispatcher) {
+        val vm = model()
+        advanceUntilIdle()
+        payments.failure = SocketTimeoutException()
+        vm.startKroniqDummyPay()
+        advanceUntilIdle()
+        auth.me = me(kroniq = true)
+        auth.limits = TripLimitsResponse(allowed = true, plan = "KRONIQ", used = 7, limit = null)
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(HomePlanTier.KRONIQ, vm.uiState.value.currentPlan)
+        assertFalse(vm.uiState.value.isThemesLocked)
+        assertTrue(vm.uiState.value.isAddTripEnabled)
+        assertNull(vm.uiState.value.tripLimitLimit)
+        assertTrue(vm.uiState.value.isDummyPayRecoveryComplete)
+        assertEquals(1, payments.requests.size)
+        vm.startKroniqDummyPay()
+        advanceUntilIdle()
+        assertEquals(1, payments.requests.size)
+    }
+
+    private class FaultStore(private val delegate: com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore) :
+        com.example.memotrip_kroniq.data.datastore.AuthSessionStore by delegate {
+        var failSave = false
+        var failClear = false
+        var readFailuresAfterClear = 0
+        private var readFailures = 0
+        override suspend fun snapshot(): com.example.memotrip_kroniq.data.datastore.AuthStorageState {
+            if (readFailures > 0) { readFailures--; throw java.io.IOException("Fixture read failure") }
+            return delegate.snapshot()
+        }
+        override suspend fun savePendingPayment(payment: com.example.memotrip_kroniq.data.datastore.PendingPayment, expectedGeneration: String?): Boolean {
+            if (failSave) throw java.io.IOException("Fixture write failure")
+            return delegate.savePendingPayment(payment, expectedGeneration)
+        }
+        override suspend fun clearPendingPayment(payment: com.example.memotrip_kroniq.data.datastore.PendingPayment) {
+            if (failClear) throw java.io.IOException("Fixture cleanup failure")
+            delegate.clearPendingPayment(payment)
+            readFailures = readFailuresAfterClear
+            readFailuresAfterClear = 0
+        }
+    }
+
     private suspend fun paymentStore(): com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore {
         val store = com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore()
         store.saveSession(com.example.memotrip_kroniq.data.datastore.AuthSession(
@@ -1128,6 +1484,16 @@ class HomeViewModelTest {
         override suspend fun getMyTrips(): List<TripDto> = emptyList()
     }
     private class FakePayments : HomePaymentsDataSource {
+        var recovered = emptyList<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem>()
+        var recoveryFailure: Exception? = null
+        var recoveryGate: CompletableDeferred<List<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem>>? = null
+        var recoveryCalls = 0
+        override suspend fun getAllPendingDummyPayments(): List<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem> {
+            recoveryCalls++
+            recoveryFailure?.let { throw it }
+            return recoveryGate?.await() ?: recovered
+        }
+
         val requests = mutableListOf<DummyPaymentPlan>()
         var failure: Exception? = null
         var status = "COMPLETED"
@@ -1145,18 +1511,19 @@ class HomeViewModelTest {
             continueRequests += purchaseId
             actionFailure?.let { throw it }
             return actionGate?.await() ?: actionResponse ?: DummyPaymentStatusResponse(
-                purchaseId, "DUMMY_PAY", "PENDING", lastPlan.apiValue, paymentUrl)
+                purchaseId, "DUMMY_PAY", "PENDING", responsePlan(purchaseId), paymentUrl)
         }
         override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse {
             cancelRequests += purchaseId
             actionFailure?.let { throw it }
             return actionGate?.await() ?: actionResponse ?: DummyPaymentStatusResponse(
-                purchaseId, "DUMMY_PAY", "FAILED", lastPlan.apiValue)
+                purchaseId, "DUMMY_PAY", "FAILED", responsePlan(purchaseId))
         }
+        private fun responsePlan(purchaseId: String) = recovered.firstOrNull { it.purchaseId == purchaseId }?.plan ?: lastPlan.apiValue
         override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse {
             statusRequests += purchaseId
             statusFailure?.let { throw it }
-            return statusResponse ?: DummyPaymentStatusResponse(purchaseId, "DUMMY_PAY", status, lastPlan.apiValue)
+            return statusResponse ?: DummyPaymentStatusResponse(purchaseId, "DUMMY_PAY", status, responsePlan(purchaseId))
         }
         override suspend fun createDummyPayment(plan: DummyPaymentPlan): DummyPaymentResponse {
             requests += plan

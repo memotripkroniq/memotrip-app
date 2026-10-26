@@ -21,4 +21,5 @@
     <string name="dummy_pay_continue">Pokračovať v platbe</string>
     <string name="dummy_pay_cancel">Zrušiť platbu</string>
     <string name="dummy_pay_pending_subtitle">Bezpečne pokračujte alebo nákup zrušte.</string>
+    <string name="dummy_pay_pending_multiple">Rozpracované platby: %1$d · %2$s</string>
 </resources>

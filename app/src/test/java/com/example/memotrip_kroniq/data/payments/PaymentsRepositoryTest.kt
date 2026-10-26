@@ -39,6 +39,8 @@ class PaymentsRepositoryTest {
         val timeout = SocketTimeoutException()
         var requests = 0
         val api = object : PaymentsApi {
+            override suspend fun getPendingDummyPayments(limit: Int, cursor: String?) =
+                com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentsResponse(emptyList(), null)
             override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse = error("Unexpected GET")
@@ -69,6 +71,8 @@ class PaymentsRepositoryTest {
         val requests = mutableListOf<String>()
         var status = "PENDING"
         val api = object : PaymentsApi {
+            override suspend fun getPendingDummyPayments(limit: Int, cursor: String?) =
+                com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentsResponse(emptyList(), null)
             override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse {
@@ -96,7 +100,9 @@ class PaymentsRepositoryTest {
     }
 
     private fun repository(error: Exception) = PaymentsRepository(object : PaymentsApi {
-        override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
+        override suspend fun getPendingDummyPayments(limit: Int, cursor: String?) =
+                com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentsResponse(emptyList(), null)
+            override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse = throw error
         override suspend fun createDummyPayment(request: DummyPaymentRequest): DummyPaymentResponse = throw error

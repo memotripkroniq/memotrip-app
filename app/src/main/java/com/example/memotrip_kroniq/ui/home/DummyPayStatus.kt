@@ -79,6 +79,8 @@ internal fun DummyPayStatus(
             PendingDummyPayPanel(
                 verifying = state.dummyPayState == DummyPayState.VERIFYING,
                 hasPurchase = state.dummyPayPurchaseId != null,
+                pendingCount = state.dummyPayPendingCount,
+                plan = state.dummyPayPlan?.apiValue.orEmpty(),
                 onVerify = onVerify, onContinue = onReopen, onCancel = onCancel, onDismiss = onDismissPending
             )
         }
@@ -109,7 +111,7 @@ internal fun DummyPayStatus(
     ) {
         Column(Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()).padding(12.dp)) {
             Text(stringResource(message))
-            if (!busy && (state.dummyPayPlan != null || !state.isAccountVerified) &&
+            if (!busy && (state.dummyPayPlan != null || !state.isAccountVerified || !state.isDummyPayRecoveryComplete) &&
                 state.dummyPayState != DummyPayState.CONFIRMED) {
                 TextButton(onClick = onVerify) { Text(stringResource(R.string.dummy_pay_verify_again)) }
                 if (state.dummyPayPurchaseId != null) {
@@ -127,13 +129,16 @@ internal fun DummyPayStatus(
 private fun PendingDummyPayPanel(
     verifying: Boolean,
     hasPurchase: Boolean,
+    pendingCount: Int,
+    plan: String,
     onVerify: () -> Unit,
     onContinue: () -> Unit,
     onCancel: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val title = stringResource(R.string.dummy_pay_pending_title)
+    val title = if (pendingCount > 1) stringResource(R.string.dummy_pay_pending_multiple, pendingCount, plan)
+        else stringResource(R.string.dummy_pay_pending_title)
     val description = stringResource(R.string.dummy_pay_pending_subtitle)
     val verifyLabel = stringResource(R.string.dummy_pay_verify_again)
     val hideLabel = stringResource(R.string.dummy_pay_hide_notice)

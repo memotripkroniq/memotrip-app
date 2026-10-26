@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 class HomeViewModel(
     private val authRepository: HomeAuthDataSource,
@@ -31,7 +32,9 @@ class HomeViewModel(
     private val sessionStore: AuthSessionStore? = null
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
+    private val _uiState = MutableStateFlow(HomeUiState(
+        isDummyPayRecoveryComplete = sessionStore == null || BuildConfig.FLAVOR == "production"
+    ))
     val uiState: StateFlow<HomeUiState> = _uiState
     private var refreshHomeJob: Job? = null
     private var addTripAccessJob: Job? = null
@@ -40,6 +43,7 @@ class HomeViewModel(
     private var loadMeJob: Job? = null
     // Serialize account/limit reads and their application, including initial loading.
     private val accountRefreshMutex = Mutex()
+    private val pendingQueue = linkedMapOf<String, PendingPayment>()
     private var paymentEpoch = 0L
     private var paymentUrl: String? = null // Never persisted: contains a bearer capability.
     private var userId: String? = null
@@ -127,7 +131,8 @@ class HomeViewModel(
                     if (owner != null && owner != me.id) clearDummyPay(cancelJobs = false)
                     userId = me.id
                     applyUserState(me, isLoading = false)
-                    if (_uiState.value.dummyPayPlan != null) verifyDummyPay()
+                    if (sessionStore != null && BuildConfig.FLAVOR != "production") recoverPendingDummyPay()
+                    else if (_uiState.value.dummyPayPlan != null) verifyDummyPay()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -288,13 +293,123 @@ class HomeViewModel(
     fun cancelDummyPay() = performPaymentAction(PaymentAction.CANCEL)
     fun verifyDummyPay() = performPaymentAction(PaymentAction.VERIFY)
 
-    private suspend fun isCurrentPayment(metadata: PendingPayment, epoch: Long, requirePending: Boolean = true): Boolean {
-        if (paymentEpoch != epoch || pendingMetadata() != metadata) return false
-        val store = sessionStore ?: return userId == metadata.userId
+    private suspend fun isCurrentOwner(owner: String, epoch: Long): Boolean {
+        if (paymentEpoch != epoch || userId != owner) return false
+        val store = sessionStore ?: return true
         val snapshot = store.snapshot()
-        return paymentEpoch == epoch && pendingMetadata() == metadata &&
-            snapshot.generation == sessionGeneration && snapshot.session?.userId == metadata.userId &&
-            (!requirePending || snapshot.pendingPayments[metadata.userId] == metadata)
+        return paymentEpoch == epoch && userId == owner && snapshot.generation == sessionGeneration &&
+            snapshot.session?.userId == owner
+    }
+
+    // A failed metadata write does not invalidate a known server purchase.
+    // SavedState restoration remains fenced separately against logout and stale imports.
+    private suspend fun isCurrentPayment(metadata: PendingPayment, epoch: Long): Boolean =
+        pendingMetadata() == metadata && isCurrentOwner(metadata.userId, epoch) && pendingMetadata() == metadata
+
+    private fun selectPendingPayment(metadata: PendingPayment) {
+        val samePurchase = _uiState.value.dummyPayPurchaseId == metadata.purchaseId
+        if (!samePurchase) {
+            paymentUrl = null
+            savedStateHandle.remove<Boolean>("dummy_notice_dismissed")
+        }
+        savedStateHandle["dummy_owner"] = metadata.userId
+        savedStateHandle["dummy_session_generation"] = sessionGeneration
+        restorePayment(DummyPaymentPlan.entries.first { it.apiValue == metadata.plan }, metadata.purchaseId)
+        _uiState.update { it.copy(dummyPayUrlToOpen = null, canReopenDummyPay = samePurchase && paymentUrl != null,
+            dummyPayPendingCount = pendingQueue.size) }
+    }
+
+    private suspend fun persistKnownPayment(metadata: PendingPayment) {
+        try {
+            // Recovery is authoritative on restart even if this local write fails.
+            sessionStore?.savePendingPayment(metadata, sessionGeneration)
+        } catch (e: CancellationException) { throw e } catch (_: Exception) {
+            // Never discard the known purchase or repeat its creation after a failed write.
+        }
+    }
+
+    private fun scheduleSelectedVerification(metadata: PendingPayment, epoch: Long) {
+        viewModelScope.launch {
+            yield() // Let the operation assigning paymentReturnRefreshJob finish first.
+            paymentReturnRefreshJob?.join()
+            if (paymentEpoch == epoch && pendingMetadata() == metadata &&
+                _uiState.value.dummyPayState == DummyPayState.UNCONFIRMED) verifyDummyPay()
+        }
+    }
+
+    private fun recoverPendingDummyPay() {
+        if (BuildConfig.FLAVOR == "production" || paymentReturnRefreshJob?.isActive == true ||
+            _uiState.value.dummyPayState == DummyPayState.CREATING) return
+        val owner = userId ?: return
+        val epoch = paymentEpoch
+        _uiState.update { it.copy(isRecoveringDummyPay = true, isDummyPayRecoveryComplete = false,
+            dummyPayState = if (it.dummyPayPlan != null) DummyPayState.VERIFYING else DummyPayState.IDLE,
+            dummyPayUrlToOpen = null,
+            isDummyPayVerificationNoticePending = false) }
+        paymentReturnRefreshJob = viewModelScope.launch {
+            accountRefreshMutex.withLock {
+                try {
+                    if (!isCurrentOwner(owner, epoch)) {
+                        if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                        return@withLock
+                    }
+                    val recovered = paymentsRepository.getAllPendingDummyPayments()
+                    if (!isCurrentOwner(owner, epoch)) {
+                        if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                        return@withLock
+                    }
+                    // Keep a known ID even if absent from PENDING: only its status GET can
+                    // distinguish COMPLETED from FAILED and refresh entitlements correctly.
+                    val known = pendingMetadata()
+                    check(known == null || known.userId == owner) { "Payment owner changed." }
+                    pendingQueue.clear()
+                    known?.let { pendingQueue[it.purchaseId] = it }
+                    recovered.forEach { item ->
+                        check(item.provider == "DUMMY_PAY" && item.status == "PENDING" &&
+                            item.purchaseId.isNotBlank() && DummyPaymentPlan.entries.any { it.apiValue == item.plan })
+                        val metadata = PendingPayment(item.purchaseId, item.plan, owner)
+                        check(known?.takeIf { it.purchaseId == item.purchaseId }?.plan?.let { it == item.plan } != false)
+                        pendingQueue[item.purchaseId] = metadata
+                    }
+                    val next = pendingQueue.values.firstOrNull()
+                    if (next == null) {
+                        // An unknown create may already have completed and disappeared from
+                        // PENDING. Refresh actual entitlements before enabling another purchase.
+                        val me = authRepository.getMe()
+                        val limits = authRepository.getTripLimits()
+                        if (!isCurrentOwner(owner, epoch)) {
+                            if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                            return@withLock
+                        }
+                        check(me.id == owner) { "Payment account changed." }
+                        applyUserState(me)
+                        applyHomeRefreshPayload(HomeRefreshPayload(trips = null, limits = limits))
+                        paymentUrl = null
+                        clearSavedPayment()
+                        _uiState.update { it.copy(dummyPayState = DummyPayState.IDLE,
+                            dummyPayPlan = null, dummyPayPurchaseId = null, dummyPayLoadingPlan = null,
+                            dummyPayPendingCount = 0, canReopenDummyPay = false,
+                            isAwaitingDummyPayReturn = false, isDummyPayNoticeDismissed = false,
+                            isDummyPayRecoveryComplete = true) }
+                    } else {
+                        selectPendingPayment(next)
+                        persistKnownPayment(next)
+                        if (!isCurrentPayment(next, epoch)) {
+                            if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                            return@withLock
+                        }
+                        _uiState.update { it.copy(isDummyPayRecoveryComplete = true) }
+                        scheduleSelectedVerification(next, epoch)
+                    }
+                } catch (e: CancellationException) { throw e } catch (_: Exception) {
+                    if (paymentEpoch == epoch) _uiState.update { it.copy(
+                        dummyPayState = DummyPayState.VERIFICATION_ERROR,
+                        isDummyPayVerificationNoticePending = true) }
+                } finally {
+                    if (paymentEpoch == epoch) _uiState.update { it.copy(isRecoveringDummyPay = false) }
+                }
+            }
+        }
     }
 
     // Claim and revalidate immediately before launching. An old URL event cannot survive logout,
@@ -323,6 +438,11 @@ class HomeViewModel(
     }
 
     private fun performPaymentAction(action: PaymentAction) {
+        if (_uiState.value.isRecoveringDummyPay) return
+        if (action == PaymentAction.VERIFY && !_uiState.value.isDummyPayRecoveryComplete) {
+            if (!_uiState.value.isAccountVerified) loadMe() else recoverPendingDummyPay()
+            return
+        }
         if (_uiState.value.dummyPayPlan == null) {
             if (action == PaymentAction.VERIFY && !_uiState.value.isAccountVerified) loadMe()
             return
@@ -332,7 +452,7 @@ class HomeViewModel(
         val metadata = pendingMetadata()
         if (metadata == null) {
             // Never repeat an ambiguous create without a purchase ID.
-            _uiState.update { it.copy(dummyPayState = DummyPayState.CREATION_UNKNOWN) }
+            if (action == PaymentAction.VERIFY) recoverPendingDummyPay()
             return
         }
         val epoch = paymentEpoch
@@ -373,7 +493,14 @@ class HomeViewModel(
                                 }
                                 paymentUrl = url
                             }
+                            pendingQueue[metadata.purchaseId] = metadata
+                            persistKnownPayment(metadata)
+                            if (!isCurrentPayment(metadata, epoch)) {
+                                if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                                return@withLock
+                            }
                             _uiState.update { it.copy(
+                                dummyPayPendingCount = pendingQueue.size,
                                 dummyPayState = DummyPayState.WAITING,
                                 dummyPayUrlToOpen = if (action == PaymentAction.CONTINUE) paymentUrl else null,
                                 canReopenDummyPay = paymentUrl != null,
@@ -382,22 +509,24 @@ class HomeViewModel(
                         }
                         "FAILED" -> {
                             sessionStore?.clearPendingPayment(metadata)
-                            if (isCurrentPayment(metadata, epoch, requirePending = false)) finishDummyPay(DummyPayState.FAILED)
+                            if (isCurrentPayment(metadata, epoch)) finishDummyPay(DummyPayState.FAILED)
+                            else if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
                         }
                         "COMPLETED" -> {
                             val me = authRepository.getMe()
                             val limits = authRepository.getTripLimits()
                             if (!isCurrentPayment(metadata, epoch)) {
-                        if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
-                        return@withLock
-                    }
+                                if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
+                                return@withLock
+                            }
                             check(me.id == metadata.userId) { "Payment account changed." }
                             // Account responses alone grant entitlements.
                             userId = me.id
                             applyUserState(me)
                             applyHomeRefreshPayload(HomeRefreshPayload(trips = null, limits = limits))
                             sessionStore?.clearPendingPayment(metadata)
-                            if (isCurrentPayment(metadata, epoch, requirePending = false)) finishDummyPay(DummyPayState.CONFIRMED)
+                            if (isCurrentPayment(metadata, epoch)) finishDummyPay(DummyPayState.CONFIRMED)
+                            else if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
                         }
                         else -> error("Unknown payment status.")
                     }
@@ -414,16 +543,24 @@ class HomeViewModel(
                             isDummyPayVerificationNoticePending = true
                         ) }
                     }
+                } finally {
+                    if (paymentEpoch == epoch && pendingMetadata() == metadata &&
+                        _uiState.value.dummyPayState == DummyPayState.VERIFYING) {
+                        _uiState.update { it.copy(dummyPayState = DummyPayState.VERIFICATION_ERROR,
+                            isAwaitingDummyPayReturn = true, isDummyPayVerificationNoticePending = true) }
+                    }
                 }
             }
         }
     }
 
     private fun finishDummyPay(state: DummyPayState) {
+        _uiState.value.dummyPayPurchaseId?.let { pendingQueue.remove(it) }
         paymentEpoch++
         paymentUrl = null
         clearSavedPayment()
         _uiState.update { it.copy(
+            dummyPayPendingCount = pendingQueue.size,
             dummyPayState = state, dummyPayPlan = null, dummyPayPurchaseId = null,
             dummyPayUrlToOpen = null, dummyPayLoadingPlan = null,
             canReopenDummyPay = false, isAwaitingDummyPayReturn = false,
@@ -437,6 +574,18 @@ class HomeViewModel(
         val result = _uiState.value.dummyPayState
         if (result != DummyPayState.CONFIRMED && result != DummyPayState.FAILED) return null
         _uiState.update { it.copy(dummyPayState = DummyPayState.IDLE) }
+        val next = pendingQueue.values.firstOrNull()
+        if (next != null) {
+            selectPendingPayment(next)
+            scheduleSelectedVerification(next, paymentEpoch)
+        } else if (!_uiState.value.isDummyPayRecoveryComplete) {
+            val epoch = paymentEpoch
+            viewModelScope.launch {
+                yield()
+                paymentReturnRefreshJob?.join()
+                if (paymentEpoch == epoch && !_uiState.value.isDummyPayRecoveryComplete) recoverPendingDummyPay()
+            }
+        }
         return result
     }
 
@@ -455,6 +604,7 @@ class HomeViewModel(
     }
 
     fun clearDummyPay(cancelJobs: Boolean = true) {
+        pendingQueue.clear()
         paymentEpoch++
         if (cancelJobs) {
             createPaymentJob?.cancel()
@@ -467,6 +617,8 @@ class HomeViewModel(
         paymentUrl = null
         clearSavedPayment()
         _uiState.update { it.copy(
+            dummyPayPendingCount = 0, isRecoveringDummyPay = false,
+            isDummyPayRecoveryComplete = sessionStore == null || BuildConfig.FLAVOR == "production",
             dummyPayState = DummyPayState.IDLE, dummyPayPlan = null,
             dummyPayPurchaseId = null, dummyPayUrlToOpen = null,
             dummyPayLoadingPlan = null, canReopenDummyPay = false,
@@ -594,7 +746,8 @@ class HomeViewModel(
                 val response = paymentsRepository.createDummyPayment(plan)
                 if (!currentCreation()) return@launch
                 savedStateHandle["dummy_purchase"] = response.purchaseId
-                _uiState.update { it.copy(dummyPayPurchaseId = response.purchaseId) }
+                _uiState.update { it.copy(dummyPayPurchaseId = response.purchaseId, dummyPayPendingCount = 1) }
+                pendingMetadata()?.let { pendingQueue[it.purchaseId] = it }
                 pendingMetadata()?.let { payment ->
                     check(sessionStore?.savePendingPayment(payment, sessionGeneration) != false) { "Payment session changed" }
                 }
@@ -617,6 +770,12 @@ class HomeViewModel(
                     catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { paymentEpoch == createEpoch && userId == createOwner }
                 if (!current) return@launch
+                if (e is PaymentApiException && e.statusCode == 409 && e.apiCode == "DUMMY_PAY_PENDING_EXISTS") {
+                    _uiState.update { it.copy(dummyPayState = DummyPayState.CREATION_UNKNOWN,
+                        dummyPayLoadingPlan = null, isDummyPayRecoveryComplete = false) }
+                    recoverPendingDummyPay()
+                    return@launch
+                }
                 // Only an explicit rejecting response is safe to retry. Transport/5xx outcomes
                 // may have created a purchase already; never automatically repeat POST.
                 val rejected = e is PaymentApiException && e.statusCode in setOf(400, 401, 404)

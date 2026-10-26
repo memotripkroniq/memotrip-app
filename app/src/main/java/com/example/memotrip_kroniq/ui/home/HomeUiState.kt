@@ -41,7 +41,10 @@ data class HomeUiState(
     val isDummyPayNoticeDismissed: Boolean = false,
     val isDummyPayVerificationNoticePending: Boolean = false,
     val isAccountVerified: Boolean = false,
-    val requiresSignIn: Boolean = false
+    val requiresSignIn: Boolean = false,
+    val isRecoveringDummyPay: Boolean = false,
+    val isDummyPayRecoveryComplete: Boolean = true,
+    val dummyPayPendingCount: Int = 0
 
 ) {
     val currentPlan: HomePlanTier
@@ -56,7 +59,8 @@ data class HomeUiState(
         get() = isDummyPayNoticeDismissed && isPendingPaymentNotice
 
     val isPurchaseBlocked: Boolean
-        get() = !isAccountVerified || dummyPayState !in setOf(
+        get() = !isAccountVerified || !isDummyPayRecoveryComplete || isRecoveringDummyPay ||
+            dummyPayPendingCount > 0 || dummyPayState !in setOf(
             DummyPayState.IDLE, DummyPayState.CONFIRMED, DummyPayState.FAILED, DummyPayState.START_ERROR,
             DummyPayState.UNAVAILABLE
         )

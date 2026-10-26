@@ -17,6 +17,7 @@ interface HomeTripsDataSource {
 }
 
 interface HomePaymentsDataSource {
+    suspend fun getAllPendingDummyPayments(): List<com.example.memotrip_kroniq.data.remote.dto.PendingDummyPaymentItem>
     suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse
     suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse
     suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse
