@@ -256,13 +256,13 @@ class HomeViewModel(
     }
 
     fun dismissDummyPayNotice() {
-        if (_uiState.value.dummyPayState != DummyPayState.WAITING) return
+        if (!_uiState.value.isPendingPaymentNotice) return
         savedStateHandle["dummy_notice_dismissed"] = true
         _uiState.update { it.copy(isDummyPayNoticeDismissed = true) }
     }
 
     fun showDummyPayNotice() {
-        if (_uiState.value.dummyPayState != DummyPayState.WAITING) return
+        if (!_uiState.value.isPendingPaymentNotice) return
         savedStateHandle.remove<Boolean>("dummy_notice_dismissed")
         _uiState.update { it.copy(isDummyPayNoticeDismissed = false) }
     }
@@ -275,16 +275,18 @@ class HomeViewModel(
         _uiState.update { it.copy(dummyPayState = DummyPayState.OPEN_ERROR) }
     }
 
-    fun reopenDummyPay() {
-        if (_uiState.value.dummyPayState in setOf(DummyPayState.CREATING, DummyPayState.VERIFYING)) return
-        paymentUrl?.takeIf { isAllowedDummyPayUrl(it, BuildConfig.BASE_URL) }
-            ?.let { url -> _uiState.update { it.copy(dummyPayUrlToOpen = url) } }
-    }
+    fun reopenDummyPay() = continueDummyPay()
 
     fun refreshUserFromPaymentReturnIfNeeded() {
         if (!_uiState.value.isAwaitingDummyPayReturn) return
         verifyDummyPay()
     }
+
+    private enum class PaymentAction { VERIFY, CONTINUE, CANCEL }
+
+    fun continueDummyPay() = performPaymentAction(PaymentAction.CONTINUE)
+    fun cancelDummyPay() = performPaymentAction(PaymentAction.CANCEL)
+    fun verifyDummyPay() = performPaymentAction(PaymentAction.VERIFY)
 
     private suspend fun isCurrentPayment(metadata: PendingPayment, epoch: Long, requirePending: Boolean = true): Boolean {
         if (paymentEpoch != epoch || pendingMetadata() != metadata) return false
@@ -320,9 +322,9 @@ class HomeViewModel(
         }
     }
 
-    fun verifyDummyPay() {
+    private fun performPaymentAction(action: PaymentAction) {
         if (_uiState.value.dummyPayPlan == null) {
-            if (!_uiState.value.isAccountVerified) loadMe()
+            if (action == PaymentAction.VERIFY && !_uiState.value.isAccountVerified) loadMe()
             return
         }
         if (_uiState.value.dummyPayState in setOf(DummyPayState.CREATING, DummyPayState.VERIFYING)) return
@@ -334,7 +336,8 @@ class HomeViewModel(
             return
         }
         val epoch = paymentEpoch
-        // Reserve verification synchronously and invalidate any unclaimed browser event.
+        // Reserve synchronously, including clearing an unclaimed URL before Cancel/Continue.
+        if (action != PaymentAction.VERIFY) paymentUrl = null
         _uiState.update { it.copy(
             dummyPayState = DummyPayState.VERIFYING, dummyPayUrlToOpen = null,
             canReopenDummyPay = paymentUrl != null, isDummyPayVerificationNoticePending = false
@@ -346,7 +349,11 @@ class HomeViewModel(
                         if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
                         return@withLock
                     }
-                    val payment = paymentsRepository.getDummyPaymentStatus(metadata.purchaseId)
+                    val payment = when (action) {
+                        PaymentAction.VERIFY -> paymentsRepository.getDummyPaymentStatus(metadata.purchaseId)
+                        PaymentAction.CONTINUE -> paymentsRepository.continueDummyPayment(metadata.purchaseId)
+                        PaymentAction.CANCEL -> paymentsRepository.cancelDummyPayment(metadata.purchaseId)
+                    }
                     if (!isCurrentPayment(metadata, epoch)) {
                         if (paymentEpoch == epoch) clearDummyPay(cancelJobs = false)
                         return@withLock
@@ -355,9 +362,20 @@ class HomeViewModel(
                         payment.plan == metadata.plan) { "Unexpected payment response." }
                     when (payment.status) {
                         "PENDING" -> {
+                            if (action == PaymentAction.CONTINUE) {
+                                val url = payment.paymentUrl
+                                check(url != null && isAllowedDummyPayUrl(url, BuildConfig.BASE_URL)) {
+                                    "Invalid payment URL."
+                                }
+                                // Also bind the returned URL to the requested purchase, not just its host.
+                                check(java.net.URI(url).path == "/payments/dummy/${metadata.purchaseId}") {
+                                    "Unexpected payment URL."
+                                }
+                                paymentUrl = url
+                            }
                             _uiState.update { it.copy(
                                 dummyPayState = DummyPayState.WAITING,
-                                dummyPayUrlToOpen = null,
+                                dummyPayUrlToOpen = if (action == PaymentAction.CONTINUE) paymentUrl else null,
                                 canReopenDummyPay = paymentUrl != null,
                                 isAwaitingDummyPayReturn = true
                             ) }

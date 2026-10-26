@@ -16,6 +16,12 @@ interface PaymentsApi {
     ): DummyPaymentStatusResponse
 
 
+    @POST("payments/dummy/{purchaseId}/continue")
+    suspend fun continueDummyPayment(@Path("purchaseId") purchaseId: String): DummyPaymentStatusResponse
+
+    @POST("payments/dummy/{purchaseId}/cancel")
+    suspend fun cancelDummyPayment(@Path("purchaseId") purchaseId: String): DummyPaymentStatusResponse
+
     @POST("payments/dummy")
     suspend fun createDummyPayment(
         @Body request: DummyPaymentRequest

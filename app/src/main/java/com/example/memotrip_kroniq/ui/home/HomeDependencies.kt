@@ -17,6 +17,8 @@ interface HomeTripsDataSource {
 }
 
 interface HomePaymentsDataSource {
+    suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse
+    suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse
     suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse
     suspend fun createDummyPayment(plan: DummyPaymentPlan): DummyPaymentResponse
 }

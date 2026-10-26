@@ -47,10 +47,13 @@ data class HomeUiState(
     val currentPlan: HomePlanTier
         get() = resolveCurrentPlan(isPremium = isPremium, isKroniq = isKroniq)
 
-    val isDummyPayNoticeCollapsed: Boolean
-        get() = isDummyPayNoticeDismissed && dummyPayState in setOf(
+    val isPendingPaymentNotice: Boolean
+        get() = dummyPayState in setOf(
             DummyPayState.WAITING, DummyPayState.VERIFYING, DummyPayState.UNCONFIRMED
         )
+
+    val isDummyPayNoticeCollapsed: Boolean
+        get() = isDummyPayNoticeDismissed && isPendingPaymentNotice
 
     val isPurchaseBlocked: Boolean
         get() = !isAccountVerified || dummyPayState !in setOf(

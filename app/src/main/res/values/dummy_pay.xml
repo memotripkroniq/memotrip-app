@@ -17,4 +17,8 @@
     <string name="dummy_pay_pending_indicator">Pending payment · Show options</string>
     <string name="dummy_pay_hide_notice">Hide payment notice</string>
     <string name="dummy_pay_verification_notice">Unable to verify payment. Please try again.</string>
+    <string name="dummy_pay_verifying_short">Verifying payment</string>
+    <string name="dummy_pay_continue">Continue payment</string>
+    <string name="dummy_pay_cancel">Cancel payment</string>
+    <string name="dummy_pay_pending_subtitle">Continue securely or cancel this purchase.</string>
 </resources>

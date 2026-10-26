@@ -39,6 +39,8 @@ class PaymentsRepositoryTest {
         val timeout = SocketTimeoutException()
         var requests = 0
         val api = object : PaymentsApi {
+            override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
+            override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse = error("Unexpected GET")
             override suspend fun createDummyPayment(request: DummyPaymentRequest): DummyPaymentResponse {
                 requests++
@@ -67,6 +69,8 @@ class PaymentsRepositoryTest {
         val requests = mutableListOf<String>()
         var status = "PENDING"
         val api = object : PaymentsApi {
+            override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
+            override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
             override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse {
                 requests += purchaseId
                 return com.google.gson.Gson().fromJson(
@@ -92,7 +96,9 @@ class PaymentsRepositoryTest {
     }
 
     private fun repository(error: Exception) = PaymentsRepository(object : PaymentsApi {
-        override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse = throw error
+        override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
+            override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse = getDummyPaymentStatus(purchaseId)
+            override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse = throw error
         override suspend fun createDummyPayment(request: DummyPaymentRequest): DummyPaymentResponse = throw error
     })
 }

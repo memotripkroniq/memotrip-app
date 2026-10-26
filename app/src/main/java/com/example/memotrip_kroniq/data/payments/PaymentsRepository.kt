@@ -35,6 +35,12 @@ class PaymentsRepository(
         }
     }
 
+    override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse =
+        try { api.continueDummyPayment(purchaseId) } catch (e: HttpException) { throw extractApiError(e) }
+
+    override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse =
+        try { api.cancelDummyPayment(purchaseId) } catch (e: HttpException) { throw extractApiError(e) }
+
     private fun extractApiError(e: HttpException): Exception {
         val error = runCatching { e.response()?.errorBody()?.string() }.getOrNull()
 

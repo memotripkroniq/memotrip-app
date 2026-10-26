@@ -17,4 +17,8 @@
     <string name="dummy_pay_pending_indicator">Rozpracovaná platba · Zobrazit možnosti</string>
     <string name="dummy_pay_hide_notice">Skrýt oznámení platby</string>
     <string name="dummy_pay_verification_notice">Platbu se nepodařilo ověřit. Zkuste to znovu.</string>
+    <string name="dummy_pay_verifying_short">Ověřování platby</string>
+    <string name="dummy_pay_continue">Pokračovat v platbě</string>
+    <string name="dummy_pay_cancel">Zrušit platbu</string>
+    <string name="dummy_pay_pending_subtitle">Bezpečně pokračujte nebo nákup zrušte.</string>
 </resources>

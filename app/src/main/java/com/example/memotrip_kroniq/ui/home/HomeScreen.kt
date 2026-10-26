@@ -228,7 +228,8 @@ fun HomeScreen(
                 DummyPayStatus(
                     state = uiState,
                     onVerify = viewModel::verifyDummyPay,
-                    onReopen = viewModel::reopenDummyPay,
+                    onReopen = viewModel::continueDummyPay,
+                    onCancel = viewModel::cancelDummyPay,
                     onDismissPending = viewModel::dismissDummyPayNotice,
                     onShowPending = viewModel::showDummyPayNotice
                 )

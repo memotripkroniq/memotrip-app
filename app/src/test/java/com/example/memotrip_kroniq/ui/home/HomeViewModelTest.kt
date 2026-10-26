@@ -71,6 +71,7 @@ class HomeViewModelTest {
         assertFalse(vm.uiState.value.canReopenDummyPay)
         assertTrue(saved.keys().isEmpty())
         vm.reopenDummyPay()
+        advanceUntilIdle()
         assertNull(vm.uiState.value.dummyPayUrlToOpen)
     }
 
@@ -114,6 +115,7 @@ class HomeViewModelTest {
         assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
         assertEquals(1, auth.meCalls)
         vm.reopenDummyPay()
+        advanceUntilIdle()
         assertNotNull(vm.uiState.value.dummyPayUrlToOpen)
         assertEquals(HomePlanTier.FREE, vm.uiState.value.currentPlan)
         assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
@@ -169,6 +171,7 @@ class HomeViewModelTest {
         vm.onDummyPayOpenFailed()
         assertEquals(DummyPayState.OPEN_ERROR, vm.uiState.value.dummyPayState)
         vm.reopenDummyPay()
+        advanceUntilIdle()
         assertEquals(url, vm.uiState.value.dummyPayUrlToOpen)
         vm.startPremiumDummyPay()
         advanceUntilIdle()
@@ -272,6 +275,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         vm.clearDummyPay()
         vm.reopenDummyPay()
+        advanceUntilIdle()
         assertNull(vm.uiState.value.dummyPayUrlToOpen)
         assertNull(vm.uiState.value.dummyPayPlan)
         assertFalse(vm.uiState.value.canReopenDummyPay)
@@ -524,6 +528,7 @@ class HomeViewModelTest {
         vm.showDummyPayNotice()
         assertFalse(vm.uiState.value.isDummyPayNoticeDismissed)
         vm.reopenDummyPay()
+        advanceUntilIdle()
         assertEquals(url, vm.uiState.value.dummyPayUrlToOpen)
         assertEquals(1, payments.requests.size)
     }
@@ -778,6 +783,29 @@ class HomeViewModelTest {
         assertTrue(payments.statusRequests.isEmpty())
     }
 
+    @Test fun pendingNoticeCanBeHiddenDuringRestoreAndVerificationWithoutLosingPurchase() = runTest(dispatcher) {
+        val gate = CompletableDeferred<UserMe>()
+        auth.meGate = gate
+        payments.status = "PENDING"
+        val handle = SavedStateHandle(mapOf("dummy_owner" to "user-1", "dummy_plan" to "PREMIUM", "dummy_purchase" to "purchase-1"))
+        val vm = model(handle)
+        runCurrent()
+        assertEquals(DummyPayState.UNCONFIRMED, vm.uiState.value.dummyPayState)
+        vm.dismissDummyPayNotice()
+        assertTrue(vm.uiState.value.isDummyPayNoticeCollapsed)
+        vm.showDummyPayNotice()
+        vm.verifyDummyPay()
+        assertEquals(DummyPayState.VERIFYING, vm.uiState.value.dummyPayState)
+        vm.dismissDummyPayNotice()
+        assertTrue(vm.uiState.value.isDummyPayNoticeCollapsed)
+        assertEquals("purchase-1", handle.get<String>("dummy_purchase"))
+        gate.complete(me())
+        advanceUntilIdle()
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertTrue(vm.uiState.value.isDummyPayNoticeCollapsed)
+        assertTrue(payments.requests.isEmpty())
+    }
+
     @Test fun invalidPaymentUrlDoesNotOfferOrEmitReopenAction() = runTest(dispatcher) {
         payments.paymentUrl = "https://untrusted.example/payment?token=fixture"
         val vm = model()
@@ -791,6 +819,276 @@ class HomeViewModelTest {
         assertNull(vm.uiState.value.dummyPayUrlToOpen)
         assertEquals(1, payments.requests.size)
         assertEquals("purchase-1", vm.uiState.value.dummyPayPurchaseId)
+    }
+
+    @Test fun continueAfterProcessRestart_recoversUrlForSamePurchaseWithoutCreating() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.dummyPayUrlToOpen)
+        vm.continueDummyPay()
+        advanceUntilIdle()
+        assertEquals(listOf("purchase-1"), payments.continueRequests)
+        assertEquals(payments.paymentUrl, vm.claimDummyPayUrl())
+        assertNull(vm.claimDummyPayUrl())
+        assertTrue(payments.requests.isEmpty())
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+    }
+
+    @Test fun cancelConfirmedFailed_clearsDurablePendingAndAllowsExplicitNewPurchase() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(listOf("purchase-1"), payments.cancelRequests)
+        assertTrue(store.snapshot().pendingPayments.isEmpty())
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+        assertNull(vm.consumeDummyPayResult())
+        assertFalse(vm.uiState.value.isPurchaseBlocked)
+        assertNull(vm.claimDummyPayUrl())
+        assertTrue(payments.requests.isEmpty())
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        assertEquals(1, payments.requests.size)
+    }
+
+    @Test fun cancelNeverRemovesExistingAccountEntitlements() = runTest(dispatcher) {
+        auth.me = me(premium = true)
+        val vm = model()
+        advanceUntilIdle()
+        vm.startKroniqDummyPay()
+        advanceUntilIdle()
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(HomePlanTier.PREMIUM, vm.uiState.value.currentPlan)
+        assertEquals(1, auth.meCalls)
+        assertNull(vm.claimDummyPayUrl())
+    }
+
+    @Test fun bothActions_completedResponseRefreshesActualAccountAndLimits() = runTest(dispatcher) {
+        for (cancel in listOf(false, true)) {
+            val store = paymentStore()
+            payments.status = "PENDING"
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "COMPLETED", "PREMIUM")
+            // The response plan must never override actual backend account permissions.
+            auth.me = me(kroniq = true)
+            auth.limits = TripLimitsResponse(allowed = true, plan = "KRONIQ", used = 6, limit = null)
+            if (cancel) vm.cancelDummyPay() else vm.continueDummyPay()
+            advanceUntilIdle()
+            assertEquals(HomePlanTier.KRONIQ, vm.uiState.value.currentPlan)
+            assertFalse(vm.uiState.value.isThemesLocked)
+            assertTrue(vm.uiState.value.isAddTripEnabled)
+            assertNull(vm.uiState.value.tripLimitLimit)
+            assertEquals(DummyPayState.CONFIRMED, vm.consumeDummyPayResult())
+            assertTrue(store.snapshot().pendingPayments.isEmpty())
+            assertNull(vm.claimDummyPayUrl())
+            assertTrue(payments.requests.isEmpty())
+        }
+    }
+
+    @Test fun completedAction_refreshFailureKeepsPendingUntilSuccessfulVerify() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "COMPLETED", "PREMIUM")
+        auth.failLimits = true
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        assertNull(vm.consumeDummyPayResult())
+        auth.failLimits = false
+        payments.status = "COMPLETED"
+        auth.me = me(premium = true)
+        vm.verifyDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.CONFIRMED, vm.consumeDummyPayResult())
+        assertTrue(store.snapshot().pendingPayments.isEmpty())
+    }
+
+    @Test fun bothActions_transportAndHttpErrorsPreservePendingAndAllowExplicitRetry() = runTest(dispatcher) {
+        val failures = listOf(SocketTimeoutException(), PaymentApiException(401, null, "Unauthorized", Exception()),
+            PaymentApiException(404, null, "Not found", Exception()), PaymentApiException(503, null, "Unavailable", Exception()))
+        for (cancel in listOf(false, true)) for (failure in failures) {
+            val store = paymentStore()
+            payments.status = "PENDING"
+            payments.actionFailure = failure
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            val previous = if (cancel) payments.cancelRequests.size else payments.continueRequests.size
+            if (cancel) vm.cancelDummyPay() else vm.continueDummyPay()
+            advanceUntilIdle()
+            assertEquals(previous + 1, if (cancel) payments.cancelRequests.size else payments.continueRequests.size)
+            assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+            assertNotNull(store.snapshot().pendingPayments["user-1"])
+            assertTrue(vm.uiState.value.isPurchaseBlocked)
+            assertNull(vm.claimDummyPayUrl())
+            payments.actionFailure = null
+            if (cancel) vm.cancelDummyPay() else vm.continueDummyPay()
+            advanceUntilIdle()
+            assertEquals(if (cancel) DummyPayState.FAILED else DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+            assertTrue(payments.requests.isEmpty())
+        }
+    }
+
+    @Test fun continueMalformedOrForeignResponse_neverOpensOrDeletesPurchase() = runTest(dispatcher) {
+        val valid = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "PENDING", "PREMIUM", payments.paymentUrl)
+        for (response in listOf(valid.copy(purchaseId = "other"), valid.copy(plan = "KRONIQ"),
+            valid.copy(provider = "OTHER"), valid.copy(status = "UNKNOWN"), valid.copy(paymentUrl = null),
+            valid.copy(paymentUrl = "http://untrusted.example/payment"),
+            valid.copy(paymentUrl = "${com.memotrip_kroniq.BuildConfig.BASE_URL}payments/dummy/other?token=fixture"))) {
+            val store = paymentStore()
+            payments.status = "PENDING"
+            payments.actionResponse = response
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            vm.continueDummyPay()
+            advanceUntilIdle()
+            assertEquals(DummyPayState.VERIFICATION_ERROR, vm.uiState.value.dummyPayState)
+            assertNull(vm.claimDummyPayUrl())
+            assertNotNull(store.snapshot().pendingPayments["user-1"])
+        }
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun cancelPendingResponse_doesNotPretendCancellationSucceeded() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "PENDING", "PREMIUM")
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        vm.cancelDummyPay()
+        advanceUntilIdle()
+        assertEquals(DummyPayState.WAITING, vm.uiState.value.dummyPayState)
+        assertTrue(vm.uiState.value.isPurchaseBlocked)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        assertNull(vm.consumeDummyPayResult())
+    }
+
+    @Test fun actionInFlight_blocksContinueCancelVerifyAndPurchaseInSameFrame() = runTest(dispatcher) {
+        val vm = model()
+        advanceUntilIdle()
+        vm.startPremiumDummyPay()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<DummyPaymentStatusResponse>()
+        payments.actionGate = gate
+        vm.continueDummyPay()
+        vm.continueDummyPay()
+        vm.cancelDummyPay()
+        vm.verifyDummyPay()
+        vm.startKroniqDummyPay()
+        runCurrent()
+        assertEquals(DummyPayState.VERIFYING, vm.uiState.value.dummyPayState)
+        assertNull(vm.claimDummyPayUrl())
+        assertEquals(1, payments.continueRequests.size)
+        assertTrue(payments.cancelRequests.isEmpty())
+        assertTrue(payments.statusRequests.isEmpty())
+        gate.complete(DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "PENDING", "PREMIUM", payments.paymentUrl))
+        advanceUntilIdle()
+        assertEquals(1, payments.requests.size)
+        vm.cancelDummyPay()
+        // Even a previously queued URL must be invalidated before Cancel responds.
+        assertNull(vm.claimDummyPayUrl())
+        advanceUntilIdle()
+    }
+
+    @Test fun lateContinueAfterAccountSwitchOrLogout_neverOpensUrlOrChangesOtherAccount() = runTest(dispatcher) {
+        for (logout in listOf(false, true)) {
+            val store = paymentStore()
+            payments.status = "PENDING"
+            val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+            advanceUntilIdle()
+            val gate = CompletableDeferred<DummyPaymentStatusResponse>()
+            payments.actionGate = gate
+            vm.continueDummyPay()
+            runCurrent()
+            if (logout) store.clearTokens() else {
+                val session = store.snapshot().session!!.copy(userId = "other")
+                store.saveSession(session, store.beginAuthentication())
+            }
+            gate.complete(DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "PENDING", "PREMIUM", payments.paymentUrl))
+            advanceUntilIdle()
+            assertNull(vm.uiState.value.dummyPayUrlToOpen)
+            assertNull(vm.claimDummyPayUrl())
+            if (logout) assertTrue(store.snapshot().pendingPayments.isEmpty())
+            else assertNotNull(store.snapshot().pendingPayments["user-1"])
+            payments.actionGate = null
+        }
+    }
+
+    @Test fun queuedUrlCannotOpenAfterSessionGenerationChanges() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        vm.continueDummyPay()
+        advanceUntilIdle()
+        assertNotNull(vm.uiState.value.dummyPayUrlToOpen)
+        store.requireReauthentication()
+        assertNull(vm.claimDummyPayUrl())
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+    }
+
+    @Test fun continueAlreadyFailed_clearsPendingWithoutOpeningBrowser() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "FAILED", "PREMIUM")
+        vm.continueDummyPay()
+        advanceUntilIdle()
+        assertTrue(store.snapshot().pendingPayments.isEmpty())
+        assertEquals(DummyPayState.FAILED, vm.consumeDummyPayResult())
+        assertNull(vm.claimDummyPayUrl())
+        assertTrue(payments.requests.isEmpty())
+    }
+
+    @Test fun lateCancelCompletedAfterAccountChange_doesNotRefreshOrClearOldOwnerMetadata() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        val meCalls = auth.meCalls
+        val gate = CompletableDeferred<DummyPaymentStatusResponse>()
+        payments.actionGate = gate
+        vm.cancelDummyPay()
+        runCurrent()
+        val session = store.snapshot().session!!.copy(userId = "other")
+        store.saveSession(session, store.beginAuthentication())
+        gate.complete(DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "COMPLETED", "PREMIUM"))
+        advanceUntilIdle()
+        assertEquals(meCalls, auth.meCalls)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        assertNull(vm.consumeDummyPayResult())
+        assertNull(vm.claimDummyPayUrl())
+        assertNull(vm.uiState.value.dummyPayPurchaseId)
+    }
+
+    @Test fun accountChangeDuringCompletedRefresh_preventsStaleEntitlementsAndPendingDeletion() = runTest(dispatcher) {
+        val store = paymentStore()
+        payments.status = "PENDING"
+        val vm = HomeViewModel(auth, FakeTrips(), payments, SavedStateHandle(), store)
+        advanceUntilIdle()
+        val gate = CompletableDeferred<TripLimitsResponse>()
+        auth.limitsGate = gate
+        auth.me = me(premium = true)
+        payments.actionResponse = DummyPaymentStatusResponse("purchase-1", "DUMMY_PAY", "COMPLETED", "PREMIUM")
+        vm.continueDummyPay()
+        runCurrent()
+        val session = store.snapshot().session!!.copy(userId = "other")
+        store.saveSession(session, store.beginAuthentication())
+        gate.complete(TripLimitsResponse(allowed = true, plan = "PREMIUM", used = 0, limit = 3))
+        advanceUntilIdle()
+        assertEquals(HomePlanTier.FREE, vm.uiState.value.currentPlan)
+        assertNotNull(store.snapshot().pendingPayments["user-1"])
+        assertNull(vm.consumeDummyPayResult())
+        assertNull(vm.claimDummyPayUrl())
     }
 
     private suspend fun paymentStore(): com.example.memotrip_kroniq.data.AuthRepositorySessionTest.MemoryStore {
@@ -838,6 +1136,23 @@ class HomeViewModelTest {
         var statusResponse: DummyPaymentStatusResponse? = null
         val statusRequests = mutableListOf<String>()
         private var lastPlan = DummyPaymentPlan.PREMIUM
+        val continueRequests = mutableListOf<String>()
+        val cancelRequests = mutableListOf<String>()
+        var actionFailure: Exception? = null
+        var actionGate: CompletableDeferred<DummyPaymentStatusResponse>? = null
+        var actionResponse: DummyPaymentStatusResponse? = null
+        override suspend fun continueDummyPayment(purchaseId: String): DummyPaymentStatusResponse {
+            continueRequests += purchaseId
+            actionFailure?.let { throw it }
+            return actionGate?.await() ?: actionResponse ?: DummyPaymentStatusResponse(
+                purchaseId, "DUMMY_PAY", "PENDING", lastPlan.apiValue, paymentUrl)
+        }
+        override suspend fun cancelDummyPayment(purchaseId: String): DummyPaymentStatusResponse {
+            cancelRequests += purchaseId
+            actionFailure?.let { throw it }
+            return actionGate?.await() ?: actionResponse ?: DummyPaymentStatusResponse(
+                purchaseId, "DUMMY_PAY", "FAILED", lastPlan.apiValue)
+        }
         override suspend fun getDummyPaymentStatus(purchaseId: String): DummyPaymentStatusResponse {
             statusRequests += purchaseId
             statusFailure?.let { throw it }
