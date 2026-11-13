@@ -162,12 +162,36 @@ private const val KRONIQ_ADD_GUEST_IN_FLIGHT_KEY = "kroniq_add_guest_in_flight"
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(navController: NavHostController, resetLinks: ResetPasswordLinkViewModel? = null) {
+
+    if (resetLinks != null) {
+        val resetState by resetLinks.state.collectAsState()
+        LaunchedEffect(resetState.generation, resetState.pendingNavigation) {
+            if (resetState.pendingNavigation) {
+                navController.navigate(DEV_RESET_ROUTE) {
+                    popUpTo(navController.graph.id) { inclusive = false }
+                    launchSingleTop = true
+                }
+                resetLinks.navigated(resetState.generation)
+            }
+        }
+    }
 
     AnimatedNavHost(
         navController = navController,
         startDestination = Screen.Splash.route
     ) {
+        if (resetLinks != null) {
+            composable(DEV_RESET_ROUTE) {
+                DevResetPasswordScreen(resetLinks) {
+                    resetLinks.clear()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(navController.graph.id) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
 
         // =============================================================
         // ⭐ SPLASH → fade animace
@@ -183,12 +207,14 @@ fun AppNavGraph(navController: NavHostController) {
             var storageError by remember { mutableStateOf(false) }
             var storageAttempt by remember { mutableStateOf(0) }
             LaunchedEffect(splashFinished, storageAttempt) {
-                if (splashFinished) {
+                if (splashFinished && resetLinks?.mayLeaveSplash() != false) {
                     storageError = false
                     val snapshot = try { tokenStore.snapshot() }
                     catch (e: kotlinx.coroutines.CancellationException) { throw e }
                     catch (_: Exception) { storageError = true; return@LaunchedEffect }
                     val session = snapshot.session
+                    if (resetLinks != null && (!resetLinks.mayLeaveSplash() ||
+                        navController.currentDestination?.route != Screen.Splash.route)) return@LaunchedEffect
                     val destination = if (session != null &&
                         session.hasUsableAccessToken()) Screen.Home.route
                     else Screen.Login.route
@@ -219,8 +245,10 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                    if (resetLinks?.mayLeaveSplash() != false) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 },
                 onCreateAccount = {
@@ -242,8 +270,10 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             SignUpScreen(
                 onSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    if (resetLinks?.mayLeaveSplash() != false) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.SignUp.route) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -270,7 +300,7 @@ fun AppNavGraph(navController: NavHostController) {
                     nullable = true
                 }
             ),
-            deepLinks = listOf(
+            deepLinks = if (resetLinks != null) emptyList() else listOf(
                 navDeepLink {
                     uriPattern = "memotrip://reset-password?token={token}"
                 }
